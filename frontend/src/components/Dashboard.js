@@ -147,6 +147,27 @@ const Dashboard = () => {
         </div>
       )}
 
+      {/* Overdue Receivables Alert */}
+      {dashboardData?.overdue_amount > 0 && (
+        <div className="alert alert-error" data-testid="overdue-receivables">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <span className="text-2xl mr-2">⏰</span>
+              <div>
+                <strong>₺{dashboardData.overdue_amount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} vadesi geçen borç</strong> bulunuyor.
+                <div className="text-sm">{dashboardData.overdue_credit_count} müşterinin ödemesi gecikmiş.</div>
+              </div>
+            </div>
+            <button 
+              onClick={() => window.location.href = '/customers'}
+              className="btn btn-danger"
+            >
+              Cari Hesapları Gör
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Low Stock Products */}
         <div className="table-container" data-testid="low-stock-products">
