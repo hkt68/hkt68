@@ -107,51 +107,75 @@ user_problem_statement: "Müşteri cari bölümünde manuel borç ekleyim stokta
 backend:
   - task: "Customer account summary API endpoint"
     implemented: true
-    working: "unknown"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "unknown"
         agent: "main"
         comment: "Backend endpoint exists, needs testing for customer account summary"
+      - working: true
+        agent: "testing"
+        comment: "✅ PASSED - GET /api/customers/{customer_id}/account-summary working correctly. Returns total debt (₺50.25), overdue amount (₺50.25), credit limit (₺5000.00), available credit (₺4949.75), and credit sales count (1). All required fields present in response."
 
   - task: "Manual credit addition API endpoint"
     implemented: true
-    working: "unknown"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "unknown"
         agent: "main"
         comment: "Backend endpoint exists, needs testing for manual credit addition"
+      - working: true
+        agent: "testing"
+        comment: "✅ PASSED - POST /api/customers/{customer_id}/manual-credit working correctly. Successfully added ₺100.50 manual credit with due date 2025-01-15 and notes 'Stoktan alınan ürün'. Creates proper CreditSale record."
 
   - task: "Payment recording API endpoint"
     implemented: true
-    working: "unknown"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "unknown"
         agent: "main"
         comment: "Backend endpoint exists, needs testing for payment recording"
+      - working: true
+        agent: "testing"
+        comment: "✅ PASSED - POST /api/payments working correctly. Successfully recorded ₺50.25 cash payment with notes 'Nakit ödeme'. Updates credit sale remaining amount and payment status properly."
 
   - task: "Purchase history API endpoint"
     implemented: true
-    working: "unknown"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "unknown"
         agent: "main"
         comment: "Backend endpoint exists, needs testing for purchase history retrieval"
+      - working: true
+        agent: "testing"
+        comment: "✅ PASSED - GET /api/customers/{customer_id}/purchase-history working correctly. Returns empty array for manual credit entries (expected behavior). Endpoint structure and response format correct."
+
+  - task: "Detailed customer report API endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ PASSED - GET /api/customers/{customer_id}/detailed-report working correctly. Returns comprehensive report with customer info, summary (total purchases: ₺100.50, total payments: ₺50.25, current balance: ₺50.25), purchase history, payment history, and credit sales. All required fields present."
 
 frontend:
   - task: "Account Details Modal with purchase history"
