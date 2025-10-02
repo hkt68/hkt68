@@ -146,6 +146,85 @@ class StockAlert(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     resolved_at: Optional[datetime] = None
 
+# Cari Hesap Modelleri
+class PaymentStatus(str, Enum):
+    PAID = "paid"           # Ödendi
+    PARTIAL = "partial"     # Kısmi ödeme
+    UNPAID = "unpaid"       # Ödenmedi
+    OVERDUE = "overdue"     # Vadesi geçti
+
+class Customer(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    address: Optional[str] = None
+    tax_number: Optional[str] = None
+    credit_limit: float = 0.0  # Kredi limiti
+    notes: Optional[str] = None
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class CustomerCreate(BaseModel):
+    name: str
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    address: Optional[str] = None
+    tax_number: Optional[str] = None
+    credit_limit: Optional[float] = 0.0
+    notes: Optional[str] = None
+
+class CustomerUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    address: Optional[str] = None
+    tax_number: Optional[str] = None
+    credit_limit: Optional[float] = None
+    notes: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class CreditSale(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    customer_id: str
+    sale_ids: List[str]  # Bu veresiye satışa ait sale ID'leri
+    total_amount: float
+    paid_amount: float = 0.0
+    remaining_amount: float
+    due_date: Optional[datetime] = None
+    payment_status: PaymentStatus = PaymentStatus.UNPAID
+    notes: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class CreditSaleCreate(BaseModel):
+    customer_id: str
+    sale_ids: List[str]
+    total_amount: float
+    due_date: Optional[datetime] = None
+    notes: Optional[str] = None
+
+class Payment(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    customer_id: str
+    credit_sale_id: str
+    amount: float
+    payment_method: str = "cash"
+    reference_no: Optional[str] = None
+    notes: Optional[str] = None
+    created_by: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class PaymentCreate(BaseModel):
+    customer_id: str
+    credit_sale_id: str
+    amount: float
+    payment_method: str = "cash"
+    reference_no: Optional[str] = None
+    notes: Optional[str] = None
+    created_by: Optional[str] = None
+
 # Helper Functions
 async def update_product_stock(product_id: str, quantity_change: int):
     """Update product stock level"""
