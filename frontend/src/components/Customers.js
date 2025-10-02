@@ -707,6 +707,218 @@ const Customers = () => {
         </div>
       )}
 
+      {/* Payment Modal */}
+      {showPaymentModal && selectedCustomer && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowPaymentModal(false)}>
+          <div className="modal-content p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold flex items-center">
+                <span className="mr-2">💰</span>
+                Ödeme Al - {selectedCustomer.name}
+              </h3>
+              <button 
+                onClick={() => setShowPaymentModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            {accountSummary && accountSummary.total_debt > 0 ? (
+              <form onSubmit={(e) => { e.preventDefault(); handlePayment(); }} className="space-y-4">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                  <div className="text-sm text-red-600">
+                    Toplam Borç: ₺{accountSummary.total_debt.toFixed(2)}
+                  </div>
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Ödeme Tutarı (₺) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    max={accountSummary.total_debt}
+                    className="form-input"
+                    value={paymentData.amount}
+                    onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
+                    placeholder="0.00"
+                    required
+                    data-testid="payment-amount-input"
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Ödeme Yöntemi</label>
+                  <select
+                    className="form-input"
+                    value={paymentData.payment_method}
+                    onChange={(e) => setPaymentData({ ...paymentData, payment_method: e.target.value })}
+                    data-testid="payment-method-select"
+                  >
+                    <option value="cash">Nakit</option>
+                    <option value="card">Kart</option>
+                    <option value="bank_transfer">Banka Havalesi</option>
+                    <option value="check">Çek</option>
+                    <option value="other">Diğer</option>
+                  </select>
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Referans No</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={paymentData.reference_no}
+                    onChange={(e) => setPaymentData({ ...paymentData, reference_no: e.target.value })}
+                    placeholder="İşlem referans numarası"
+                    data-testid="payment-reference-input"
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Notlar</label>
+                  <textarea
+                    className="form-input"
+                    rows="2"
+                    value={paymentData.notes}
+                    onChange={(e) => setPaymentData({ ...paymentData, notes: e.target.value })}
+                    placeholder="Ödeme hakkında notlar..."
+                    data-testid="payment-notes-input"
+                  />
+                </div>
+                
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="submit"
+                    className="btn btn-success flex-1"
+                    disabled={processingPayment || !paymentData.amount}
+                    data-testid="confirm-payment-btn"
+                  >
+                    {processingPayment ? (
+                      <><div className="spinner"></div> İşleniyor...</>
+                    ) : (
+                      <><span>💰</span> Ödeme Kaydet</>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowPaymentModal(false)}
+                    className="btn btn-secondary"
+                    data-testid="cancel-payment-btn"
+                  >
+                    İptal
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="text-center py-8">
+                <div className="text-4xl mb-3">✅</div>
+                <div className="text-lg text-gray-600">Bu müşterinin borcu bulunmuyor</div>
+                <button 
+                  onClick={() => setShowPaymentModal(false)}
+                  className="btn btn-secondary mt-4"
+                >
+                  Kapat
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Credit Modal */}
+      {showCreditModal && selectedCustomer && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowCreditModal(false)}>
+          <div className="modal-content p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold flex items-center">
+                <span className="mr-2">📝</span>
+                Manuel Borç Ekle - {selectedCustomer.name}
+              </h3>
+              <button 
+                onClick={() => setShowCreditModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            <form onSubmit={(e) => { e.preventDefault(); handleManualCredit(); }} className="space-y-4">
+              {accountSummary && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                  <div className="text-sm text-blue-600">
+                    Kredi Limiti: ₺{accountSummary.credit_limit.toFixed(2)}
+                  </div>
+                  <div className="text-sm text-blue-600">
+                    Kullanılabilir: ₺{accountSummary.available_credit.toFixed(2)}
+                  </div>
+                </div>
+              )}
+              
+              <div className="form-group">
+                <label className="form-label">Borç Tutarı (₺) *</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  className="form-input"
+                  value={creditData.amount}
+                  onChange={(e) => setCreditData({ ...creditData, amount: e.target.value })}
+                  placeholder="0.00"
+                  required
+                  data-testid="credit-amount-input"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label className="form-label">Vade Tarihi</label>
+                <input
+                  type="date"
+                  className="form-input"
+                  value={creditData.due_date}
+                  onChange={(e) => setCreditData({ ...creditData, due_date: e.target.value })}
+                  min={new Date().toISOString().split('T')[0]}
+                  data-testid="credit-due-date-input"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label className="form-label">Açıklama *</label>
+                <textarea
+                  className="form-input"
+                  rows="3"
+                  value={creditData.notes}
+                  onChange={(e) => setCreditData({ ...creditData, notes: e.target.value })}
+                  placeholder="Borç sebebi (ör: Stoktan alınan ürün, hizmet bedeli...)"
+                  required
+                  data-testid="credit-notes-input"
+                />
+              </div>
+              
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="submit"
+                  className="btn btn-warning flex-1"
+                  disabled={!creditData.amount || !creditData.notes.trim()}
+                  data-testid="confirm-credit-btn"
+                >
+                  <span>📝</span> Borç Ekle
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCreditModal(false)}
+                  className="btn btn-secondary"
+                  data-testid="cancel-credit-btn"
+                >
+                  İptal
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Customers Table */}
       <div className="table-container" data-testid="customers-table">
         <div className="table-header p-4">
