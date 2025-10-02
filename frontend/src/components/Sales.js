@@ -548,6 +548,190 @@ const Sales = () => {
       ) : (
         /* SALES HISTORY VIEW */
         <div className="space-y-4">
+          {/* Sales Statistics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="stat-card card-hover" data-testid="total-sales-card">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="stat-number text-blue-600">{sales.length}</div>
+                  <div className="stat-label">Toplam Satış</div>
+                </div>
+                <div className="text-3xl text-blue-600">📄</div>
+              </div>
+            </div>
+
+            <div className="stat-card card-hover" data-testid="total-quantity-card">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="stat-number text-purple-600">{getTotalQuantity()}</div>
+                  <div className="stat-label">Toplam Adet</div>
+                </div>
+                <div className="text-3xl text-purple-600">📦</div>
+              </div>
+            </div>
+
+            <div className="stat-card card-hover" data-testid="total-revenue-card">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="stat-number text-green-600">
+                    ₺{getTotalRevenue().toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                  </div>
+                  <div className="stat-label">Toplam Ciro</div>
+                </div>
+                <div className="text-3xl text-green-600">💵</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Filters */}
+          <div className="bg-white rounded-lg p-4 shadow-sm" data-testid="sales-filters">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="form-label">Ürün</label>
+                <select
+                  className="form-select"
+                  value={filters.product_id}
+                  onChange={(e) => setFilters({ ...filters, product_id: e.target.value })}
+                  data-testid="filter-product-select"
+                >
+                  <option value="">Tüm Ürünler</option>
+                  {products.map(product => (
+                    <option key={product.id} value={product.id}>{product.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="form-label">Başlangıç Tarihi</label>
+                <input
+                  type="date"
+                  className="form-input"
+                  value={filters.start_date}
+                  onChange={(e) => setFilters({ ...filters, start_date: e.target.value })}
+                  data-testid="filter-start-date"
+                />
+              </div>
+              <div>
+                <label className="form-label">Bitiş Tarihi</label>
+                <input
+                  type="date"
+                  className="form-input"
+                  value={filters.end_date}
+                  onChange={(e) => setFilters({ ...filters, end_date: e.target.value })}
+                  data-testid="filter-end-date"
+                />
+              </div>
+              <div className="flex items-end">
+                <button 
+                  onClick={() => setFilters({ product_id: '', start_date: '', end_date: '' })}
+                  className="btn btn-secondary w-full"
+                  data-testid="clear-sales-filters-btn"
+                >
+                  Filtreleri Temizle
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Sales Table */}
+          <div className="table-container" data-testid="sales-table">
+            <div className="table-header p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Satış Listesi ({sales.length})</h3>
+                <button 
+                  onClick={fetchSales}
+                  className="btn btn-secondary btn-sm"
+                  data-testid="refresh-sales-btn"
+                >
+                  🔄 Yenile
+                </button>
+              </div>
+            </div>
+            
+            {sales.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="table-header">
+                    <tr>
+                      <th className="text-left p-3">Tarih</th>
+                      <th className="text-left p-3">Ürün</th>
+                      <th className="text-center p-3">Miktar</th>
+                      <th className="text-left p-3">Birim Fiyat</th>
+                      <th className="text-left p-3">Toplam</th>
+                      <th className="text-left p-3">Müşteri</th>
+                      <th className="text-left p-3">Ödeme</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sales.map((sale) => (
+                      <tr key={sale.id} className="table-row">
+                        <td className="p-3">
+                          <div className="text-sm">
+                            {new Date(sale.created_at).toLocaleDateString('tr-TR')}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {new Date(sale.created_at).toLocaleTimeString('tr-TR')}
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <div className="font-medium">{getProductName(sale.product_id)}</div>
+                          {sale.notes && (
+                            <div className="text-xs text-gray-500 mt-1">{sale.notes}</div>
+                          )}
+                        </td>
+                        <td className="p-3 text-center">
+                          <span className="font-semibold text-blue-600">{sale.quantity}</span>
+                        </td>
+                        <td className="p-3">
+                          <span className="font-medium">₺{sale.unit_price.toFixed(2)}</span>
+                        </td>
+                        <td className="p-3">
+                          <span className="font-bold text-green-600">
+                            ₺{sale.total_amount.toFixed(2)}
+                          </span>
+                        </td>
+                        <td className="p-3">
+                          <div className="text-sm">
+                            <div>{sale.customer_name || '-'}</div>
+                            {sale.customer_phone && (
+                              <div className="text-xs text-gray-500">{sale.customer_phone}</div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
+                            {{"cash": "Nakit", "card": "Kart", "transfer": "Havale", "check": "Çek"}[sale.payment_method] || sale.payment_method}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="p-8 text-center text-gray-500">
+                <div className="text-6xl mb-4">💰</div>
+                <div className="text-xl mb-2">
+                  {filters.product_id || filters.start_date || filters.end_date
+                    ? 'Arama kriterlerinize uygun satış bulunamadı' 
+                    : 'Henüz satış kaydı yok'
+                  }
+                </div>
+                {!filters.product_id && !filters.start_date && !filters.end_date && (
+                  <>
+                    <div className="mb-4">İlk satışınızı POS sistemi ile yapabilirsiniz.</div>
+                    <button 
+                      onClick={() => setShowHistory(false)}
+                      className="btn btn-success"
+                    >
+                      POS Sistemine Git
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Sales Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
