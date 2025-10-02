@@ -122,9 +122,12 @@ class Sale(BaseModel):
     quantity: int
     unit_price: float
     total_amount: float
+    customer_id: Optional[str] = None  # Cari hesap müşterisi
     customer_name: Optional[str] = None
     customer_phone: Optional[str] = None
     payment_method: Optional[str] = "cash"
+    is_credit_sale: bool = False  # Veresiye satış mı?
+    credit_sale_id: Optional[str] = None  # Hangi veresiye satışa ait
     notes: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -132,9 +135,11 @@ class SaleCreate(BaseModel):
     product_id: str
     quantity: int
     unit_price: float
+    customer_id: Optional[str] = None
     customer_name: Optional[str] = None
     customer_phone: Optional[str] = None
     payment_method: Optional[str] = "cash"
+    is_credit_sale: Optional[bool] = False
     notes: Optional[str] = None
 
 class StockAlert(BaseModel):
