@@ -702,6 +702,54 @@ async def get_customer_total_debt(customer_id: str) -> float:
     result = await db.credit_sales.aggregate(pipeline).to_list(1)
     return result[0]["total_debt"] if result else 0.0
 
+# Get Customer Purchase History with Product Details
+@api_router.get("/customers/{customer_id}/purchase-history")
+async def get_customer_purchase_history(customer_id: str):
+    # Get all sales for this customer
+    sales = await db.sales.find({"customer_id": customer_id}).sort("created_at", -1).to_list(1000)
+    
+    # Get product details for each sale
+    purchase_history = []
+    for sale in sales:
+        product = await db.products.find_one({"id": sale["product_id"]})
+        if product:
+            purchase_history.append({
+                "sale_id": sale["id"],
+                "product_name": product["name"],
+                "product_sku": product.get("sku"),
+                "quantity": sale["quantity"],
+                "unit_price": sale["unit_price"],
+                "total_amount": sale["total_amount"],
+                "is_credit_sale": sale.get("is_credit_sale", False),
+                "payment_method": sale["payment_method"],
+                "purchase_date": sale["created_at"],
+                "notes": sale.get("notes")
+            })
+    
+    return purchase_history
+
+# Manual Credit Entry (Elle borç ekleme)
+@api_router.post("/customers/{customer_id}/manual-credit")
+async def add_manual_credit(customer_id: str, credit_data: dict):
+    # Verify customer exists
+    customer = await db.customers.find_one({"id": customer_id})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    # Create a manual credit sale record
+    manual_credit = CreditSale(
+        customer_id=customer_id,
+        sale_ids=[],  # No specific sales, manual entry
+        total_amount=credit_data["amount"],
+        remaining_amount=credit_data["amount"],
+        due_date=datetime.fromisoformat(credit_data["due_date"]) if credit_data.get("due_date") else None,
+        notes=credit_data.get("notes", "Manuel borç girişi"),
+        payment_status=PaymentStatus.UNPAID
+    )
+    
+    await db.credit_sales.insert_one(manual_credit.dict())
+    return manual_credit
+
 # Customer Account Summary
 @api_router.get("/customers/{customer_id}/account-summary")
 async def get_customer_account_summary(customer_id: str):
