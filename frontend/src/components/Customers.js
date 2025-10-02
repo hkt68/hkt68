@@ -123,12 +123,21 @@ const Customers = () => {
   const showAccountDetails = async (customer) => {
     try {
       setSelectedCustomer(customer);
-      const response = await axios.get(`/customers/${customer.id}/account-summary`);
-      setAccountSummary(response.data);
+      
+      // Fetch account summary and purchase history
+      const [summaryResponse, historyResponse, reportResponse] = await Promise.all([
+        axios.get(`/customers/${customer.id}/account-summary`),
+        axios.get(`/customers/${customer.id}/purchase-history`),
+        axios.get(`/customers/${customer.id}/detailed-report`)
+      ]);
+      
+      setAccountSummary(summaryResponse.data);
+      setPurchaseHistory(historyResponse.data);
+      setDetailedReport(reportResponse.data);
       setShowAccountModal(true);
     } catch (err) {
-      setError('Hesap özeti yüklenirken hata oluştu');
-      console.error('Account summary error:', err);
+      setError('Hesap bilgileri yüklenirken hata oluştu');
+      console.error('Account details error:', err);
     }
   };
 
