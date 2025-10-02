@@ -61,12 +61,14 @@ const Sales = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [salesResponse, productsResponse] = await Promise.all([
+      const [salesResponse, productsResponse, categoriesResponse] = await Promise.all([
         axios.get('/sales'),
-        axios.get('/products')
+        axios.get('/products'),
+        axios.get('/categories')
       ]);
       setSales(salesResponse.data);
       setProducts(productsResponse.data);
+      setCategories(categoriesResponse.data);
     } catch (err) {
       setError('Veriler yüklenirken hata oluştu');
       console.error('Data fetch error:', err);
