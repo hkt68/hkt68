@@ -467,6 +467,149 @@ const Sales = () => {
         </div>
       )}
 
+      {/* Quick Add Product Modal */}
+      {showQuickAdd && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && closeQuickAddModal()}>
+          <div className="modal-content p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-orange-600 flex items-center">
+                <span className="mr-2">🚫</span>
+                Ürün Bulunamadı!
+              </h3>
+              <button 
+                onClick={closeQuickAddModal}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+              <div className="text-sm text-orange-700">
+                <strong>Barkod/SKU:</strong> {quickAddData.barcode}
+              </div>
+              <div className="text-sm text-orange-600 mt-1">
+                Bu ürün sistemde kayıtlı değil. Hızlıca eklemek ister misiniz?
+              </div>
+            </div>
+            
+            <form className="space-y-4">
+              <div className="form-group">
+                <label className="form-label">Ürün Adı *</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={quickAddData.name}
+                  onChange={(e) => setQuickAddData({ ...quickAddData, name: e.target.value })}
+                  placeholder="Ürün adını girin..."
+                  required
+                  autoFocus
+                  data-testid="quick-add-name"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div className="form-group">
+                  <label className="form-label">Satış Fiyatı (₺) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    className="form-input"
+                    value={quickAddData.selling_price}
+                    onChange={(e) => setQuickAddData({ ...quickAddData, selling_price: e.target.value })}
+                    placeholder="0.00"
+                    required
+                    data-testid="quick-add-price"
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Maliyet Fiyatı (₺)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    className="form-input"
+                    value={quickAddData.cost_price}
+                    onChange={(e) => setQuickAddData({ ...quickAddData, cost_price: e.target.value })}
+                    placeholder="Otomatik hesaplanacak"
+                    data-testid="quick-add-cost"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div className="form-group">
+                  <label className="form-label">Başlangıç Stok</label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="form-input"
+                    value={quickAddData.initial_stock}
+                    onChange={(e) => setQuickAddData({ ...quickAddData, initial_stock: e.target.value })}
+                    data-testid="quick-add-stock"
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Min. Stok Seviye</label>
+                  <input
+                    type="number"
+                    min="0"
+                    className="form-input"
+                    value={quickAddData.min_stock_level}
+                    onChange={(e) => setQuickAddData({ ...quickAddData, min_stock_level: e.target.value })}
+                    data-testid="quick-add-min-stock"
+                  />
+                </div>
+              </div>
+              
+              <div className="form-group">
+                <label className="form-label">Kategori</label>
+                <select
+                  className="form-select"
+                  value={quickAddData.category_id}
+                  onChange={(e) => setQuickAddData({ ...quickAddData, category_id: e.target.value })}
+                  data-testid="quick-add-category"
+                >
+                  <option value="">Otomatik seçilecek</option>
+                  {categories.map(category => (
+                    <option key={category.id} value={category.id}>{category.name}</option>
+                  ))}
+                </select>
+              </div>
+            </form>
+            
+            <div className="flex gap-3 pt-4">
+              <button
+                onClick={handleQuickAddProduct}
+                disabled={addingProduct || !quickAddData.name || !quickAddData.selling_price}
+                className="btn btn-success flex-1"
+                data-testid="quick-add-save-btn"
+              >
+                {addingProduct ? (
+                  <><div className="spinner"></div> Ekleniyor...</>
+                ) : (
+                  <>🚀 Hızlı Ekle & Sepete At</>
+                )}
+              </button>
+              <button
+                onClick={closeQuickAddModal}
+                className="btn btn-secondary"
+                data-testid="quick-add-cancel-btn"
+              >
+                ❌ İptal
+              </button>
+            </div>
+            
+            <div className="mt-3 text-xs text-gray-500 text-center">
+              💡 İpucu: Ürün eklenip direkt sepete atılacak
+            </div>
+          </div>
+        </div>
+      )}
+
       {!showHistory ? (
         /* POS SYSTEM VIEW */
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
