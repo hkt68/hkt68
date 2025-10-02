@@ -174,38 +174,46 @@ const Sales = () => {
     barcodeInputRef.current?.focus();
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!formData.product_id || !formData.quantity || !formData.unit_price) return;
+  const handleCheckout = async () => {
+    if (cart.length === 0) {
+      setError('Sepet boş!');
+      return;
+    }
 
-    const quantity = parseInt(formData.quantity);
-    const unit_price = parseFloat(formData.unit_price);
-
-    // Check if there's enough stock
-    if (selectedProduct && selectedProduct.current_stock < quantity) {
-      setError(`Yetersiz stok! Mevcut stok: ${selectedProduct.current_stock}`);
+    if (paymentInfo.method === 'cash' && getChangeAmount() < 0) {
+      setError('Alınan tutar yetersiz!');
       return;
     }
 
     try {
       setSubmitting(true);
       
-      const submitData = {
-        ...formData,
-        quantity,
-        unit_price
-      };
+      // Process each cart item as separate sale
+      for (const item of cart) {
+        const saleData = {
+          product_id: item.product.id,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          customer_name: customerInfo.name || null,
+          customer_phone: customerInfo.phone || null,
+          payment_method: paymentInfo.method,
+          notes: paymentInfo.notes || null
+        };
+        
+        await axios.post('/sales', saleData);
+      }
       
-      await axios.post('/sales', submitData);
-      await fetchData(); // Refresh both sales and products (for updated stock)
-      resetForm();
+      await fetchData(); // Refresh data
+      clearCart();
+      alert(`✅ Satış tamamlandı!\nToplam: ₺${getCartTotal().toLocaleString('tr-TR', { minimumFractionDigits: 2 })}\n${paymentInfo.method === 'cash' && getChangeAmount() > 0 ? `Para Üstü: ₺${getChangeAmount().toLocaleString('tr-TR', { minimumFractionDigits: 2 })}` : ''}`);
+      
     } catch (err) {
       if (err.response?.data?.detail) {
         setError(err.response.data.detail);
       } else {
         setError('Satış kaydedilirken hata oluştu');
       }
-      console.error('Sale submit error:', err);
+      console.error('Checkout error:', err);
     } finally {
       setSubmitting(false);
     }
