@@ -107,8 +107,13 @@ const Sales = () => {
       setSearchSuggestions([]);
       barcodeInputRef.current?.focus();
     } else {
-      setError('Barkod/SKU bulunamadı: ' + barcodeInput);
-      setBarcodeInput('');
+      // Ürün bulunamadı, hızlı ekleme modalı aç
+      setQuickAddData({
+        ...quickAddData,
+        barcode: barcodeInput.trim(),
+        sku: barcodeInput.trim().toUpperCase()
+      });
+      setShowQuickAdd(true);
       setShowSuggestions(false);
     }
   };
