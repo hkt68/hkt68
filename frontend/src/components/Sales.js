@@ -28,7 +28,13 @@ const Sales = () => {
     end_date: ''
   });
   
+  // Autocomplete State
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
+  
   const barcodeInputRef = useRef(null);
+  const suggestionsRef = useRef(null);
 
   useEffect(() => {
     fetchData();
