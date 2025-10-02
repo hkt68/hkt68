@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
 const Sales = () => {
@@ -7,13 +7,18 @@ const Sales = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    product_id: '',
-    quantity: '',
-    unit_price: '',
-    customer_name: '',
-    customer_phone: '',
-    payment_method: 'cash',
+  const [showHistory, setShowHistory] = useState(false);
+  
+  // POS System State
+  const [cart, setCart] = useState([]);
+  const [barcodeInput, setBarcodeInput] = useState('');
+  const [customerInfo, setCustomerInfo] = useState({
+    name: '',
+    phone: ''
+  });
+  const [paymentInfo, setPaymentInfo] = useState({
+    method: 'cash',
+    received_amount: '',
     notes: ''
   });
   const [submitting, setSubmitting] = useState(false);
@@ -22,7 +27,8 @@ const Sales = () => {
     start_date: '',
     end_date: ''
   });
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  
+  const barcodeInputRef = useRef(null);
 
   useEffect(() => {
     fetchData();
