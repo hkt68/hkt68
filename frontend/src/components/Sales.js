@@ -817,8 +817,11 @@ const Sales = () => {
         </div>
       </div>
 
-      {/* Sale Form Modal */}
-      {showForm && (
+    </div>
+  );
+};
+
+export default Sales;
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && resetForm()}>
           <div className="modal-content p-6 w-full max-w-xl">
             <div className="flex items-center justify-between mb-4">
