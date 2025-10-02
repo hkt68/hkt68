@@ -10,6 +10,22 @@ const Customers = () => {
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [accountSummary, setAccountSummary] = useState(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showCreditModal, setShowCreditModal] = useState(false);
+  const [purchaseHistory, setPurchaseHistory] = useState([]);
+  const [detailedReport, setDetailedReport] = useState(null);
+  const [paymentData, setPaymentData] = useState({
+    amount: '',
+    payment_method: 'cash',
+    reference_no: '',
+    notes: ''
+  });
+  const [creditData, setCreditData] = useState({
+    amount: '',
+    due_date: '',
+    notes: ''
+  });
+  const [processingPayment, setProcessingPayment] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
