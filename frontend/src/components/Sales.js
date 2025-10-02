@@ -219,20 +219,12 @@ const Sales = () => {
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      product_id: '',
-      quantity: '',
-      unit_price: '',
-      customer_name: '',
-      customer_phone: '',
-      payment_method: 'cash',
-      notes: ''
-    });
-    setSelectedProduct(null);
-    setShowForm(false);
-    setError(null);
-  };
+  // Focus barcode input on component mount
+  useEffect(() => {
+    if (barcodeInputRef.current) {
+      barcodeInputRef.current.focus();
+    }
+  }, []);
 
   const getProductName = (productId) => {
     const product = products.find(p => p.id === productId);
