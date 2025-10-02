@@ -1,0 +1,95 @@
+<analysis>
+The trajectory documents the development of a full-stack application for a small business owner. The project started with the AI engineer exploring a boilerplate React/FastAPI/MongoDB codebase. The user, communicating in Turkish, initially requested a general application for stock, sales, and backup management.
+
+The AI engineer first built a comprehensive inventory management system with a standard dashboard UI. Following user feedback, this was refined into a Point-of-Sale (POS) system with barcode scanning, a sales cart, and change calculation features.
+
+Subsequent user requests led to further iterative development. Key features added include:
+1.  An autocomplete search function for products on the POS screen.
+2.  A quick add modal to create new products directly from the POS screen if a scanned barcode is not found.
+3.  A complete Customer Relationship Management (CRM) module for cari hesap (current accounts/accounts receivable). This included creating, viewing, and managing customers.
+4.  Integration of the CRM with the POS system to allow for veresiye (credit) sales, linking transactions to specific customers and tracking their debt.
+
+The most recent work involves enhancing the CRM module. The user requested the ability to see a customer's purchase history, manually add debt or record payments, and print a summary of their account. The AI engineer was in the process of implementing these features in a detailed customer account modal when the trajectory ended.
+</analysis>
+
+<product_requirements>
+The user, owner of a small business named Elite Medya Bilişim that sells stationery and office supplies, requires a web-based application to manage their operations. The core need is a Point-of-Sale (POS) system integrated with inventory and customer account management.
+
+**Key Functional Requirements:**
+1.  **Inventory Management:** Add, view, and track product stock levels.
+2.  **POS System:**
+    *   A primary sales screen for processing transactions.
+    *   Ability to add products to a cart via barcode scanning or an autocomplete product search.
+    *   If a scanned barcode is new, a prompt to quickly add the product to the inventory.
+    *   Calculation of total price and change due.
+3.  **Customer Account Management (Cari Hesap):**
+    *   Create and manage a database of customers.
+    *   Process veresiye (credit) sales, assigning the debt to a customer's account.
+    *   In a dedicated customer view, display a detailed transaction history (what they bought, when).
+    *   Allow for manual entry of debts or recording of payments received against their balance.
+    *   Provide an option to print a summary/statement of the customer's account.
+
+**Ultimate Goal:**
+The system should be embeddable or integrable into the user's existing Wix website, , with a public-facing sales/product page and a private admin panel for management.
+</product_requirements>
+
+<key_technical_concepts>
+- **Backend:** FastAPI (Python), Motor (Asynchronous MongoDB driver), Pydantic (Data validation).
+- **Frontend:** React 19, React Router, Axios (for API calls).
+- **Database:** MongoDB.
+- **Styling:** Tailwind CSS.
+- **Core Concepts:** REST API, Full-Stack Development, Point-of-Sale (POS) logic, Customer Relationship Management (CRM), Accounts Receivable (Veresiye/Cari Hesap).
+</key_technical_concepts>
+
+<code_architecture>
+The application follows a standard monolithic full-stack architecture with a distinct frontend and backend housed in the same repository.
+
+**Directory Structure:**
+
+
+- ****
+    - **Importance:** This is the monolithic backend file containing the entire FastAPI application logic. It defines all Pydantic data models (Product, Sale, Customer, etc.), database connections via Motor, and all API endpoints under the  prefix for managing inventory, sales, and customer accounts.
+    - **Changes:** It was completely rewritten from a simple boilerplate to a full-featured inventory API. It was later heavily modified to add comprehensive models and endpoints for  and  to support the CRM and credit sales features, including endpoints to get customer details, sales history, and process payments.
+
+- ****
+    - **Importance:** The main entry point for the React application. It sets up the navigation shell (sidebar) and uses  to route traffic to different component pages like , , and .
+    - **Changes:** Initially a basic welcome page, it was rewritten to include a persistent sidebar and routing logic for all the new features. It was last edited to add the  route and link in the sidebar navigation.
+
+- ****
+    - **Importance:** This is the core of the application's user experience, functioning as the main Point-of-Sale (POS) interface. It manages the sales cart, barcode/product search input, payment calculations, and transaction processing.
+    - **Changes:** This file has undergone the most significant evolution. It was transformed from a simple sales list to an interactive POS screen. Major features added include state management for the sales cart, an autocomplete search dropdown, a modal for quick-adding new products, and UI elements for selecting a customer to process a credit (veresiye) sale.
+
+- ****
+    - **Importance:** This component serves as the CRM hub. It displays a list of all customers and is responsible for managing customer data, including viewing their account details.
+    - **Changes:** This is a newly created component. The most recent work was focused here, specifically on building a comprehensive Account Details Modal that would be triggered from this page. The modal is intended to show purchase history, and allow for manual debt and payment entries.
+</code_architecture>
+
+<pending_tasks>
+- Complete the implementation of the Account Details Modal in . This includes:
+  - Displaying a customer's full purchase and payment history.
+  - Adding a form to manually record a payment received from a customer.
+  - Adding a form to manually add a debt to a customer's account.
+  - Implementing a Print Summary feature for the customer's account statement.
+- Integrate the finished application into the user's Wix website.
+</pending_tasks>
+
+<current_work>
+The engineer was in the middle of a major feature enhancement for the Customer Relationship Management (CRM) module, based on the user's request for more detailed customer account management.
+
+**Backend:** The necessary API endpoints have already been created and modified in . This includes:
+- An endpoint to fetch detailed customer account information, including their transaction history ().
+- An endpoint to handle manual financial transactions like payments or adding debt ().
+- An endpoint to generate a printable report for a customer's account ().
+
+**Frontend:** The focus was on the  file. The engineer was building a sophisticated modal, referred to as the , which would pop up when a user clicks on a customer's account.
+
+The last actions recorded in the trajectory were a series of edits to :
+1.  Adding the backend API call to fetch detailed customer data.
+2.  Adding state management for the modal's visibility and data.
+3.  Implementing the function to handle ödeme (payment) submissions.
+4.  Writing the JSX structure for the . The trajectory ended while this code was being written, specifically after adding the initial structure for displaying customer info, transaction history, and placeholders for the manual debt/payment forms. The work is incomplete.
+</current_work>
+
+<optional_next_step>
+Continue the development of the  in  to complete the feature as requested by the user.
+</optional_next_step>
