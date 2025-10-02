@@ -281,8 +281,8 @@ const Sales = () => {
 
   const clearCart = () => {
     setCart([]);
-    setCustomerInfo({ name: '', phone: '' });
-    setPaymentInfo({ method: 'cash', received_amount: '', notes: '' });
+    setCustomerInfo({ customer_id: '', name: '', phone: '' });
+    setPaymentInfo({ method: 'cash', received_amount: '', notes: '', is_credit_sale: false, due_date: '' });
     setError(null);
     barcodeInputRef.current?.focus();
   };
