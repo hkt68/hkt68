@@ -233,7 +233,11 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Account Details Modal with purchase history"
+    - "Payment Modal for recording payments" 
+    - "Credit Modal for manual debt addition"
+    - "Environment variable usage in API calls"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
