@@ -108,7 +108,7 @@ const Customers = () => {
     if (!window.confirm('Bu müşteriyi silmek istediğinizden emin misiniz?')) return;
 
     try {
-      await axios.delete(`/customers/${customerId}`);
+      await axios.delete(`${import.meta.env.REACT_APP_BACKEND_URL}/api/customers/${customerId}`);
       await fetchCustomers();
     } catch (err) {
       if (err.response?.status === 400) {
