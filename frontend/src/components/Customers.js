@@ -212,7 +212,7 @@ const Customers = () => {
         notes: creditData.notes || 'Manuel borç girişi'
       };
       
-      await axios.post(`/customers/${selectedCustomer.id}/manual-credit`, credit);
+      await axios.post(`${import.meta.env.REACT_APP_BACKEND_URL}/api/customers/${selectedCustomer.id}/manual-credit`, credit);
       
       // Refresh account details
       await showAccountDetails(selectedCustomer);
