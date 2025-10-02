@@ -69,14 +69,109 @@ const Sales = () => {
     }
   };
 
-  const handleProductSelect = (productId) => {
+  // POS System Functions
+  const handleBarcodeSubmit = (e) => {
+    e.preventDefault();
+    if (!barcodeInput.trim()) return;
+    
+    const product = products.find(p => 
+      p.barcode === barcodeInput.trim() || 
+      p.sku === barcodeInput.trim() ||
+      p.name.toLowerCase().includes(barcodeInput.toLowerCase())
+    );
+    
+    if (product) {
+      addToCart(product);
+      setBarcodeInput('');
+      barcodeInputRef.current?.focus();
+    } else {
+      setError('Barkod/SKU bulunamadı: ' + barcodeInput);
+      setBarcodeInput('');
+    }
+  };
+
+  const addToCart = (product, quantity = 1) => {
+    if (product.current_stock < quantity) {
+      setError(`Yetersiz stok! Mevcut: ${product.current_stock}`);
+      return;
+    }
+
+    const existingItem = cart.find(item => item.product.id === product.id);
+    
+    if (existingItem) {
+      const newQuantity = existingItem.quantity + quantity;
+      if (product.current_stock < newQuantity) {
+        setError(`Yetersiz stok! Maksimum: ${product.current_stock}`);
+        return;
+      }
+      
+      setCart(cart.map(item => 
+        item.product.id === product.id 
+          ? { ...item, quantity: newQuantity, subtotal: newQuantity * item.unit_price }
+          : item
+      ));
+    } else {
+      setCart([...cart, {
+        product,
+        quantity,
+        unit_price: product.selling_price,
+        subtotal: quantity * product.selling_price
+      }]);
+    }
+    setError(null);
+  };
+
+  const removeFromCart = (productId) => {
+    setCart(cart.filter(item => item.product.id !== productId));
+  };
+
+  const updateCartItemQuantity = (productId, newQuantity) => {
+    if (newQuantity <= 0) {
+      removeFromCart(productId);
+      return;
+    }
+
     const product = products.find(p => p.id === productId);
-    setSelectedProduct(product);
-    setFormData({
-      ...formData,
-      product_id: productId,
-      unit_price: product ? product.selling_price.toString() : ''
-    });
+    if (product.current_stock < newQuantity) {
+      setError(`Yetersiz stok! Maksimum: ${product.current_stock}`);
+      return;
+    }
+
+    setCart(cart.map(item => 
+      item.product.id === productId 
+        ? { ...item, quantity: newQuantity, subtotal: newQuantity * item.unit_price }
+        : item
+    ));
+  };
+
+  const updateCartItemPrice = (productId, newPrice) => {
+    const price = parseFloat(newPrice) || 0;
+    setCart(cart.map(item => 
+      item.product.id === productId 
+        ? { ...item, unit_price: price, subtotal: item.quantity * price }
+        : item
+    ));
+  };
+
+  const getCartTotal = () => {
+    return cart.reduce((total, item) => total + item.subtotal, 0);
+  };
+
+  const getCartItemCount = () => {
+    return cart.reduce((total, item) => total + item.quantity, 0);
+  };
+
+  const getChangeAmount = () => {
+    const receivedAmount = parseFloat(paymentInfo.received_amount) || 0;
+    return receivedAmount - getCartTotal();
+  };
+
+  const clearCart = () => {
+    setCart([]);
+    setCustomerInfo({ name: '', phone: '' });
+    setPaymentInfo({ method: 'cash', received_amount: '', notes: '' });
+    setError(null);
+    barcodeInputRef.current?.focus();
   };
 
   const handleSubmit = async (e) => {
