@@ -750,6 +750,7 @@ async def get_dashboard_summary():
     total_products = await db.products.count_documents({})
     total_categories = await db.categories.count_documents({})
     active_alerts = await db.stock_alerts.count_documents({"is_resolved": False})
+    total_customers = await db.customers.count_documents({"is_active": True})
     
     # Get low stock products
     low_stock_products = await db.products.find({
