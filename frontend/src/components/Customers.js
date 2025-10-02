@@ -547,18 +547,27 @@ const Customers = () => {
       {/* Account Details Modal */}
       {showAccountModal && selectedCustomer && accountSummary && (
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowAccountModal(false)}>
-          <div className="modal-content p-6 w-full max-w-4xl">
+          <div className="modal-content p-6 w-full max-w-6xl max-h-90vh overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-semibold flex items-center">
                 <span className="mr-2">🏦</span>
-                Cari Hesap Özeti - {selectedCustomer.name}
+                Cari Hesap Detayı - {selectedCustomer.name}
               </h3>
-              <button 
-                onClick={() => setShowAccountModal(false)}
-                className="text-gray-400 hover:text-gray-600 text-2xl"
-              >
-                ×
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={printReport}
+                  className="btn btn-secondary btn-sm"
+                  data-testid="print-report-btn"
+                >
+                  🖨️ Yazdır
+                </button>
+                <button 
+                  onClick={() => setShowAccountModal(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
             </div>
             
             {/* Account Summary Stats */}
