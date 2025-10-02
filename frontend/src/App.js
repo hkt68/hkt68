@@ -43,6 +43,7 @@ const Navigation = () => {
     { path: '/', label: 'Dashboard', icon: '📊' },
     { path: '/products', label: 'Ürünler', icon: '📦' },
     { path: '/categories', label: 'Kategoriler', icon: '🏷️' },
+    { path: '/customers', label: 'Cari Hesaplar', icon: '👥' },
     { path: '/sales', label: 'Satışlar', icon: '💰' },
     { path: '/stock', label: 'Stok İşlemleri', icon: '📋' },
     { path: '/reports', label: 'Raporlar', icon: '📈' },
