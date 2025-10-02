@@ -252,17 +252,19 @@ const Sales = () => {
     <div className="space-y-6 fade-in">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold text-gray-800 flex items-center">
-          <span className="mr-3">💰</span>
-          Satışlar
+          <span className="mr-3">🛒</span>
+          POS Satış Sistemi
         </h2>
-        <button 
-          onClick={() => setShowForm(true)}
-          className="btn btn-success"
-          data-testid="new-sale-btn"
-        >
-          <span>➕</span>
-          Yeni Satış
-        </button>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => setShowHistory(!showHistory)}
+            className={`btn ${showHistory ? 'btn-primary' : 'btn-secondary'}`}
+            data-testid="toggle-history-btn"
+          >
+            <span>📊</span>
+            {showHistory ? 'POS Görünümü' : 'Satış Geçmişi'}
+          </button>
+        </div>
       </div>
 
       {error && (
