@@ -703,6 +703,69 @@ const Customers = () => {
                 </div>
               </div>
             </div>
+            
+            {/* Detailed Purchase History */}
+            {purchaseHistory && purchaseHistory.length > 0 && (
+              <div className="mt-6">
+                <h4 className="font-semibold mb-3 flex items-center">
+                  <span className="mr-2">🛒</span>
+                  Detaylı Alışveriş Geçmişi
+                </h4>
+                <div className="bg-white rounded-lg border overflow-hidden">
+                  <div className="overflow-x-auto max-h-80">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="text-left p-3 font-medium">Tarih</th>
+                          <th className="text-left p-3 font-medium">Ürün</th>
+                          <th className="text-right p-3 font-medium">Adet</th>
+                          <th className="text-right p-3 font-medium">Birim Fiyat</th>
+                          <th className="text-right p-3 font-medium">Toplam</th>
+                          <th className="text-center p-3 font-medium">Durum</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {purchaseHistory.map((item, index) => (
+                          <tr key={index} className="border-t border-gray-100">
+                            <td className="p-3">
+                              {new Date(item.date || item.created_at).toLocaleDateString('tr-TR', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric'
+                              })}
+                            </td>
+                            <td className="p-3">
+                              <div className="font-medium">{item.product_name || item.name}</div>
+                              {item.barcode && (
+                                <div className="text-xs text-gray-500">Barkod: {item.barcode}</div>
+                              )}
+                            </td>
+                            <td className="p-3 text-right">{item.quantity}</td>
+                            <td className="p-3 text-right">
+                              ₺{(item.unit_price || item.price).toFixed(2)}
+                            </td>
+                            <td className="p-3 text-right font-medium">
+                              ₺{(item.total_amount || (item.quantity * item.unit_price)).toFixed(2)}
+                            </td>
+                            <td className="p-3 text-center">
+                              <span className={`px-2 py-1 rounded text-xs ${
+                                item.payment_status === 'cash' ? 'bg-green-100 text-green-800' :
+                                item.payment_status === 'credit' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {item.payment_status === 'cash' ? 'Nakit' :
+                                 item.payment_status === 'credit' ? 'Veresiye' :
+                                 item.payment_status || 'Nakit'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
