@@ -233,11 +233,7 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus:
-    - "Customer account summary API endpoint"
-    - "Manual credit addition API endpoint"
-    - "Payment recording API endpoint"
-    - "Purchase history API endpoint"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
