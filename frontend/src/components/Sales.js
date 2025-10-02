@@ -732,9 +732,6 @@ const Sales = () => {
           </div>
         </div>
       )}
-
-      {/* Sales Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="stat-card card-hover" data-testid="total-sales-card">
           <div className="flex items-center justify-between">
             <div>
