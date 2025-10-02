@@ -293,13 +293,22 @@ const Sales = () => {
       return;
     }
 
-    if (paymentInfo.method === 'cash' && getChangeAmount() < 0) {
+    // Nakit ve yetersiz tutar kontrolü
+    if (paymentInfo.method === 'cash' && !paymentInfo.is_credit_sale && getChangeAmount() < 0) {
       setError('Alınan tutar yetersiz!');
+      return;
+    }
+
+    // Veresiye satış için müşteri seçimi zorunlu
+    if (paymentInfo.is_credit_sale && !customerInfo.customer_id && !customerInfo.name) {
+      setError('Veresiye satış için müşteri seçimi zorunludur!');
       return;
     }
 
     try {
       setSubmitting(true);
+      
+      const saleIds = [];
       
       // Process each cart item as separate sale
       for (const item of cart) {
@@ -307,18 +316,39 @@ const Sales = () => {
           product_id: item.product.id,
           quantity: item.quantity,
           unit_price: item.unit_price,
+          customer_id: customerInfo.customer_id || null,
           customer_name: customerInfo.name || null,
           customer_phone: customerInfo.phone || null,
           payment_method: paymentInfo.method,
+          is_credit_sale: paymentInfo.is_credit_sale,
           notes: paymentInfo.notes || null
         };
         
-        await axios.post('/sales', saleData);
+        const saleResponse = await axios.post('/sales', saleData);
+        saleIds.push(saleResponse.data.id);
+      }
+      
+      // If credit sale, create credit sale record
+      if (paymentInfo.is_credit_sale) {
+        const creditSaleData = {
+          customer_id: customerInfo.customer_id,
+          sale_ids: saleIds,
+          total_amount: getCartTotal(),
+          due_date: paymentInfo.due_date ? new Date(paymentInfo.due_date).toISOString() : null,
+          notes: paymentInfo.notes || 'POS sisteminden veresiye satış'
+        };
+        
+        await axios.post('/credit-sales', creditSaleData);
       }
       
       await fetchData(); // Refresh data
       clearCart();
-      alert(`✅ Satış tamamlandı!\nToplam: ₺${getCartTotal().toLocaleString('tr-TR', { minimumFractionDigits: 2 })}\n${paymentInfo.method === 'cash' && getChangeAmount() > 0 ? `Para Üstü: ₺${getChangeAmount().toLocaleString('tr-TR', { minimumFractionDigits: 2 })}` : ''}`);
+      
+      const successMessage = paymentInfo.is_credit_sale
+        ? `✅ Veresiye satış tamamlandı!\nMüşteri: ${customerInfo.name}\nToplam: ₺${getCartTotal().toLocaleString('tr-TR', { minimumFractionDigits: 2 })}\n${paymentInfo.due_date ? `Vade: ${new Date(paymentInfo.due_date).toLocaleDateString('tr-TR')}` : ''}`
+        : `✅ Satış tamamlandı!\nToplam: ₺${getCartTotal().toLocaleString('tr-TR', { minimumFractionDigits: 2 })}\n${paymentInfo.method === 'cash' && getChangeAmount() > 0 ? `Para Üstü: ₺${getChangeAmount().toLocaleString('tr-TR', { minimumFractionDigits: 2 })}` : ''}`;
+      
+      alert(successMessage);
       
     } catch (err) {
       if (err.response?.data?.detail) {
