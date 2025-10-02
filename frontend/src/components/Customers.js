@@ -570,6 +570,32 @@ const Customers = () => {
               </div>
             </div>
             
+            {/* Quick Actions */}
+            <div className="flex gap-3 mb-6 no-print">
+              <button 
+                onClick={() => setShowPaymentModal(true)}
+                className="btn btn-success"
+                disabled={accountSummary.total_debt <= 0}
+                data-testid="receive-payment-btn"
+              >
+                💰 Ödeme Al
+              </button>
+              <button 
+                onClick={() => setShowCreditModal(true)}
+                className="btn btn-warning"
+                data-testid="add-credit-btn"
+              >
+                📝 Elle Borç Ekle
+              </button>
+              <button 
+                onClick={() => showAccountDetails(selectedCustomer)}
+                className="btn btn-secondary"
+                data-testid="refresh-account-btn"
+              >
+                🔄 Yenile
+              </button>
+            </div>
+
             {/* Account Summary Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <div className="stat-card">
