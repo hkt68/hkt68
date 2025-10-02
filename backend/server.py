@@ -797,13 +797,32 @@ async def get_dashboard_summary():
                 "total_revenue": item["total_revenue"]
             })
     
+    # Get credit sales data
+    unpaid_credit_sales = await db.credit_sales.find({
+        "payment_status": {"$ne": PaymentStatus.PAID}
+    }).to_list(1000)
+    
+    total_receivables = sum(cs["remaining_amount"] for cs in unpaid_credit_sales)
+    
+    overdue_credit_sales = await db.credit_sales.find({
+        "due_date": {"$lt": datetime.utcnow()},
+        "payment_status": {"$ne": PaymentStatus.PAID}
+    }).to_list(1000)
+    
+    overdue_amount = sum(cs["remaining_amount"] for cs in overdue_credit_sales)
+    
     return {
         "total_products": total_products,
         "total_categories": total_categories,
+        "total_customers": total_customers,
         "active_alerts": active_alerts,
         "low_stock_count": len(low_stock_products),
         "today_sales_count": today_sales_count,
         "today_revenue": today_revenue,
+        "total_receivables": total_receivables,
+        "overdue_amount": overdue_amount,
+        "unpaid_credit_count": len(unpaid_credit_sales),
+        "overdue_credit_count": len(overdue_credit_sales),
         "low_stock_products": [Product(**p) for p in low_stock_products[:10]],
         "top_selling_products": top_products
     }
