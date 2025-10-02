@@ -1,0 +1,236 @@
+// Authentication and Authorization Backend
+// Handles user roles and permissions for Elite Medya POS
+
+import { authentication, authorization } from 'wix-members-backend';
+import { currentUser } from 'wix-users-backend';
+
+// User roles definition
+const USER_ROLES = {
+  OWNER: 'owner',
+  MANAGER: 'manager', 
+  STAFF: 'staff',
+  CUSTOMER: 'customer'
+};
+
+// Permission levels
+const PERMISSIONS = {
+  // POS Operations
+  PROCESS_SALES: ['owner', 'manager', 'staff'],
+  VIEW_SALES: ['owner', 'manager', 'staff'],
+  
+  // Inventory Management
+  MANAGE_INVENTORY: ['owner', 'manager'],
+  VIEW_INVENTORY: ['owner', 'manager', 'staff'],
+  ADJUST_INVENTORY: ['owner', 'manager'],
+  
+  // Customer Management
+  MANAGE_CUSTOMERS: ['owner', 'manager', 'staff'],
+  VIEW_CUSTOMER_ACCOUNTS: ['owner', 'manager', 'staff'],
+  MODIFY_CUSTOMER_CREDIT: ['owner', 'manager'],
+  
+  // Financial Operations
+  PROCESS_PAYMENTS: ['owner', 'manager', 'staff'],
+  VIEW_FINANCIAL_REPORTS: ['owner', 'manager'],
+  MANAGE_PRICING: ['owner', 'manager'],
+  
+  // System Administration
+  ADMIN_ACCESS: ['owner'],
+  USER_MANAGEMENT: ['owner', 'manager'],
+  SYSTEM_SETTINGS: ['owner']
+};
+
+// Get current user information
+export async function getCurrentUserInfo() {
+  try {
+    const user = await currentUser.getCurrentUser();
+    
+    if (!user || !user.loggedIn) {
+      return { success: false, error: 'User not authenticated' };
+    }
+    
+    // Get user role from member data
+    const userRole = await getUserRole(user.id);
+    
+    return {
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: userRole,
+        loginProvider: user.loginProvider
+      }
+    };
+  } catch (error) {
+    console.error('Get current user error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Get user role
+export async function getUserRole(userId) {
+  try {
+    // Check if user is the business owner (you can configure this)
+    const ownerEmails = ['elitmedya@gmail.com']; // Add your email here
+    
+    const user = await currentUser.getCurrentUser();
+    if (user && ownerEmails.includes(user.email)) {
+      return USER_ROLES.OWNER;
+    }
+    
+    // For other users, check member roles or use default
+    // You can extend this to check custom member fields
+    return USER_ROLES.STAFF; // Default role for employees
+    
+  } catch (error) {
+    console.error('Get user role error:', error);
+    return USER_ROLES.CUSTOMER; // Most restrictive default
+  }
+}
+
+// Check if user has specific permission
+export async function hasPermission(userId, permission) {
+  try {
+    const userRole = await getUserRole(userId);
+    const allowedRoles = PERMISSIONS[permission] || [];
+    
+    return allowedRoles.includes(userRole);
+  } catch (error) {
+    console.error('Permission check error:', error);
+    return false;
+  }
+}
+
+// Require permission (throws error if not authorized)
+export async function requirePermission(userId, permission) {
+  const hasAccess = await hasPermission(userId, permission);
+  
+  if (!hasAccess) {
+    throw new Error(`Access denied. Required permission: ${permission}`);
+  }
+  
+  return true;
+}
+
+// Login handler
+export async function handleLogin(email, password) {
+  try {
+    const loginResult = await authentication.login(email, password);
+    
+    if (loginResult.success) {
+      const userInfo = await getCurrentUserInfo();
+      
+      return {
+        success: true,
+        user: userInfo.user,
+        redirectUrl: getRedirectUrl(userInfo.user.role)
+      };
+    }
+    
+    return { success: false, error: 'Invalid credentials' };
+    
+  } catch (error) {
+    console.error('Login error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Get redirect URL based on user role
+function getRedirectUrl(userRole) {
+  switch (userRole) {
+    case USER_ROLES.OWNER:
+    case USER_ROLES.MANAGER:
+      return '/yonetim/dashboard';
+    case USER_ROLES.STAFF:
+      return '/yonetim/pos';
+    case USER_ROLES.CUSTOMER:
+      return '/hesabim';
+    default:
+      return '/';
+  }
+}
+
+// Register new staff member
+export async function registerStaffMember(staffData) {
+  try {
+    // Only owners can register staff
+    const currentUserInfo = await getCurrentUserInfo();
+    if (currentUserInfo.user.role !== USER_ROLES.OWNER) {
+      throw new Error('Only business owners can register staff members');
+    }
+    
+    const registrationResult = await authentication.register(staffData.email, staffData.password, {
+      contactInfo: {
+        firstName: staffData.firstName,
+        lastName: staffData.lastName,
+        phone: staffData.phone
+      },
+      privacyStatus: 'PUBLIC'
+    });
+    
+    if (registrationResult.success) {
+      // Set staff role in member data
+      await setUserRole(registrationResult.user.id, staffData.role || USER_ROLES.STAFF);
+      
+      return {
+        success: true,
+        user: registrationResult.user
+      };
+    }
+    
+    return { success: false, error: 'Registration failed' };
+    
+  } catch (error) {
+    console.error('Staff registration error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Set user role (internal function)
+async function setUserRole(userId, role) {
+  // This would typically update a custom member field
+  // For now, we'll use a simple mapping
+  // You can extend this to use Wix Data collections if needed
+  return true;
+}
+
+// Logout handler
+export async function handleLogout() {
+  try {
+    await authentication.logout();
+    return { success: true };
+  } catch (error) {
+    console.error('Logout error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Session validation
+export async function validateSession() {
+  try {
+    const userInfo = await getCurrentUserInfo();
+    return userInfo;
+  } catch (error) {
+    return { success: false, error: 'Invalid session' };
+  }
+}
+
+// Activity logging
+export async function logUserActivity(userId, action, details = {}) {
+  try {
+    const logEntry = {
+      userId: userId,
+      action: action,
+      details: details,
+      timestamp: new Date().toISOString(),
+      ipAddress: 'system' // You can get actual IP if needed
+    };
+    
+    // Log to console for now - you can extend to store in database
+    console.log('User Activity:', logEntry);
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Activity logging error:', error);
+    return { success: false, error: error.message };
+  }
+}

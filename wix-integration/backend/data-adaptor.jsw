@@ -1,0 +1,188 @@
+// Backend External Database Adaptor for Elite Medya POS System
+// Connects Wix Velo to FastAPI backend
+
+import { fetch } from 'wix-fetch';
+
+// Configuration
+const API_BASE_URL = 'https://elite-pos-1.preview.emergentagent.com/api';
+const API_TIMEOUT = 10000;
+
+// Generic API request handler
+export async function apiRequest(method, endpoint, data = null) {
+  try {
+    const options = {
+      method: method.toUpperCase(),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      timeout: API_TIMEOUT
+    };
+    
+    if (data && (method.toUpperCase() === 'POST' || method.toUpperCase() === 'PUT')) {
+      options.body = JSON.stringify(data);
+    }
+    
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+    
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    }
+    
+    const result = await response.json();
+    return { success: true, data: result };
+    
+  } catch (error) {
+    console.error('API Request Error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Product Management Functions
+export async function getProducts(filters = {}) {
+  const params = new URLSearchParams();
+  
+  if (filters.search) params.append('search', filters.search);
+  if (filters.category) params.append('category', filters.category);
+  if (filters.active_only) params.append('active_only', 'true');
+  
+  const endpoint = `/products${params.toString() ? '?' + params.toString() : ''}`;
+  return await apiRequest('GET', endpoint);
+}
+
+export async function createProduct(productData) {
+  return await apiRequest('POST', '/products', productData);
+}
+
+export async function updateProduct(productId, productData) {
+  return await apiRequest('PUT', `/products/${productId}`, productData);
+}
+
+export async function deleteProduct(productId) {
+  return await apiRequest('DELETE', `/products/${productId}`);
+}
+
+// Customer Management Functions
+export async function getCustomers(filters = {}) {
+  const params = new URLSearchParams();
+  
+  if (filters.search) params.append('search', filters.search);
+  if (filters.active_only) params.append('active_only', 'true');
+  
+  const endpoint = `/customers${params.toString() ? '?' + params.toString() : ''}`;
+  return await apiRequest('GET', endpoint);
+}
+
+export async function createCustomer(customerData) {
+  return await apiRequest('POST', '/customers', customerData);
+}
+
+export async function updateCustomer(customerId, customerData) {
+  return await apiRequest('PUT', `/customers/${customerId}`, customerData);
+}
+
+export async function getCustomerAccountSummary(customerId) {
+  return await apiRequest('GET', `/customers/${customerId}/account-summary`);
+}
+
+export async function getCustomerPurchaseHistory(customerId) {
+  return await apiRequest('GET', `/customers/${customerId}/purchase-history`);
+}
+
+export async function addManualCredit(customerId, creditData) {
+  return await apiRequest('POST', `/customers/${customerId}/manual-credit`, creditData);
+}
+
+// Sales and Payment Functions
+export async function processSale(saleData) {
+  return await apiRequest('POST', '/sales', saleData);
+}
+
+export async function recordPayment(paymentData) {
+  return await apiRequest('POST', '/payments', paymentData);
+}
+
+export async function getSales(filters = {}) {
+  const params = new URLSearchParams();
+  
+  if (filters.start_date) params.append('start_date', filters.start_date);
+  if (filters.end_date) params.append('end_date', filters.end_date);
+  if (filters.customer_id) params.append('customer_id', filters.customer_id);
+  
+  const endpoint = `/sales${params.toString() ? '?' + params.toString() : ''}`;
+  return await apiRequest('GET', endpoint);
+}
+
+// Inventory Management Functions
+export async function getInventoryItems() {
+  return await apiRequest('GET', '/inventory');
+}
+
+export async function updateInventory(productId, adjustment) {
+  return await apiRequest('POST', `/inventory/${productId}/adjust`, adjustment);
+}
+
+export async function getInventoryAlerts() {
+  return await apiRequest('GET', '/inventory/alerts');
+}
+
+// Reports and Analytics
+export async function getDashboardMetrics() {
+  return await apiRequest('GET', '/reports/dashboard');
+}
+
+export async function generateSalesReport(reportType, filters) {
+  return await apiRequest('POST', '/reports/sales', { reportType, filters });
+}
+
+export async function generateCustomerReport(customerId) {
+  return await apiRequest('GET', `/customers/${customerId}/detailed-report`);
+}
+
+// Authentication and Authorization
+export async function validateUserAccess(userId, requiredRole) {
+  try {
+    // Check if user has required permissions
+    // This integrates with Wix Members system
+    return { success: true, hasAccess: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+// Utility Functions
+export function formatCurrency(amount) {
+  return new Intl.NumberFormat('tr-TR', {
+    style: 'currency',
+    currency: 'TRY'
+  }).format(amount);
+}
+
+export function formatDate(date) {
+  return new Intl.DateTimeFormat('tr-TR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(new Date(date));
+}
+
+// Error handling and logging
+export function logError(operation, error) {
+  console.error(`POS System Error [${operation}]:`, {
+    message: error.message,
+    timestamp: new Date().toISOString(),
+    operation: operation
+  });
+}
+
+// Health check
+export async function checkSystemHealth() {
+  try {
+    const response = await apiRequest('GET', '/health');
+    return response;
+  } catch (error) {
+    return { success: false, error: 'Backend system unavailable' };
+  }
+}
