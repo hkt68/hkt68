@@ -508,6 +508,241 @@ async def resolve_alert(alert_id: str):
     
     return {"message": "Alert resolved successfully"}
 
+# Customers (Müşteriler)
+@api_router.post("/customers", response_model=Customer)
+async def create_customer(customer: CustomerCreate):
+    customer_obj = Customer(**customer.dict())
+    await db.customers.insert_one(customer_obj.dict())
+    return customer_obj
+
+@api_router.get("/customers", response_model=List[Customer])
+async def get_customers(
+    search: Optional[str] = None,
+    active_only: bool = True
+):
+    query = {}
+    
+    if active_only:
+        query["is_active"] = True
+    
+    if search:
+        query["$or"] = [
+            {"name": {"$regex": search, "$options": "i"}},
+            {"phone": {"$regex": search, "$options": "i"}},
+            {"email": {"$regex": search, "$options": "i"}}
+        ]
+    
+    customers = await db.customers.find(query).sort("name", 1).to_list(1000)
+    return [Customer(**customer) for customer in customers]
+
+@api_router.get("/customers/{customer_id}", response_model=Customer)
+async def get_customer(customer_id: str):
+    customer = await db.customers.find_one({"id": customer_id})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    return Customer(**customer)
+
+@api_router.put("/customers/{customer_id}", response_model=Customer)
+async def update_customer(customer_id: str, customer_update: CustomerUpdate):
+    update_data = {k: v for k, v in customer_update.dict().items() if v is not None}
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No data to update")
+    
+    update_data["updated_at"] = datetime.utcnow()
+    
+    result = await db.customers.update_one(
+        {"id": customer_id}, 
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    updated_customer = await db.customers.find_one({"id": customer_id})
+    return Customer(**updated_customer)
+
+@api_router.delete("/customers/{customer_id}")
+async def delete_customer(customer_id: str):
+    # Check if customer has credit sales
+    credit_sales_count = await db.credit_sales.count_documents({"customer_id": customer_id})
+    if credit_sales_count > 0:
+        raise HTTPException(status_code=400, detail="Cannot delete customer with existing credit sales")
+    
+    result = await db.customers.delete_one({"id": customer_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    return {"message": "Customer deleted successfully"}
+
+# Credit Sales (Veresiye Satışlar)
+@api_router.post("/credit-sales", response_model=CreditSale)
+async def create_credit_sale(credit_sale: CreditSaleCreate):
+    # Verify customer exists
+    customer = await db.customers.find_one({"id": credit_sale.customer_id})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    # Check credit limit
+    customer_obj = Customer(**customer)
+    current_debt = await get_customer_total_debt(credit_sale.customer_id)
+    
+    if customer_obj.credit_limit > 0 and (current_debt + credit_sale.total_amount) > customer_obj.credit_limit:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Credit limit exceeded. Current debt: ₺{current_debt:.2f}, Limit: ₺{customer_obj.credit_limit:.2f}"
+        )
+    
+    credit_sale_obj = CreditSale(**credit_sale.dict(), remaining_amount=credit_sale.total_amount)
+    await db.credit_sales.insert_one(credit_sale_obj.dict())
+    return credit_sale_obj
+
+@api_router.get("/credit-sales", response_model=List[CreditSale])
+async def get_credit_sales(
+    customer_id: Optional[str] = None,
+    payment_status: Optional[PaymentStatus] = None,
+    overdue_only: bool = False
+):
+    query = {}
+    
+    if customer_id:
+        query["customer_id"] = customer_id
+    
+    if payment_status:
+        query["payment_status"] = payment_status
+    
+    if overdue_only:
+        query["due_date"] = {"$lt": datetime.utcnow()}
+        query["payment_status"] = {"$ne": PaymentStatus.PAID}
+    
+    credit_sales = await db.credit_sales.find(query).sort("created_at", -1).to_list(1000)
+    return [CreditSale(**sale) for sale in credit_sales]
+
+# Payments (Ödemeler)
+@api_router.post("/payments", response_model=Payment)
+async def create_payment(payment: PaymentCreate):
+    # Verify credit sale exists
+    credit_sale = await db.credit_sales.find_one({"id": payment.credit_sale_id})
+    if not credit_sale:
+        raise HTTPException(status_code=404, detail="Credit sale not found")
+    
+    credit_sale_obj = CreditSale(**credit_sale)
+    
+    # Check if payment amount is valid
+    if payment.amount <= 0:
+        raise HTTPException(status_code=400, detail="Payment amount must be positive")
+    
+    if payment.amount > credit_sale_obj.remaining_amount:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Payment amount exceeds remaining debt. Remaining: ₺{credit_sale_obj.remaining_amount:.2f}"
+        )
+    
+    # Create payment record
+    payment_obj = Payment(**payment.dict())
+    await db.payments.insert_one(payment_obj.dict())
+    
+    # Update credit sale
+    new_paid_amount = credit_sale_obj.paid_amount + payment.amount
+    new_remaining_amount = credit_sale_obj.total_amount - new_paid_amount
+    
+    # Determine payment status
+    if new_remaining_amount <= 0:
+        new_status = PaymentStatus.PAID
+    elif new_paid_amount > 0:
+        new_status = PaymentStatus.PARTIAL
+    else:
+        new_status = PaymentStatus.UNPAID
+    
+    # Check if overdue
+    if credit_sale_obj.due_date and datetime.utcnow() > credit_sale_obj.due_date and new_status != PaymentStatus.PAID:
+        new_status = PaymentStatus.OVERDUE
+    
+    await db.credit_sales.update_one(
+        {"id": payment.credit_sale_id},
+        {
+            "$set": {
+                "paid_amount": new_paid_amount,
+                "remaining_amount": new_remaining_amount,
+                "payment_status": new_status,
+                "updated_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    return payment_obj
+
+@api_router.get("/payments", response_model=List[Payment])
+async def get_payments(
+    customer_id: Optional[str] = None,
+    credit_sale_id: Optional[str] = None
+):
+    query = {}
+    
+    if customer_id:
+        query["customer_id"] = customer_id
+    
+    if credit_sale_id:
+        query["credit_sale_id"] = credit_sale_id
+    
+    payments = await db.payments.find(query).sort("created_at", -1).to_list(1000)
+    return [Payment(**payment) for payment in payments]
+
+# Helper function to calculate customer total debt
+async def get_customer_total_debt(customer_id: str) -> float:
+    pipeline = [
+        {"$match": {"customer_id": customer_id, "payment_status": {"$ne": PaymentStatus.PAID}}},
+        {"$group": {"_id": None, "total_debt": {"$sum": "$remaining_amount"}}}
+    ]
+    
+    result = await db.credit_sales.aggregate(pipeline).to_list(1)
+    return result[0]["total_debt"] if result else 0.0
+
+# Customer Account Summary
+@api_router.get("/customers/{customer_id}/account-summary")
+async def get_customer_account_summary(customer_id: str):
+    # Verify customer exists
+    customer = await db.customers.find_one({"id": customer_id})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    # Get total debt
+    total_debt = await get_customer_total_debt(customer_id)
+    
+    # Get credit sales count
+    credit_sales_count = await db.credit_sales.count_documents({"customer_id": customer_id})
+    
+    # Get overdue amount
+    overdue_pipeline = [
+        {
+            "$match": {
+                "customer_id": customer_id,
+                "due_date": {"$lt": datetime.utcnow()},
+                "payment_status": {"$ne": PaymentStatus.PAID}
+            }
+        },
+        {"$group": {"_id": None, "overdue_amount": {"$sum": "$remaining_amount"}}}
+    ]
+    
+    overdue_result = await db.credit_sales.aggregate(overdue_pipeline).to_list(1)
+    overdue_amount = overdue_result[0]["overdue_amount"] if overdue_result else 0.0
+    
+    # Get recent payments (last 10)
+    recent_payments = await db.payments.find({"customer_id": customer_id}).sort("created_at", -1).limit(10).to_list(10)
+    
+    # Get recent credit sales (last 10)
+    recent_credit_sales = await db.credit_sales.find({"customer_id": customer_id}).sort("created_at", -1).limit(10).to_list(10)
+    
+    return {
+        "customer": Customer(**customer),
+        "total_debt": total_debt,
+        "overdue_amount": overdue_amount,
+        "credit_sales_count": credit_sales_count,
+        "credit_limit": customer["credit_limit"],
+        "available_credit": max(0, customer["credit_limit"] - total_debt),
+        "recent_payments": [Payment(**p) for p in recent_payments],
+        "recent_credit_sales": [CreditSale(**cs) for cs in recent_credit_sales]
+    }
+
 # Dashboard & Analytics
 @api_router.get("/dashboard/summary")
 async def get_dashboard_summary():
