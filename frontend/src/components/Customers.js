@@ -75,9 +75,9 @@ const Customers = () => {
       };
       
       if (editingCustomer) {
-        await axios.put(`${import.meta.env.REACT_APP_BACKEND_URL}/api/customers/${editingCustomer.id}`, submitData);
+        await axios.put(`${process.env.REACT_APP_BACKEND_URL}/api/customers/${editingCustomer.id}`, submitData);
       } else {
-        await axios.post(`${import.meta.env.REACT_APP_BACKEND_URL}/api/customers`, submitData);
+        await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/customers`, submitData);
       }
       
       await fetchCustomers();
