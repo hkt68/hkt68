@@ -33,6 +33,20 @@ const Sales = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
   
+  // Quick Add Product State
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [quickAddData, setQuickAddData] = useState({
+    name: '',
+    barcode: '',
+    sku: '',
+    category_id: '',
+    selling_price: '',
+    cost_price: '',
+    min_stock_level: '5',
+    initial_stock: '1'
+  });
+  const [addingProduct, setAddingProduct] = useState(false);
+  
   const barcodeInputRef = useRef(null);
   const suggestionsRef = useRef(null);
 
