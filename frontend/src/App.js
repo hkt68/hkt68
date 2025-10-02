@@ -112,6 +112,7 @@ function App() {
                 <Route index element={<Dashboard />} />
                 <Route path="products" element={<Products />} />
                 <Route path="categories" element={<Categories />} />
+                <Route path="customers" element={<Customers />} />
                 <Route path="sales" element={<Sales />} />
                 <Route path="stock" element={<StockTransactions />} />
                 <Route path="reports" element={<Reports />} />
