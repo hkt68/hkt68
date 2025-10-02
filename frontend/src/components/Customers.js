@@ -52,7 +52,7 @@ const Customers = () => {
       if (filters.search) params.append('search', filters.search);
       if (filters.active_only) params.append('active_only', 'true');
       
-      const response = await axios.get(`/customers?${params}`);
+      const response = await axios.get(`${import.meta.env.REACT_APP_BACKEND_URL}/api/customers?${params}`);
       setCustomers(response.data);
     } catch (err) {
       setError('Müşteriler yüklenirken hata oluştu');
