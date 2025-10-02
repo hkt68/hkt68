@@ -796,6 +796,70 @@ async def get_customer_account_summary(customer_id: str):
         "recent_credit_sales": [CreditSale(**cs) for cs in recent_credit_sales]
     }
 
+# Detailed Customer Report for Printing
+@api_router.get("/customers/{customer_id}/detailed-report")
+async def get_customer_detailed_report(customer_id: str):
+    # Get customer info
+    customer = await db.customers.find_one({"id": customer_id})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    # Get all credit sales
+    credit_sales = await db.credit_sales.find({"customer_id": customer_id}).sort("created_at", -1).to_list(1000)
+    
+    # Get all payments
+    payments = await db.payments.find({"customer_id": customer_id}).sort("created_at", -1).to_list(1000)
+    
+    # Get purchase history
+    purchase_history = []
+    for cs in credit_sales:
+        if cs["sale_ids"]:  # If has associated sales
+            for sale_id in cs["sale_ids"]:
+                sale = await db.sales.find_one({"id": sale_id})
+                if sale:
+                    product = await db.products.find_one({"id": sale["product_id"]})
+                    if product:
+                        purchase_history.append({
+                            "date": sale["created_at"],
+                            "product_name": product["name"],
+                            "quantity": sale["quantity"],
+                            "unit_price": sale["unit_price"],
+                            "total_amount": sale["total_amount"],
+                            "type": "product_sale"
+                        })
+        else:  # Manual credit entry
+            purchase_history.append({
+                "date": cs["created_at"],
+                "product_name": "Manuel Borç Girişi",
+                "quantity": 1,
+                "unit_price": cs["total_amount"],
+                "total_amount": cs["total_amount"],
+                "type": "manual_credit",
+                "notes": cs.get("notes")
+            })
+    
+    # Sort purchase history by date
+    purchase_history.sort(key=lambda x: x["date"], reverse=True)
+    
+    # Calculate summary
+    total_purchases = sum(item["total_amount"] for item in purchase_history)
+    total_payments_amount = sum(p["amount"] for p in payments)
+    current_balance = total_purchases - total_payments_amount
+    
+    return {
+        "customer": Customer(**customer),
+        "report_date": datetime.utcnow(),
+        "summary": {
+            "total_purchases": total_purchases,
+            "total_payments": total_payments_amount,
+            "current_balance": current_balance,
+            "total_transactions": len(purchase_history) + len(payments)
+        },
+        "purchase_history": purchase_history,
+        "payment_history": [Payment(**p) for p in payments],
+        "credit_sales": [CreditSale(**cs) for cs in credit_sales]
+    }
+
 # Dashboard & Analytics
 @api_router.get("/dashboard/summary")
 async def get_dashboard_summary():
