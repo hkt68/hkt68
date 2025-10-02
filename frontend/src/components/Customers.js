@@ -126,9 +126,9 @@ const Customers = () => {
       
       // Fetch account summary and purchase history
       const [summaryResponse, historyResponse, reportResponse] = await Promise.all([
-        axios.get(`${import.meta.env.REACT_APP_BACKEND_URL}/api/customers/${customer.id}/account-summary`),
-        axios.get(`${import.meta.env.REACT_APP_BACKEND_URL}/api/customers/${customer.id}/purchase-history`),
-        axios.get(`${import.meta.env.REACT_APP_BACKEND_URL}/api/customers/${customer.id}/detailed-report`)
+        axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/customers/${customer.id}/account-summary`),
+        axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/customers/${customer.id}/purchase-history`),
+        axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/customers/${customer.id}/detailed-report`)
       ]);
       
       setAccountSummary(summaryResponse.data);
