@@ -11,6 +11,7 @@ import Sales from './components/Sales';
 import StockTransactions from './components/StockTransactions';
 import Reports from './components/Reports';
 import Alerts from './components/Alerts';
+import Customers from './components/Customers';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
