@@ -102,6 +102,28 @@ const Dashboard = () => {
             <div className="text-3xl text-yellow-600">💵</div>
           </div>
         </div>
+
+        <div className="stat-card card-hover" data-testid="total-customers-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="stat-number text-purple-600">{dashboardData?.total_customers || 0}</div>
+              <div className="stat-label">Toplam Müşteri</div>
+            </div>
+            <div className="text-3xl text-purple-600">👥</div>
+          </div>
+        </div>
+
+        <div className="stat-card card-hover" data-testid="total-receivables-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="stat-number text-orange-600">
+                ₺{dashboardData?.total_receivables ? dashboardData.total_receivables.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) : '0.00'}
+              </div>
+              <div className="stat-label">Toplam Alacak</div>
+            </div>
+            <div className="text-3xl text-orange-600">🏦</div>
+          </div>
+        </div>
       </div>
 
       {/* Alerts Section */}
