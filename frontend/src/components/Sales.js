@@ -1091,12 +1091,16 @@ const Sales = () => {
                 {/* Checkout Button */}
                 <button
                   onClick={handleCheckout}
-                  disabled={submitting || (paymentInfo.method === 'cash' && getChangeAmount() < 0)}
-                  className="btn btn-success w-full text-xl py-4 mt-4"
+                  disabled={submitting || (paymentInfo.method === 'cash' && !paymentInfo.is_credit_sale && getChangeAmount() < 0)}
+                  className={`btn w-full text-xl py-4 mt-4 ${
+                    paymentInfo.is_credit_sale ? 'btn-warning' : 'btn-success'
+                  }`}
                   data-testid="checkout-btn"
                 >
                   {submitting ? (
                     <><div className="spinner"></div> İşleniyor...</>
+                  ) : paymentInfo.is_credit_sale ? (
+                    <>🏦 VERESİYE SATIŞ TAMAMLA</>
                   ) : (
                     <>💰 SATIŞ TAMAMLA</>
                   )}
