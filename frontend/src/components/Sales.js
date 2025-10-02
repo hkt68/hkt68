@@ -274,6 +274,281 @@ const Sales = () => {
         </div>
       )}
 
+      {!showHistory ? (
+        /* POS SYSTEM VIEW */
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* LEFT PANEL - Product Selection & Barcode */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Barcode Scanner */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border-2 border-blue-100">
+              <h3 className="text-lg font-semibold mb-4 flex items-center">
+                <span className="mr-2">📷</span>
+                Barkod/SKU Okuyucu
+              </h3>
+              <form onSubmit={handleBarcodeSubmit} className="flex gap-2">
+                <input
+                  ref={barcodeInputRef}
+                  type="text"
+                  className="form-input flex-1 text-lg py-3 px-4"
+                  value={barcodeInput}
+                  onChange={(e) => setBarcodeInput(e.target.value)}
+                  placeholder="Barkod, SKU veya ürün adı girin..."
+                  data-testid="barcode-input"
+                  autoFocus
+                />
+                <button 
+                  type="submit" 
+                  className="btn btn-primary text-lg px-6"
+                  data-testid="add-to-cart-btn"
+                >
+                  ➕ Ekle
+                </button>
+              </form>
+            </div>
+
+            {/* Quick Product Selection */}
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <h3 className="text-lg font-semibold mb-4 flex items-center">
+                <span className="mr-2">🔍</span>
+                Hızlı Ürün Seçimi
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-96 overflow-y-auto">
+                {products
+                  .filter(p => p.current_stock > 0)
+                  .slice(0, 20)
+                  .map(product => (
+                    <button
+                      key={product.id}
+                      onClick={() => addToCart(product)}
+                      className="p-3 border rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors text-left"
+                      data-testid={`quick-add-${product.id}`}
+                    >
+                      <div className="font-medium text-sm">{product.name}</div>
+                      <div className="text-xs text-gray-500">Stok: {product.current_stock}</div>
+                      <div className="text-sm font-bold text-green-600">
+                        ₺{product.selling_price.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                      </div>
+                    </button>
+                  ))}
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT PANEL - Cart & Checkout */}
+          <div className="space-y-4">
+            {/* Cart */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border-2 border-green-100">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold flex items-center">
+                  <span className="mr-2">🛒</span>
+                  Sepet ({getCartItemCount()} adet)
+                </h3>
+                {cart.length > 0 && (
+                  <button 
+                    onClick={clearCart}
+                    className="btn btn-danger btn-sm"
+                    data-testid="clear-cart-btn"
+                  >
+                    🗑️ Temizle
+                  </button>
+                )}
+              </div>
+
+              {cart.length > 0 ? (
+                <div className="space-y-3 max-h-80 overflow-y-auto">
+                  {cart.map((item, index) => (
+                    <div key={index} className="border rounded-lg p-3 bg-gray-50">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">{item.product.name}</div>
+                          <div className="text-xs text-gray-500">
+                            {item.product.sku && `SKU: ${item.product.sku}`}
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => removeFromCart(item.product.id)}
+                          className="text-red-500 hover:text-red-700 text-lg"
+                          data-testid={`remove-item-${item.product.id}`}
+                        >
+                          ×
+                        </button>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-xs text-gray-600">Miktar:</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max={item.product.current_stock}
+                            value={item.quantity}
+                            onChange={(e) => updateCartItemQuantity(item.product.id, parseInt(e.target.value) || 1)}
+                            className="form-input text-sm"
+                            data-testid={`quantity-${item.product.id}`}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-600">Birim Fiyat:</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={item.unit_price}
+                            onChange={(e) => updateCartItemPrice(item.product.id, e.target.value)}
+                            className="form-input text-sm"
+                            data-testid={`price-${item.product.id}`}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="text-right mt-2">
+                        <span className="font-bold text-green-600">
+                          ₺{item.subtotal.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-gray-500 py-8">
+                  <div className="text-4xl mb-2">🛒</div>
+                  <div>Sepet boş</div>
+                  <div className="text-sm">Barkod okutun veya ürün seçin</div>
+                </div>
+              )}
+            </div>
+
+            {/* Checkout Section */}
+            {cart.length > 0 && (
+              <div className="bg-white rounded-lg p-6 shadow-sm border-2 border-yellow-100">
+                <h3 className="text-lg font-semibold mb-4 flex items-center">
+                  <span className="mr-2">💳</span>
+                  Ödeme
+                </h3>
+
+                {/* Total Amount */}
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                  <div className="text-center">
+                    <div className="text-sm text-gray-600">TOPLAM TUTAR</div>
+                    <div className="text-3xl font-bold text-green-600" data-testid="total-amount">
+                      ₺{getCartTotal().toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Customer Info */}
+                <div className="space-y-3 mb-4">
+                  <div>
+                    <label className="form-label text-sm">Müşteri Adı</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={customerInfo.name}
+                      onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
+                      placeholder="Müşteri adı (opsiyonel)"
+                      data-testid="customer-name-input"
+                    />
+                  </div>
+                  <div>
+                    <label className="form-label text-sm">Telefon</label>
+                    <input
+                      type="tel"
+                      className="form-input"
+                      value={customerInfo.phone}
+                      onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
+                      placeholder="Telefon (opsiyonel)"
+                      data-testid="customer-phone-input"
+                    />
+                  </div>
+                </div>
+
+                {/* Payment Method */}
+                <div className="space-y-3">
+                  <div>
+                    <label className="form-label text-sm">Ödeme Yöntemi</label>
+                    <select
+                      className="form-select"
+                      value={paymentInfo.method}
+                      onChange={(e) => setPaymentInfo({ ...paymentInfo, method: e.target.value })}
+                      data-testid="payment-method-select"
+                    >
+                      <option value="cash">💵 Nakit</option>
+                      <option value="card">💳 Kredi Kartı</option>
+                      <option value="transfer">🏦 Havale/EFT</option>
+                      <option value="check">📝 Çek</option>
+                    </select>
+                  </div>
+
+                  {paymentInfo.method === 'cash' && (
+                    <div>
+                      <label className="form-label text-sm">Alınan Tutar (₺)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        className="form-input text-lg font-bold"
+                        value={paymentInfo.received_amount}
+                        onChange={(e) => setPaymentInfo({ ...paymentInfo, received_amount: e.target.value })}
+                        placeholder="0.00"
+                        data-testid="received-amount-input"
+                      />
+                      {paymentInfo.received_amount && (
+                        <div className={`mt-2 p-2 rounded text-center font-bold ${
+                          getChangeAmount() >= 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {getChangeAmount() >= 0 ? (
+                            <>
+                              <div>✅ Para Üstü</div>
+                              <div className="text-lg" data-testid="change-amount">
+                                ₺{getChangeAmount().toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div>❌ Yetersiz Tutar</div>
+                              <div className="text-lg">
+                                ₺{Math.abs(getChangeAmount()).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} eksik
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="form-label text-sm">Notlar</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={paymentInfo.notes}
+                      onChange={(e) => setPaymentInfo({ ...paymentInfo, notes: e.target.value })}
+                      placeholder="Satış notu (opsiyonel)"
+                      data-testid="sale-notes-input"
+                    />
+                  </div>
+                </div>
+
+                {/* Checkout Button */}
+                <button
+                  onClick={handleCheckout}
+                  disabled={submitting || (paymentInfo.method === 'cash' && getChangeAmount() < 0)}
+                  className="btn btn-success w-full text-xl py-4 mt-4"
+                  data-testid="checkout-btn"
+                >
+                  {submitting ? (
+                    <><div className="spinner"></div> İşleniyor...</>
+                  ) : (
+                    <>💰 SATIŞ TAMAMLA</>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        /* SALES HISTORY VIEW */
+        <div className="space-y-4">
+
       {/* Sales Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="stat-card card-hover" data-testid="total-sales-card">
