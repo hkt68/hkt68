@@ -14,13 +14,16 @@ const Sales = () => {
   const [cart, setCart] = useState([]);
   const [barcodeInput, setBarcodeInput] = useState('');
   const [customerInfo, setCustomerInfo] = useState({
+    customer_id: '',
     name: '',
     phone: ''
   });
   const [paymentInfo, setPaymentInfo] = useState({
     method: 'cash',
     received_amount: '',
-    notes: ''
+    notes: '',
+    is_credit_sale: false,
+    due_date: ''
   });
   const [submitting, setSubmitting] = useState(false);
   const [filters, setFilters] = useState({
