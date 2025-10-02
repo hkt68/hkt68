@@ -141,6 +141,182 @@ const Customers = () => {
     }
   };
 
+  const handlePayment = async () => {
+    if (!paymentData.amount || !selectedCustomer) return;
+
+    try {
+      setProcessingPayment(true);
+      
+      // Find an unpaid credit sale to apply payment to
+      const unpaidCreditSale = accountSummary.recent_credit_sales.find(cs => 
+        cs.payment_status !== 'paid' && cs.remaining_amount > 0
+      );
+      
+      if (!unpaidCreditSale) {
+        setError('Bu müşterinin ödenmemiş borcu bulunmuyor');
+        return;
+      }
+      
+      const paymentAmount = parseFloat(paymentData.amount);
+      if (paymentAmount > unpaidCreditSale.remaining_amount) {
+        setError(`Ödeme tutarı kalan borcun (₺${unpaidCreditSale.remaining_amount.toFixed(2)}) üzerinde olamaz`);
+        return;
+      }
+      
+      // Create payment record
+      const payment = {
+        customer_id: selectedCustomer.id,
+        credit_sale_id: unpaidCreditSale.id,
+        amount: paymentAmount,
+        payment_method: paymentData.payment_method,
+        reference_no: paymentData.reference_no,
+        notes: paymentData.notes,
+        created_by: 'Cari Hesap Ekranı'
+      };
+      
+      await axios.post('/payments', payment);
+      
+      // Refresh account details
+      await showAccountDetails(selectedCustomer);
+      
+      // Reset payment form
+      setPaymentData({
+        amount: '',
+        payment_method: 'cash',
+        reference_no: '',
+        notes: ''
+      });
+      setShowPaymentModal(false);
+      
+      alert(`✅ Ödeme kaydedildi!\nTutar: ₺${paymentAmount.toFixed(2)}\nKalan Borç: ₺${(unpaidCreditSale.remaining_amount - paymentAmount).toFixed(2)}`);
+      
+    } catch (err) {
+      if (err.response?.data?.detail) {
+        setError(err.response.data.detail);
+      } else {
+        setError('Ödeme kaydedilirken hata oluştu');
+      }
+      console.error('Payment error:', err);
+    } finally {
+      setProcessingPayment(false);
+    }
+  };
+
+  const handleManualCredit = async () => {
+    if (!creditData.amount || !selectedCustomer) return;
+
+    try {
+      const credit = {
+        amount: parseFloat(creditData.amount),
+        due_date: creditData.due_date || null,
+        notes: creditData.notes || 'Manuel borç girişi'
+      };
+      
+      await axios.post(`/customers/${selectedCustomer.id}/manual-credit`, credit);
+      
+      // Refresh account details
+      await showAccountDetails(selectedCustomer);
+      
+      // Reset credit form
+      setCreditData({
+        amount: '',
+        due_date: '',
+        notes: ''
+      });
+      setShowCreditModal(false);
+      
+      alert(`✅ Manuel borç eklendi!\nTutar: ₺${credit.amount.toFixed(2)}`);
+      
+    } catch (err) {
+      if (err.response?.data?.detail) {
+        setError(err.response.data.detail);
+      } else {
+        setError('Borç eklenirken hata oluştu');
+      }
+      console.error('Manual credit error:', err);
+    }
+  };
+
+  const printReport = () => {
+    if (!detailedReport) return;
+    
+    // Create printable content
+    const printContent = `
+      <div style="font-family: Arial, sans-serif; padding: 20px;">
+        <h2 style="text-align: center; color: #333;">CARİ HESAP ÖZETİ</h2>
+        <hr>
+        
+        <div style="margin-bottom: 20px;">
+          <h3>Müşteri Bilgileri</h3>
+          <p><strong>Ad:</strong> ${detailedReport.customer.name}</p>
+          <p><strong>Telefon:</strong> ${detailedReport.customer.phone || '-'}</p>
+          <p><strong>E-posta:</strong> ${detailedReport.customer.email || '-'}</p>
+          <p><strong>Adres:</strong> ${detailedReport.customer.address || '-'}</p>
+          <p><strong>Kredi Limiti:</strong> ₺${detailedReport.customer.credit_limit.toLocaleString('tr-TR')}</p>
+          <p><strong>Rapor Tarihi:</strong> ${new Date(detailedReport.report_date).toLocaleDateString('tr-TR')}</p>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+          <h3>Finansal Özet</h3>
+          <p><strong>Toplam Alışveriş:</strong> ₺${detailedReport.summary.total_purchases.toFixed(2)}</p>
+          <p><strong>Toplam Ödeme:</strong> ₺${detailedReport.summary.total_payments.toFixed(2)}</p>
+          <p><strong>Güncel Bakiye:</strong> ₺${detailedReport.summary.current_balance.toFixed(2)}</p>
+          <p><strong>Toplam İşlem:</strong> ${detailedReport.summary.total_transactions}</p>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+          <h3>Alışveriş Geçmişi</h3>
+          <table border="1" style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <th style="padding: 8px; background: #f5f5f5;">Tarih</th>
+              <th style="padding: 8px; background: #f5f5f5;">Ürün/İşlem</th>
+              <th style="padding: 8px; background: #f5f5f5;">Miktar</th>
+              <th style="padding: 8px; background: #f5f5f5;">Birim Fiyat</th>
+              <th style="padding: 8px; background: #f5f5f5;">Toplam</th>
+            </tr>
+            ${detailedReport.purchase_history.map(item => `
+              <tr>
+                <td style="padding: 8px;">${new Date(item.date).toLocaleDateString('tr-TR')}</td>
+                <td style="padding: 8px;">${item.product_name}</td>
+                <td style="padding: 8px;">${item.quantity}</td>
+                <td style="padding: 8px;">₺${item.unit_price.toFixed(2)}</td>
+                <td style="padding: 8px;">₺${item.total_amount.toFixed(2)}</td>
+              </tr>
+            `).join('')}
+          </table>
+        </div>
+        
+        <div>
+          <h3>Ödeme Geçmişi</h3>
+          <table border="1" style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <th style="padding: 8px; background: #f5f5f5;">Tarih</th>
+              <th style="padding: 8px; background: #f5f5f5;">Tutar</th>
+              <th style="padding: 8px; background: #f5f5f5;">Yöntem</th>
+              <th style="padding: 8px; background: #f5f5f5;">Referans</th>
+              <th style="padding: 8px; background: #f5f5f5;">Notlar</th>
+            </tr>
+            ${detailedReport.payment_history.map(payment => `
+              <tr>
+                <td style="padding: 8px;">${new Date(payment.created_at).toLocaleDateString('tr-TR')}</td>
+                <td style="padding: 8px;">₺${payment.amount.toFixed(2)}</td>
+                <td style="padding: 8px;">${payment.payment_method}</td>
+                <td style="padding: 8px;">${payment.reference_no || '-'}</td>
+                <td style="padding: 8px;">${payment.notes || '-'}</td>
+              </tr>
+            `).join('')}
+          </table>
+        </div>
+      </div>
+    `;
+    
+    // Open print dialog
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
   const resetForm = () => {
     setFormData({
       name: '',
