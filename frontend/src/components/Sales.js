@@ -988,18 +988,33 @@ const Sales = () => {
                 {/* Payment Method */}
                 <div className="space-y-3">
                   <div>
-                    <label className="form-label text-sm">Ödeme Yöntemi</label>
-                    <select
-                      className="form-select"
-                      value={paymentInfo.method}
-                      onChange={(e) => setPaymentInfo({ ...paymentInfo, method: e.target.value })}
-                      data-testid="payment-method-select"
-                    >
-                      <option value="cash">💵 Nakit</option>
-                      <option value="card">💳 Kredi Kartı</option>
-                      <option value="transfer">🏦 Havale/EFT</option>
-                      <option value="check">📝 Çek</option>
-                    </select>
+                    <label className="form-label text-sm">
+                      {paymentInfo.is_credit_sale ? 'Veresiye Satış Bilgileri' : 'Ödeme Yöntemi'}
+                    </label>
+                    
+                    {paymentInfo.is_credit_sale ? (
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                        <div className="flex items-center text-orange-800">
+                          <span className="text-lg mr-2">🏦</span>
+                          <span className="font-medium">Veresiye Satış</span>
+                        </div>
+                        <div className="text-sm text-orange-700 mt-1">
+                          Bu satış müşterinin cari hesabına borç olarak kaydedilecek
+                        </div>
+                      </div>
+                    ) : (
+                      <select
+                        className="form-select"
+                        value={paymentInfo.method}
+                        onChange={(e) => setPaymentInfo({ ...paymentInfo, method: e.target.value })}
+                        data-testid="payment-method-select"
+                      >
+                        <option value="cash">💵 Nakit</option>
+                        <option value="card">💳 Kredi Kartı</option>
+                        <option value="transfer">🏦 Havale/EFT</option>
+                        <option value="check">📝 Çek</option>
+                      </select>
+                    )}
                   </div>
 
                   {paymentInfo.method === 'cash' && (
