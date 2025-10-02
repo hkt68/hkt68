@@ -868,27 +868,121 @@ const Sales = () => {
                 {/* Customer Info */}
                 <div className="space-y-3 mb-4">
                   <div>
-                    <label className="form-label text-sm">Müşteri Adı</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={customerInfo.name}
-                      onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
-                      placeholder="Müşteri adı (opsiyonel)"
-                      data-testid="customer-name-input"
-                    />
+                    <label className="form-label text-sm">Müşteri Seç</label>
+                    <select
+                      className="form-select"
+                      value={customerInfo.customer_id}
+                      onChange={(e) => {
+                        const selectedCustomerId = e.target.value;
+                        const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
+                        if (selectedCustomer) {
+                          setCustomerInfo({
+                            customer_id: selectedCustomerId,
+                            name: selectedCustomer.name,
+                            phone: selectedCustomer.phone || ''
+                          });
+                        } else {
+                          setCustomerInfo({
+                            customer_id: '',
+                            name: '',
+                            phone: ''
+                          });
+                        }
+                      }}
+                      data-testid="customer-select"
+                    >
+                      <option value="">💰 Nakit Müşteri (Cari hesap yok)</option>
+                      {customers.map(customer => (
+                        <option key={customer.id} value={customer.id}>
+                          👤 {customer.name} {customer.phone ? `(${customer.phone})` : ''}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                  <div>
-                    <label className="form-label text-sm">Telefon</label>
-                    <input
-                      type="tel"
-                      className="form-input"
-                      value={customerInfo.phone}
-                      onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
-                      placeholder="Telefon (opsiyonel)"
-                      data-testid="customer-phone-input"
-                    />
-                  </div>
+                  
+                  {/* Manual customer info if no customer selected */}
+                  {!customerInfo.customer_id && (
+                    <>
+                      <div>
+                        <label className="form-label text-sm">Müşteri Adı</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          value={customerInfo.name}
+                          onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
+                          placeholder="Müşteri adı (opsiyonel)"
+                          data-testid="customer-name-input"
+                        />
+                      </div>
+                      <div>
+                        <label className="form-label text-sm">Telefon</label>
+                        <input
+                          type="tel"
+                          className="form-input"
+                          value={customerInfo.phone}
+                          onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
+                          placeholder="Telefon (opsiyonel)"
+                          data-testid="customer-phone-input"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Veresiye Satış Checkbox */}
+                  {customerInfo.customer_id && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          className="mr-2"
+                          checked={paymentInfo.is_credit_sale}
+                          onChange={(e) => {
+                            setPaymentInfo({ 
+                              ...paymentInfo, 
+                              is_credit_sale: e.target.checked,
+                              method: e.target.checked ? 'credit' : 'cash'
+                            });
+                          }}
+                          data-testid="credit-sale-checkbox"
+                        />
+                        <span className="text-sm font-medium text-blue-800">
+                          🏦 Veresiye Satış Yap
+                        </span>
+                      </label>
+                      
+                      {paymentInfo.is_credit_sale && (
+                        <div className="mt-3">
+                          <label className="form-label text-sm">Vade Tarihi</label>
+                          <input
+                            type="date"
+                            className="form-input"
+                            value={paymentInfo.due_date}
+                            onChange={(e) => setPaymentInfo({ ...paymentInfo, due_date: e.target.value })}
+                            min={new Date().toISOString().split('T')[0]}
+                            data-testid="credit-due-date"
+                          />
+                          <div className="text-xs text-blue-600 mt-1">
+                            💡 Vade tarihi boş bırakılırsa sınırsız veresiye olur
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Customer Credit Info */}
+                  {customerInfo.customer_id && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm">
+                      <div className="font-medium text-green-800 mb-1">
+                        👤 {customerInfo.name}
+                      </div>
+                      <div className="text-green-700">
+                        💳 Kredi Durumu: <span className="font-medium">Güvenilir Müşteri</span>
+                      </div>
+                      <div className="text-xs text-green-600 mt-1">
+                        ℹ️ Bu müşteriye veresiye satış yapabilirsiniz
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Payment Method */}
