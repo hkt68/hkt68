@@ -89,12 +89,94 @@ const Sales = () => {
     if (product) {
       addToCart(product);
       setBarcodeInput('');
+      setShowSuggestions(false);
+      setSearchSuggestions([]);
       barcodeInputRef.current?.focus();
     } else {
       setError('Barkod/SKU bulunamadı: ' + barcodeInput);
       setBarcodeInput('');
+      setShowSuggestions(false);
     }
   };
+
+  // Autocomplete Functions
+  const handleSearchInputChange = (e) => {
+    const value = e.target.value;
+    setBarcodeInput(value);
+    
+    if (value.length >= 2) {
+      const filtered = products.filter(p => 
+        p.name.toLowerCase().includes(value.toLowerCase()) ||
+        p.sku?.toLowerCase().includes(value.toLowerCase()) ||
+        p.barcode?.includes(value) ||
+        p.description?.toLowerCase().includes(value.toLowerCase())
+      ).slice(0, 8); // Maksimum 8 öneri göster
+      
+      setSearchSuggestions(filtered);
+      setShowSuggestions(filtered.length > 0);
+      setSelectedSuggestionIndex(-1);
+    } else {
+      setSearchSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (!showSuggestions || searchSuggestions.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedSuggestionIndex(prev => 
+          prev < searchSuggestions.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedSuggestionIndex(prev => 
+          prev > 0 ? prev - 1 : searchSuggestions.length - 1
+        );
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedSuggestionIndex >= 0) {
+          selectSuggestion(searchSuggestions[selectedSuggestionIndex]);
+        } else {
+          handleBarcodeSubmit(e);
+        }
+        break;
+      case 'Escape':
+        setShowSuggestions(false);
+        setSelectedSuggestionIndex(-1);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const selectSuggestion = (product) => {
+    addToCart(product);
+    setBarcodeInput('');
+    setShowSuggestions(false);
+    setSearchSuggestions([]);
+    setSelectedSuggestionIndex(-1);
+    barcodeInputRef.current?.focus();
+  };
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+        setSelectedSuggestionIndex(-1);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const addToCart = (product, quantity = 1) => {
     if (product.current_stock < quantity) {
