@@ -367,23 +367,76 @@ const Sales = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* LEFT PANEL - Product Selection & Barcode */}
           <div className="lg:col-span-2 space-y-4">
-            {/* Barcode Scanner */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border-2 border-blue-100">
+            {/* Barcode Scanner with Autocomplete */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border-2 border-blue-100 relative">
               <h3 className="text-lg font-semibold mb-4 flex items-center">
                 <span className="mr-2">📷</span>
-                Barkod/SKU Okuyucu
+                Barkod/SKU Okuyucu & Ürün Arama
               </h3>
               <form onSubmit={handleBarcodeSubmit} className="flex gap-2">
-                <input
-                  ref={barcodeInputRef}
-                  type="text"
-                  className="form-input flex-1 text-lg py-3 px-4"
-                  value={barcodeInput}
-                  onChange={(e) => setBarcodeInput(e.target.value)}
-                  placeholder="Barkod, SKU veya ürün adı girin..."
-                  data-testid="barcode-input"
-                  autoFocus
-                />
+                <div className="relative flex-1">
+                  <input
+                    ref={barcodeInputRef}
+                    type="text"
+                    className="form-input w-full text-lg py-3 px-4"
+                    value={barcodeInput}
+                    onChange={handleSearchInputChange}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Barkod, SKU veya ürün adı girin..."
+                    data-testid="barcode-input"
+                    autoFocus
+                    autoComplete="off"
+                  />
+                  
+                  {/* Autocomplete Suggestions */}
+                  {showSuggestions && searchSuggestions.length > 0 && (
+                    <div 
+                      ref={suggestionsRef}
+                      className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto"
+                      data-testid="search-suggestions"
+                    >
+                      {searchSuggestions.map((product, index) => (
+                        <div
+                          key={product.id}
+                          className={`p-3 cursor-pointer border-b border-gray-100 hover:bg-blue-50 transition-colors ${
+                            selectedSuggestionIndex === index ? 'bg-blue-100' : ''
+                          }`}
+                          onClick={() => selectSuggestion(product)}
+                          data-testid={`suggestion-${index}`}
+                        >
+                          <div className="flex justify-between items-center">
+                            <div className="flex-1">
+                              <div className="font-medium text-gray-800">{product.name}</div>
+                              <div className="text-sm text-gray-500 flex gap-4">
+                                {product.sku && <span>SKU: {product.sku}</span>}
+                                {product.barcode && <span>Barkod: {product.barcode}</span>}
+                                <span className={`font-medium ${
+                                  product.current_stock > 0 ? 'text-green-600' : 'text-red-600'
+                                }`}>
+                                  Stok: {product.current_stock}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-bold text-green-600">
+                                ₺{product.selling_price.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {product.current_stock > 0 ? '✅ Mevcut' : '❌ Stokta Yok'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {/* Keyboard navigation hint */}
+                      <div className="p-2 bg-gray-50 text-xs text-gray-600 text-center">
+                        ⬆️⬇️ Gezinmek | Enter: Seç | Esc: Kapat
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
                 <button 
                   type="submit" 
                   className="btn btn-primary text-lg px-6"
@@ -392,6 +445,11 @@ const Sales = () => {
                   ➕ Ekle
                 </button>
               </form>
+              
+              {/* Search Tips */}
+              <div className="mt-2 text-xs text-gray-500">
+                💡 İpucu: Ürün adı, barkod veya SKU yazarak arayabilirsiniz. En az 2 karakter yazın.
+              </div>
             </div>
 
             {/* Quick Product Selection */}
