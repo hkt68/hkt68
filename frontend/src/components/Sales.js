@@ -326,6 +326,92 @@ const Sales = () => {
     }
   };
 
+  // Quick Add Product Functions
+  const handleQuickAddProduct = async () => {
+    if (!quickAddData.name || !quickAddData.selling_price) {
+      setError('Ürün adı ve satış fiyatı zorunludur');
+      return;
+    }
+
+    try {
+      setAddingProduct(true);
+      
+      // Kategori seç (eğer yoksa kırtasiye kategorisini kullan)
+      let categoryId = quickAddData.category_id;
+      if (!categoryId) {
+        const categories = await axios.get('/categories');
+        const kirtasiyeCategory = categories.data.find(c => c.name.includes('Kırtasiye') || c.name.includes('Ofis'));
+        categoryId = kirtasiyeCategory ? kirtasiyeCategory.id : categories.data[0]?.id;
+      }
+
+      // Ürün ekle
+      const productData = {
+        name: quickAddData.name,
+        category_id: categoryId,
+        sku: quickAddData.sku || quickAddData.barcode,
+        barcode: quickAddData.barcode,
+        selling_price: parseFloat(quickAddData.selling_price),
+        cost_price: parseFloat(quickAddData.cost_price) || parseFloat(quickAddData.selling_price) * 0.7,
+        min_stock_level: parseInt(quickAddData.min_stock_level) || 5
+      };
+      
+      const productResponse = await axios.post('/products', productData);
+      const newProduct = productResponse.data;
+      
+      // Başlangıç stoğu ekle
+      const initialStock = parseInt(quickAddData.initial_stock) || 1;
+      await axios.post('/stock/transactions', {
+        product_id: newProduct.id,
+        transaction_type: 'stock_in',
+        quantity: initialStock,
+        unit_price: productData.cost_price,
+        reference_no: 'HIZLI-EKLEME',
+        notes: 'POS sisteminden hızlı ekleme',
+        created_by: 'POS Kullanıcısı'
+      });
+      
+      // Ürünü sepete ekle
+      const updatedProduct = { ...newProduct, current_stock: initialStock };
+      addToCart(updatedProduct);
+      
+      // Ürün listesini güncelle
+      await fetchData();
+      
+      // Modal'ı kapat ve formu temizle
+      setShowQuickAdd(false);
+      resetQuickAddForm();
+      setBarcodeInput('');
+      barcodeInputRef.current?.focus();
+      
+      setError(null);
+      
+    } catch (err) {
+      setError('Ürün eklenirken hata oluştu: ' + (err.response?.data?.detail || err.message));
+    } finally {
+      setAddingProduct(false);
+    }
+  };
+
+  const resetQuickAddForm = () => {
+    setQuickAddData({
+      name: '',
+      barcode: '',
+      sku: '',
+      category_id: '',
+      selling_price: '',
+      cost_price: '',
+      min_stock_level: '5',
+      initial_stock: '1'
+    });
+  };
+
+  const closeQuickAddModal = () => {
+    setShowQuickAdd(false);
+    resetQuickAddForm();
+    setBarcodeInput('');
+    barcodeInputRef.current?.focus();
+  };
+
   // Focus barcode input on component mount
   useEffect(() => {
     if (barcodeInputRef.current) {
