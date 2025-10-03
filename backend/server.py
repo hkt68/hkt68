@@ -658,6 +658,51 @@ async def get_credit_sales(
     return [CreditSale(**sale) for sale in credit_sales]
 
 # Payments (Ödemeler)
+@api_router.post("/payments/customer", response_model=dict)
+async def create_customer_payment(payment_data: dict):
+    """Create a payment for a customer - can exceed debt (creates credit balance)"""
+    customer_id = payment_data["customer_id"]
+    amount = payment_data["amount"]
+    
+    # Verify customer exists
+    customer = await db.customers.find_one({"id": customer_id})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    if amount <= 0:
+        raise HTTPException(status_code=400, detail="Payment amount must be positive")
+    
+    # Create payment record
+    payment_record = {
+        "id": str(uuid.uuid4()),
+        "customer_id": customer_id,
+        "amount": amount,
+        "payment_method": payment_data.get("payment_method", "cash"),
+        "reference_no": payment_data.get("reference_no", ""),
+        "notes": payment_data.get("notes", ""),
+        "created_at": datetime.now(timezone.utc),
+        "payment_type": "customer_payment"  # Distinguish from credit sale payments
+    }
+    
+    await db.payments.insert_one(payment_record)
+    
+    # Calculate current debt and new balance after payment
+    current_debt = await get_customer_total_debt(customer_id)
+    remaining_debt = current_debt - amount
+    
+    # If payment exceeds debt, customer has credit balance
+    credit_balance = abs(remaining_debt) if remaining_debt < 0 else 0
+    
+    return {
+        "success": True,
+        "payment_id": payment_record["id"],
+        "amount": amount,
+        "previous_debt": current_debt,
+        "remaining_debt": max(0, remaining_debt),
+        "credit_balance": credit_balance,
+        "message": f"Payment of ₺{amount:.2f} recorded successfully"
+    }
+
 @api_router.post("/payments", response_model=Payment)
 async def create_payment(payment: PaymentCreate):
     # Verify credit sale exists
