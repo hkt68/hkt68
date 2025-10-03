@@ -1,0 +1,61 @@
+{
+  "name": "elite-medya-pos",
+  "version": "1.0.0",
+  "description": "Elite Medya Bilişim POS - Windows Desktop Uygulaması",
+  "main": "main.js",
+  "author": "Elite Medya Bilişim",
+  "license": "MIT",
+  "homepage": "./",
+  "scripts": {
+    "start": "electron .",
+    "dev": "concurrently \"npm run start-react\" \"wait-on http://localhost:3000 && electron .\"",
+    "start-react": "cd renderer && npm start",
+    "build": "cd renderer && npm run build",
+    "dist": "npm run build && electron-builder",
+    "dist-win": "npm run build && electron-builder --win",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "build": {
+    "appId": "com.elitemedya.pos",
+    "productName": "Elite Medya POS",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "database/**/*",
+      "renderer/build/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "installerHeaderIcon": "assets/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "directories": {
+      "output": "dist"
+    }
+  },
+  "devDependencies": {
+    "concurrently": "^7.6.0",
+    "electron": "^22.0.0",
+    "electron-builder": "^24.0.0",
+    "wait-on": "^7.0.1"
+  },
+  "dependencies": {
+    "sqlite3": "^5.1.6",
+    "electron-updater": "^5.3.0",
+    "electron-store": "^8.1.0"
+  }
+}
