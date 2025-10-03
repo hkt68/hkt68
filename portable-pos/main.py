@@ -302,48 +302,144 @@ class ElitePOS:
         self.refresh_customers()
         
     def create_sales_tab(self):
-        """Satış sekmesi (basit)"""
-        sales_frame = ttk.Frame(self.notebook)
-        self.notebook.add(sales_frame, text="🛒 Satış")
+        """Modern satış sekmesi"""
+        self.tabview.add("🛒 Satış")
+        sales_frame = self.tabview.tab("🛒 Satış")
         
-        # Basit satış formu
-        form_frame = ttk.LabelFrame(sales_frame, text="Hızlı Satış", padding=10)
-        form_frame.pack(fill=tk.X, padx=10, pady=10)
+        # Ana satış formu
+        form_frame = ctk.CTkFrame(sales_frame)
+        form_frame.pack(fill="x", padx=20, pady=20)
+        
+        # Başlık
+        title = ctk.CTkLabel(form_frame, text="🛒 Hızlı Satış İşlemi", font=ctk.CTkFont(size=20, weight="bold"))
+        title.pack(pady=15)
+        
+        # Form içeriği
+        content_frame = ctk.CTkFrame(form_frame)
+        content_frame.pack(fill="x", padx=20, pady=(0, 20))
+        
+        # Sol taraf - Müşteri ve Ürün
+        left_frame = ctk.CTkFrame(content_frame)
+        left_frame.pack(side="left", fill="both", expand=True, padx=(10, 5), pady=10)
         
         # Müşteri seçimi
-        ttk.Label(form_frame, text="Müşteri:").grid(row=0, column=0, sticky=tk.W, pady=2)
-        self.sale_customer = ttk.Combobox(form_frame, width=30)
-        self.sale_customer.grid(row=0, column=1, sticky=tk.EW, pady=2)
+        ctk.CTkLabel(left_frame, text="👤 Müşteri Seçin:", font=ctk.CTkFont(size=14, weight="bold")).pack(anchor="w", padx=15, pady=(15, 5))
+        self.sale_customer = ctk.CTkComboBox(left_frame, width=350, height=35, font=ctk.CTkFont(size=12))
+        self.sale_customer.pack(padx=15, pady=(0, 15))
         
-        # Ürün seçimi
-        ttk.Label(form_frame, text="Ürün:").grid(row=1, column=0, sticky=tk.W, pady=2)
-        self.sale_product = ttk.Combobox(form_frame, width=30)
-        self.sale_product.grid(row=1, column=1, sticky=tk.EW, pady=2)
+        # Barkod/Ürün seçimi
+        ctk.CTkLabel(left_frame, text="📦 Ürün/Barkod:", font=ctk.CTkFont(size=14, weight="bold")).pack(anchor="w", padx=15, pady=(0, 5))
+        
+        # Barkod entry
+        barcode_frame = ctk.CTkFrame(left_frame, fg_color="transparent")
+        barcode_frame.pack(fill="x", padx=15, pady=(0, 10))
+        
+        self.barcode_entry = ctk.CTkEntry(barcode_frame, placeholder_text="Barkod numarasını girin...", width=250, height=35, font=ctk.CTkFont(size=12))
+        self.barcode_entry.pack(side="left", padx=(0, 10))
+        self.barcode_entry.bind('<Return>', self.search_product_by_barcode)
+        
+        ctk.CTkButton(barcode_frame, text="🔍", command=self.search_product_by_barcode, width=40, height=35).pack(side="left")
+        
+        # VEYA
+        ctk.CTkLabel(left_frame, text="veya", font=ctk.CTkFont(size=10)).pack(pady=5)
+        
+        # Ürün dropdown
+        self.sale_product = ctk.CTkComboBox(left_frame, width=350, height=35, font=ctk.CTkFont(size=12))
+        self.sale_product.pack(padx=15, pady=(0, 15))
+        
+        # Sağ taraf - Miktar ve Ödeme
+        right_frame = ctk.CTkFrame(content_frame)
+        right_frame.pack(side="right", fill="both", expand=True, padx=(5, 10), pady=10)
         
         # Miktar
-        ttk.Label(form_frame, text="Adet:").grid(row=2, column=0, sticky=tk.W, pady=2)
-        self.sale_quantity = ttk.Spinbox(form_frame, from_=1, to=100, width=10)
-        self.sale_quantity.grid(row=2, column=1, sticky=tk.W, pady=2)
-        self.sale_quantity.set(1)
+        ctk.CTkLabel(right_frame, text="📊 Adet:", font=ctk.CTkFont(size=14, weight="bold")).pack(anchor="w", padx=15, pady=(15, 5))
+        quantity_frame = ctk.CTkFrame(right_frame, fg_color="transparent")
+        quantity_frame.pack(fill="x", padx=15, pady=(0, 15))
+        
+        self.quantity_var = tk.StringVar(value="1")
+        self.sale_quantity = ctk.CTkEntry(quantity_frame, textvariable=self.quantity_var, width=100, height=35, font=ctk.CTkFont(size=14))
+        self.sale_quantity.pack(side="left", padx=(0, 10))
+        
+        # Miktar butonları
+        for i, qty in enumerate([1, 5, 10]):
+            ctk.CTkButton(quantity_frame, text=str(qty), command=lambda q=qty: self.quantity_var.set(str(q)), width=40, height=35).pack(side="left", padx=2)
         
         # Ödeme türü
-        ttk.Label(form_frame, text="Ödeme:").grid(row=3, column=0, sticky=tk.W, pady=2)
-        self.payment_type = ttk.Combobox(form_frame, values=["Nakit", "Kart", "Veresiye"], width=15)
-        self.payment_type.grid(row=3, column=1, sticky=tk.W, pady=2)
+        ctk.CTkLabel(right_frame, text="💳 Ödeme Türü:", font=ctk.CTkFont(size=14, weight="bold")).pack(anchor="w", padx=15, pady=(0, 5))
+        self.payment_type = ctk.CTkComboBox(right_frame, values=["Nakit", "Kart", "Veresiye"], width=200, height=35, font=ctk.CTkFont(size=12))
+        self.payment_type.pack(padx=15, pady=(0, 15))
         self.payment_type.set("Nakit")
         
-        # Satış butonu
-        ttk.Button(
-            form_frame,
-            text="💰 Satış Yap",
-            command=self.process_sale
-        ).grid(row=4, column=0, columnspan=2, pady=10)
+        # Tutar gösterimi
+        self.total_frame = ctk.CTkFrame(right_frame, fg_color=("gray80", "gray20"))
+        self.total_frame.pack(fill="x", padx=15, pady=(0, 15))
         
-        # Grid ayarları
-        form_frame.columnconfigure(1, weight=1)
+        self.total_label = ctk.CTkLabel(self.total_frame, text="Toplam: ₺0.00", font=ctk.CTkFont(size=16, weight="bold"))
+        self.total_label.pack(pady=10)
+        
+        # Satış butonu
+        sale_button = ctk.CTkButton(
+            sales_frame,
+            text="💰 SATIŞ YAP",
+            command=self.process_sale,
+            width=300,
+            height=50,
+            font=ctk.CTkFont(size=18, weight="bold"),
+            fg_color=("green", "darkgreen"),
+            hover_color=("lightgreen", "green")
+        )
+        sale_button.pack(pady=20)
+        
+        # Event bindings
+        self.sale_product.bind('<<ComboboxSelected>>', self.update_total)
+        self.sale_quantity.bind('<KeyRelease>', self.update_total)
         
         # Combobox verilerini yükle
         self.refresh_sale_combos()
+    
+    def search_product_by_barcode(self, event=None):
+        """Barkod ile ürün ara"""
+        barcode = self.barcode_entry.get().strip()
+        if not barcode:
+            return
+            
+        products = self.load_data('products')
+        found_product = None
+        
+        for product in products:
+            if product.get('barcode', '') == barcode:
+                found_product = product
+                break
+        
+        if found_product:
+            # Ürünü dropdown'da seç
+            product_text = f"{found_product['name']} - ₺{found_product['price']:.2f}"
+            self.sale_product.set(product_text)
+            self.update_total()
+            messagebox.showinfo("Ürün Bulundu", f"✅ {found_product['name']}")
+        else:
+            messagebox.showwarning("Ürün Bulunamadı", f"❌ Barkod '{barcode}' ile eşleşen ürün yok")
+            
+    def update_total(self, event=None):
+        """Toplam tutarı güncelle"""
+        try:
+            product_text = self.sale_product.get()
+            if not product_text or '₺' not in product_text:
+                self.total_label.configure(text="Toplam: ₺0.00")
+                return
+                
+            # Fiyatı çıkar
+            price_text = product_text.split('₺')[-1]
+            unit_price = float(price_text)
+            
+            # Miktar
+            quantity = int(self.quantity_var.get() or 1)
+            
+            total = unit_price * quantity
+            self.total_label.configure(text=f"Toplam: ₺{total:.2f}")
+            
+        except (ValueError, IndexError):
+            self.total_label.configure(text="Toplam: ₺0.00")
         
     def create_reports_tab(self):
         """Raporlar sekmesi"""
