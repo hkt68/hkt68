@@ -1143,29 +1143,6 @@ class ElitePOS:
     def edit_product_dialog(self, event=None):
         """Ürün düzenleme (gelecek sürümde)"""
         messagebox.showinfo("Bilgi", "Ürün düzenleme özelliği gelecek versiyonda eklenecek.")
-        name_entry.grid(row=0, column=1, padx=10, pady=5)
-        name_entry.focus()
-        
-        ttk.Label(dialog, text="Telefon").grid(row=1, column=0, sticky=tk.W, padx=10, pady=5)
-        phone_entry = ttk.Entry(dialog, width=30)
-        phone_entry.grid(row=1, column=1, padx=10, pady=5)
-        
-        ttk.Label(dialog, text="E-posta").grid(row=2, column=0, sticky=tk.W, padx=10, pady=5)
-        email_entry = ttk.Entry(dialog, width=30)
-        email_entry.grid(row=2, column=1, padx=10, pady=5)
-        
-        ttk.Label(dialog, text="Adres").grid(row=3, column=0, sticky=tk.W, padx=10, pady=5)
-        address_text = tk.Text(dialog, width=25, height=3)
-        address_text.grid(row=3, column=1, padx=10, pady=5)
-        
-        ttk.Label(dialog, text="Kredi Limiti").grid(row=4, column=0, sticky=tk.W, padx=10, pady=5)
-        credit_entry = ttk.Entry(dialog, width=30)
-        credit_entry.grid(row=4, column=1, padx=10, pady=5)
-        credit_entry.insert(0, "5000.00")
-        
-        ttk.Label(dialog, text="Notlar").grid(row=5, column=0, sticky=tk.W, padx=10, pady=5)
-        notes_text = tk.Text(dialog, width=25, height=2)
-        notes_text.grid(row=5, column=1, padx=10, pady=5)
         
         def save_customer():
             name = name_entry.get().strip()
