@@ -103,18 +103,18 @@ class CustomerCRMTester:
             return False
     
     def test_manual_credit_addition(self) -> bool:
-        """Test adding manual credit to customer account"""
+        """Test adding manual credit to customer account with detailed notes"""
         if not self.test_customer_id:
             self.log("❌ No test customer available for credit addition", "ERROR")
             return False
             
-        self.log("Testing manual credit addition...")
+        self.log("Testing manual credit addition with detailed notes...")
         
-        # Test data as specified in the requirements
+        # Test data as specified in the review request
         credit_data = {
-            "amount": 100.50,
+            "amount": 75.50,
             "due_date": "2025-01-15",
-            "notes": "Stoktan alınan ürün"
+            "notes": "Stoktan alınan ofis malzemeleri - 3 adet kalem, 2 adet defter"
         }
         
         result = self.make_request("POST", f"/customers/{self.test_customer_id}/manual-credit", credit_data)
@@ -122,6 +122,7 @@ class CustomerCRMTester:
         if result["success"]:
             self.test_credit_sale_id = result["data"]["id"]
             self.log(f"✅ Manual credit added successfully: ₺{credit_data['amount']}")
+            self.log(f"   - Notes: {credit_data['notes']}")
             return True
         else:
             self.log(f"❌ Failed to add manual credit: {result.get('error', 'Unknown error')}", "ERROR")
