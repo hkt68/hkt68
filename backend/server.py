@@ -1167,6 +1167,100 @@ async def import_system_data(backup_data: dict):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Import failed: {str(e)}")
 
+# Delete Operations for Credit Sales and Sales
+@api_router.delete("/credit-sales/{credit_sale_id}")
+async def delete_credit_sale(credit_sale_id: str):
+    """Delete a manual credit entry"""
+    # Check if this is a manual credit (no associated sales)
+    credit_sale = await db.credit_sales.find_one({"id": credit_sale_id})
+    if not credit_sale:
+        raise HTTPException(status_code=404, detail="Credit sale not found")
+    
+    # Don't allow deletion if there are payments made
+    payments_count = await db.payments.count_documents({"credit_sale_id": credit_sale_id})
+    if payments_count > 0:
+        raise HTTPException(status_code=400, detail="Cannot delete credit sale with existing payments")
+    
+    # Delete the credit sale
+    result = await db.credit_sales.delete_one({"id": credit_sale_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Credit sale not found")
+    
+    return {"success": True, "message": "Credit sale deleted successfully"}
+
+@api_router.delete("/sales/{sale_id}")
+async def delete_sale(sale_id: str):
+    """Delete a sale transaction"""
+    sale = await db.sales.find_one({"id": sale_id})
+    if not sale:
+        raise HTTPException(status_code=404, detail="Sale not found")
+    
+    # Check if this sale has associated credit sales
+    credit_sales = await db.credit_sales.find({"sale_ids": sale_id}).to_list(None)
+    if credit_sales:
+        # Don't allow deletion if there are payments made for this sale
+        for credit_sale in credit_sales:
+            payments_count = await db.payments.count_documents({"credit_sale_id": credit_sale["id"]})
+            if payments_count > 0:
+                raise HTTPException(status_code=400, detail="Cannot delete sale with existing payments")
+    
+    # If it's a credit sale, also delete the credit sale record
+    for credit_sale in credit_sales:
+        await db.credit_sales.delete_one({"id": credit_sale["id"]})
+    
+    # Restore stock if it's a stock-affecting sale
+    if sale.get("product_id"):
+        await update_product_stock(sale["product_id"], sale["quantity"])  # Add back to stock
+    
+    # Delete the sale
+    result = await db.sales.delete_one({"id": sale_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Sale not found")
+    
+    return {"success": True, "message": "Sale deleted successfully"}
+
+@api_router.delete("/payments/{payment_id}")
+async def delete_payment(payment_id: str):
+    """Delete a payment record"""
+    payment = await db.payments.find_one({"id": payment_id})
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    
+    # If this was a credit sale payment, update the credit sale
+    if payment.get("credit_sale_id"):
+        credit_sale = await db.credit_sales.find_one({"id": payment["credit_sale_id"]})
+        if credit_sale:
+            # Recalculate remaining amount after removing this payment
+            new_paid_amount = credit_sale["paid_amount"] - payment["amount"]
+            new_remaining_amount = credit_sale["total_amount"] - new_paid_amount
+            
+            # Update payment status
+            if new_remaining_amount <= 0:
+                new_status = PaymentStatus.PAID
+            elif new_paid_amount > 0:
+                new_status = PaymentStatus.PARTIAL
+            else:
+                new_status = PaymentStatus.UNPAID
+            
+            await db.credit_sales.update_one(
+                {"id": payment["credit_sale_id"]},
+                {
+                    "$set": {
+                        "paid_amount": max(0, new_paid_amount),
+                        "remaining_amount": new_remaining_amount,
+                        "payment_status": new_status,
+                        "updated_at": datetime.now(timezone.utc)
+                    }
+                }
+            )
+    
+    # Delete the payment
+    result = await db.payments.delete_one({"id": payment_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    
+    return {"success": True, "message": "Payment deleted successfully"}
+
 # Include the router in the main app
 app.include_router(api_router)
 
