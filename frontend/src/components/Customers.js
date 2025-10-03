@@ -746,6 +746,7 @@ const Customers = () => {
                           <th className="text-right p-3 font-medium">Birim Fiyat</th>
                           <th className="text-right p-3 font-medium">Toplam</th>
                           <th className="text-center p-3 font-medium">Durum</th>
+                          <th className="text-center p-3 font-medium">İşlemler</th>
                         </tr>
                       </thead>
                       <tbody>
