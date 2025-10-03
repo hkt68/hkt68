@@ -224,60 +224,76 @@ class ElitePOS:
         
     def create_customers_tab(self):
         """Müşteriler sekmesi"""
-        customers_frame = ttk.Frame(self.notebook)
-        self.notebook.add(customers_frame, text="👥 Müşteriler")
+        self.tabview.add("👥 Müşteriler")
+        customers_frame = self.tabview.tab("👥 Müşteriler")
         
-        # Üst butonlar
-        buttons_frame = ttk.Frame(customers_frame)
-        buttons_frame.pack(fill=tk.X, padx=5, pady=5)
+        # Üst kontrol paneli
+        control_frame = ctk.CTkFrame(customers_frame)
+        control_frame.pack(fill="x", padx=10, pady=(10, 5))
         
-        ttk.Button(
-            buttons_frame,
+        # Sol butonlar
+        left_buttons = ctk.CTkFrame(control_frame, fg_color="transparent")
+        left_buttons.pack(side="left", padx=10, pady=10)
+        
+        ctk.CTkButton(
+            left_buttons,
             text="➕ Yeni Müşteri",
-            command=self.new_customer_dialog
-        ).pack(side=tk.LEFT, padx=(0, 5))
+            command=self.new_customer_dialog,
+            width=120,
+            height=32
+        ).pack(side="left", padx=(0, 10))
         
-        ttk.Button(
-            buttons_frame,
+        ctk.CTkButton(
+            left_buttons,
             text="🔄 Yenile",
-            command=self.refresh_customers
-        ).pack(side=tk.LEFT)
+            command=self.refresh_customers,
+            width=80,
+            height=32
+        ).pack(side="left")
         
-        # Arama
-        search_frame = ttk.Frame(buttons_frame)
-        search_frame.pack(side=tk.RIGHT)
+        # Sağ arama
+        search_frame = ctk.CTkFrame(control_frame, fg_color="transparent")
+        search_frame.pack(side="right", padx=10, pady=10)
         
-        ttk.Label(search_frame, text="🔍 Ara:").pack(side=tk.LEFT)
-        self.customer_search = ttk.Entry(search_frame, width=20)
-        self.customer_search.pack(side=tk.LEFT, padx=(5, 0))
+        ctk.CTkLabel(search_frame, text="🔍 Müşteri Ara:", font=ctk.CTkFont(size=12)).pack(side="left", padx=(0, 5))
+        self.customer_search = ctk.CTkEntry(search_frame, placeholder_text="İsim veya telefon...", width=200)
+        self.customer_search.pack(side="left")
         self.customer_search.bind('<KeyRelease>', self.filter_customers)
         
+        # Müşteri listesi frame
+        list_frame = ctk.CTkFrame(customers_frame)
+        list_frame.pack(fill="both", expand=True, padx=10, pady=5)
+        
+        # Treeview için frame (modern görünüm için)
+        tree_frame = tk.Frame(list_frame, bg='#212121' if ctk.get_appearance_mode() == "Dark" else '#f0f0f0')
+        tree_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        
         # Müşteri listesi
-        columns = ("ID", "İsim", "Telefon", "Borç", "Durum")
-        self.customers_tree = ttk.Treeview(customers_frame, columns=columns, show="headings", height=15)
+        columns = ("ID", "İsim", "Telefon", "Email", "Borç", "Durum")
+        self.customers_tree = tk.ttk.Treeview(tree_frame, columns=columns, show="headings", height=20)
         
-        # Kolon başlıkları
-        self.customers_tree.heading("ID", text="ID")
-        self.customers_tree.heading("İsim", text="Müşteri Adı")
-        self.customers_tree.heading("Telefon", text="Telefon")
-        self.customers_tree.heading("Borç", text="Toplam Borç")
-        self.customers_tree.heading("Durum", text="Durum")
+        # Kolon başlıkları ve genişlikleri
+        headers = {
+            "ID": ("ID", 80),
+            "İsim": ("Müşteri Adı", 200), 
+            "Telefon": ("Telefon", 120),
+            "Email": ("E-posta", 180),
+            "Borç": ("Toplam Borç", 120),
+            "Durum": ("Durum", 150)
+        }
         
-        # Kolon genişlikleri
-        self.customers_tree.column("ID", width=80)
-        self.customers_tree.column("İsim", width=200)
-        self.customers_tree.column("Telefon", width=120)
-        self.customers_tree.column("Borç", width=100)
-        self.customers_tree.column("Durum", width=100)
-        
-        self.customers_tree.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        for col, (header, width) in headers.items():
+            self.customers_tree.heading(col, text=header)
+            self.customers_tree.column(col, width=width)
         
         # Scrollbar
-        scrollbar = ttk.Scrollbar(customers_frame, orient=tk.VERTICAL, command=self.customers_tree.yview)
+        scrollbar = tk.ttk.Scrollbar(tree_frame, orient="vertical", command=self.customers_tree.yview)
         self.customers_tree.configure(yscrollcommand=scrollbar.set)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
-        # Sağ tık menü
+        self.customers_tree.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+        
+        # Events
         self.customers_tree.bind("<Button-3>", self.customer_context_menu)
         self.customers_tree.bind("<Double-1>", self.customer_account_details)
         
