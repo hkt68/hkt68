@@ -195,6 +195,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "✅ PASSED - Account Details Modal working perfectly. Opens correctly with account summary stats (Total Debt: ₺254.15, Credit Limit: ₺5,000.00, Available Credit: ₺4,745.85). Displays recent payments and credit sales sections. Purchase history table shows 6 transaction rows with proper formatting. All data refreshes correctly after operations."
+      - working: true
+        agent: "testing"
+        comment: "✅ MANUAL CREDIT NOTES DISPLAY VERIFIED - Comprehensive testing confirmed that manual credit entries properly display their notes/descriptions in the purchase history table. Manual credits appear as 'Manuel Borç Girişi' with notes displayed underneath in the same cell. Tested with detailed notes like 'Stoktan alınan ofis malzemeleri - 3 adet kalem, 2 adet defter' and 'Temizlik malzemeleri - deterjan, kağıt havlu'. Multiple manual credits each show their unique notes correctly. The user-reported issue about manual credit notes not being visible has been RESOLVED."
 
   - task: "Payment Modal for recording payments"
     implemented: true
