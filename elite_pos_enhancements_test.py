@@ -241,31 +241,21 @@ class ElitePOSEnhancementsTester:
             self.log("❌ No backup data available for import test", "ERROR")
             return False
         
-        # Create a modified backup for testing import
-        test_backup = {
-            "export_date": datetime.now(timezone.utc).isoformat(),
-            "version": "1.0",
-            "data": {
-                "customers": [
-                    {
-                        "id": str(uuid.uuid4()),
-                        "name": "Import Test Customer",
-                        "phone": "+90 555 123 4567",
-                        "email": "import.test@example.com",
-                        "credit_limit": 1000.0,
-                        "is_active": True,
-                        "created_at": datetime.now(timezone.utc).isoformat(),
-                        "updated_at": datetime.now(timezone.utc).isoformat()
-                    }
-                ],
-                "products": [],
-                "categories": [],
-                "sales": [],
-                "credit_sales": [],
-                "stock_transactions": [],
-                "payments": []
-            }
-        }
+        # Store the original backup data to restore later
+        original_backup = self.backup_data.copy()
+        
+        # Create a modified backup for testing import (add our test customer to existing data)
+        test_backup = original_backup.copy()
+        test_backup["data"]["customers"].append({
+            "id": str(uuid.uuid4()),
+            "name": "Import Test Customer",
+            "phone": "+90 555 123 4567",
+            "email": "import.test@example.com",
+            "credit_limit": 1000.0,
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        })
         
         result = self.make_request("POST", "/backup/import", test_backup)
         
