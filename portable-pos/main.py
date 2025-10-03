@@ -2,18 +2,21 @@
 # -*- coding: utf-8 -*-
 """
 Elite Medya Bilişim POS - Portable Windows Application
-Tek .exe dosyası - Kurulum gerektirmez
+Modern arayüz, kurulum gerektirmez
 """
 
+import customtkinter as ctk
 import tkinter as tk
-from tkinter import ttk, messagebox, filedialog
+from tkinter import messagebox, filedialog
 import json
 import os
 import sys
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import uuid
 from decimal import Decimal
-import webbrowser
+import requests
+import threading
+from typing import Dict, List, Optional
 
 class ElitePOS:
     def __init__(self):
