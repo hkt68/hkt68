@@ -180,6 +180,66 @@ backend:
         agent: "testing"
         comment: "✅ PASSED - GET /api/customers/{customer_id}/detailed-report working correctly. Returns comprehensive report with customer info, summary (total purchases: ₺100.50, total payments: ₺50.25, current balance: ₺50.25), purchase history, payment history, and credit sales. All required fields present."
 
+  - task: "Overdue debt display in customer list API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ PASSED - GET /api/customers endpoint successfully returns overdue debt information. Includes has_overdue, overdue_debt, and current_debt fields for all customers. Tested with customer having ₺175.50 overdue debt (15 days past due). Overdue calculation working correctly based on due_date comparison."
+
+  - task: "System backup export API endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ PASSED - GET /api/backup/export successfully exports all system data. Returns backup with export_date, version, and data containing all 7 required collections: customers, products, categories, sales, credit_sales, stock_transactions, payments. All MongoDB ObjectIds properly converted to strings, datetime objects converted to ISO format."
+
+  - task: "System backup import API endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ PASSED - POST /api/backup/import successfully imports system data from backup. Clears existing collections and imports new data. Properly converts ISO datetime strings back to datetime objects. Returns success status and count of imported documents per collection. Full system restore functionality working correctly."
+
+  - task: "Overpayment support API endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ PASSED - POST /api/payments/customer endpoint handles overpayments correctly. Tested scenarios: exact payment (₺100 debt, ₺100 payment = ₺0 remaining debt, ₺0 credit balance), overpayment (₺80 debt, ₺120 payment = ₺0 remaining debt, ₺40 credit balance). Returns previous_debt, remaining_debt, and credit_balance fields. Payment exceeding debt creates proper credit balance."
+
+  - task: "Delete operations API endpoints"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ PASSED - DELETE /api/credit-sales/{id}, /api/sales/{id}, /api/payments/{id} endpoints working with proper validation. Cannot delete credit sales with existing payments (returns 400 error with message 'Cannot delete credit sale with existing payments'). After payment deletion, credit sale deletion succeeds. Payment deletion properly updates credit sale paid_amount and remaining_amount. All delete operations include proper error handling and validation."
+
 frontend:
   - task: "Account Details Modal with purchase history"
     implemented: true
