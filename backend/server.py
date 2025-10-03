@@ -705,11 +705,12 @@ async def get_customer_total_debt(customer_id: str) -> float:
 # Get Customer Purchase History with Product Details
 @api_router.get("/customers/{customer_id}/purchase-history")
 async def get_customer_purchase_history(customer_id: str):
+    purchase_history = []
+    
     # Get all sales for this customer
     sales = await db.sales.find({"customer_id": customer_id}).sort("created_at", -1).to_list(1000)
     
     # Get product details for each sale
-    purchase_history = []
     for sale in sales:
         product = await db.products.find_one({"id": sale["product_id"]})
         if product:
@@ -722,9 +723,34 @@ async def get_customer_purchase_history(customer_id: str):
                 "total_amount": sale["total_amount"],
                 "is_credit_sale": sale.get("is_credit_sale", False),
                 "payment_method": sale["payment_method"],
-                "purchase_date": sale["created_at"],
-                "notes": sale.get("notes")
+                "date": sale["created_at"],
+                "notes": sale.get("notes"),
+                "type": "sale"
             })
+    
+    # Get all manual credit entries for this customer
+    credit_sales = await db.credit_sales.find({"customer_id": customer_id}).sort("created_at", -1).to_list(1000)
+    
+    for credit in credit_sales:
+        # Only include manual credits (those without sale_ids)
+        if not credit.get("sale_ids") or len(credit.get("sale_ids", [])) == 0:
+            purchase_history.append({
+                "sale_id": credit["id"],
+                "product_name": "Manuel Borç Girişi",
+                "description": credit.get("notes", "Manuel borç girişi"),
+                "quantity": 1,
+                "unit_price": credit["total_amount"],
+                "total_amount": credit["total_amount"],
+                "is_credit_sale": True,
+                "payment_method": "credit",
+                "date": credit["created_at"],
+                "notes": credit.get("notes", "Manuel borç girişi"),
+                "type": "manual_credit",
+                "payment_status": credit.get("payment_status", "unpaid")
+            })
+    
+    # Sort all entries by date, newest first
+    purchase_history.sort(key=lambda x: x["date"], reverse=True)
     
     return purchase_history
 
