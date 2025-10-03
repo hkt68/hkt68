@@ -7,7 +7,7 @@ Modern arayüz, kurulum gerektirmez
 
 import customtkinter as ctk
 import tkinter as tk
-from tkinter import messagebox, filedialog
+from tkinter import messagebox, filedialog, ttk
 import json
 import os
 import sys
