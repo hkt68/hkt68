@@ -1026,7 +1026,9 @@ const Customers = () => {
                 {customers.map((customer) => {
                   const debtStatus = getDebtStatus(customer);
                   return (
-                    <tr key={customer.id} className="table-row">
+                    <tr key={customer.id} className={`table-row ${
+                      debtStatus.status === 'overdue' ? 'bg-red-50 border-l-4 border-l-red-500' : ''
+                    }`}>
                       <td className="p-3">
                         <div>
                           <div className="font-semibold text-gray-800">{customer.name}</div>
