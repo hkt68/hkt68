@@ -317,6 +317,40 @@ const Dashboard = () => {
           </button>
         </div>
       </div>
+
+      {/* Backup Section */}
+      <div className="bg-white rounded-lg p-6 shadow-sm">
+        <h3 className="text-lg font-semibold mb-4 flex items-center">
+          <span className="mr-2">💾</span>
+          Yedekleme İşlemleri
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <button 
+            onClick={() => window.location.href = '/backup'}
+            className="btn btn-info"
+            data-testid="create-backup-btn"
+          >
+            <span>💾</span>
+            Yedek Oluştur
+          </button>
+          <button 
+            onClick={() => window.location.href = '/backup/restore'}
+            className="btn btn-warning"
+            data-testid="restore-backup-btn"
+          >
+            <span>🔄</span>
+            Yedek Geri Yükle
+          </button>
+          <button 
+            onClick={() => window.location.href = '/backup/schedule'}
+            className="btn btn-secondary"
+            data-testid="schedule-backup-btn"
+          >
+            <span>⏰</span>
+            Otomatik Yedekleme
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
