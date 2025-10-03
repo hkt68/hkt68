@@ -717,7 +717,7 @@ const Customers = () => {
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="text-left p-3 font-medium">Tarih</th>
-                          <th className="text-left p-3 font-medium">Ürün</th>
+                          <th className="text-left p-3 font-medium">Ürün/Açıklama</th>
                           <th className="text-right p-3 font-medium">Adet</th>
                           <th className="text-right p-3 font-medium">Birim Fiyat</th>
                           <th className="text-right p-3 font-medium">Toplam</th>
