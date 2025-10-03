@@ -490,6 +490,15 @@ class ElitePOS:
             font=ctk.CTkFont(size=14)
         ).pack(side="left", padx=10)
         
+        ctk.CTkButton(
+            button_frame,
+            text="🖨️ Raporu Yazdır",
+            command=self.print_report,
+            width=200,
+            height=40,
+            font=ctk.CTkFont(size=14)
+        ).pack(side="left", padx=10)
+        
         # Rapor gösterim alanı
         report_section = ctk.CTkFrame(main_frame)
         report_section.pack(fill="both", expand=True, padx=20, pady=(10, 20))
