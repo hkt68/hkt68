@@ -735,9 +735,12 @@ const Customers = () => {
                               })}
                             </td>
                             <td className="p-3">
-                              <div className="font-medium">{item.product_name || item.name}</div>
+                              <div className="font-medium">{item.product_name || item.name || item.description || 'Manuel İşlem'}</div>
                               {item.barcode && (
                                 <div className="text-xs text-gray-500">Barkod: {item.barcode}</div>
+                              )}
+                              {(item.notes || item.description) && (
+                                <div className="text-xs text-gray-600 mt-1">{item.notes || item.description}</div>
                               )}
                             </td>
                             <td className="p-3 text-right">{item.quantity}</td>
