@@ -786,6 +786,15 @@ const Customers = () => {
                                  item.payment_status || 'Nakit'}
                               </span>
                             </td>
+                            <td className="p-3 text-center">
+                              <button
+                                onClick={() => handleDeleteTransaction(item)}
+                                className="btn btn-danger btn-xs"
+                                title="Bu işlemi sil"
+                              >
+                                🗑️
+                              </button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
