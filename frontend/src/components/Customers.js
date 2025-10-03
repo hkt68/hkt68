@@ -216,6 +216,41 @@ const Customers = () => {
     }
   };
 
+  const handleDeleteTransaction = async (item) => {
+    if (!window.confirm('Bu işlemi silmek istediğinizden emin misiniz?')) return;
+
+    try {
+      let endpoint = '';
+      let itemType = '';
+
+      if (item.type === 'manual_credit') {
+        endpoint = `/api/credit-sales/${item.sale_id}`;
+        itemType = 'manuel borç girişi';
+      } else if (item.type === 'sale') {
+        endpoint = `/api/sales/${item.sale_id}`;
+        itemType = 'satış işlemi';
+      } else {
+        alert('Bu işlem türü silinemez.');
+        return;
+      }
+
+      await axios.delete(`${process.env.REACT_APP_BACKEND_URL}${endpoint}`);
+      
+      // Refresh account details
+      await showAccountDetails(selectedCustomer);
+      
+      alert(`✅ ${itemType} başarıyla silindi.`);
+      
+    } catch (error) {
+      console.error('Delete transaction error:', error);
+      if (error.response?.data?.detail) {
+        alert(`❌ Silme işlemi başarısız: ${error.response.data.detail}`);
+      } else {
+        alert('❌ Silme işlemi başarısız oldu.');
+      }
+    }
+  };
+
   const handleManualCredit = async () => {
     if (!creditData.amount || !selectedCustomer) return;
 
