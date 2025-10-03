@@ -1058,11 +1058,18 @@ const Customers = () => {
                           <div>Limit: ₺{customer.credit_limit.toLocaleString('tr-TR')}</div>
                           <div className={`font-medium ${
                             debtStatus.status === 'clear' ? 'text-green-600' : 
-                            debtStatus.status === 'warning' ? 'text-yellow-600' : 'text-red-600'
+                            debtStatus.status === 'overdue' ? 'text-red-600 font-bold' :
+                            debtStatus.status === 'warning' ? 'text-yellow-600' : 'text-blue-600'
                           }`}>
                             {debtStatus.status === 'clear' ? '✅ Temiz' : 
+                             debtStatus.status === 'overdue' ? `🚨 ₺${debtStatus.debt.toLocaleString('tr-TR')} (VADESİ GEÇMİŞ!)` :
                              `💰 ₺${debtStatus.debt.toLocaleString('tr-TR')}`}
                           </div>
+                          {debtStatus.status === 'overdue' && (
+                            <div className="text-xs text-red-600 font-medium">
+                              Vadesi Geçen: ₺{debtStatus.overdue.toLocaleString('tr-TR')}
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td className="p-3">
