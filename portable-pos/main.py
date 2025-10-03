@@ -160,59 +160,67 @@ class ElitePOS:
             self.save_data('settings', settings)
             
     def create_widgets(self):
-        """Ana arayüzü oluştur"""
-        # Ana frame
-        main_frame = ttk.Frame(self.root)
-        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        """Modern arayüzü oluştur"""
+        # Ana başlık
+        header_frame = ctk.CTkFrame(self.root, height=70)
+        header_frame.pack(fill="x", padx=20, pady=(20, 10))
+        header_frame.pack_propagate(False)
         
-        # Üst başlık
-        header_frame = ttk.Frame(main_frame)
-        header_frame.pack(fill=tk.X, pady=(0, 10))
-        
-        title_label = ttk.Label(
+        # Sol taraf - başlık
+        title_label = ctk.CTkLabel(
             header_frame, 
             text="🏪 Elite Medya Bilişim POS", 
-            font=("Arial", 16, "bold")
+            font=ctk.CTkFont(size=24, weight="bold")
         )
-        title_label.pack(side=tk.LEFT)
+        title_label.pack(side="left", padx=20, pady=20)
         
-        version_label = ttk.Label(
-            header_frame,
-            text="v1.0 Portable",
-            font=("Arial", 9),
-            foreground="gray"
+        # Sağ taraf - web sync butonu
+        sync_frame = ctk.CTkFrame(header_frame, fg_color="transparent")
+        sync_frame.pack(side="right", padx=20, pady=15)
+        
+        self.sync_button = ctk.CTkButton(
+            sync_frame,
+            text="🔄 Web'den Veri Çek",
+            command=self.sync_from_web,
+            width=140,
+            height=32
         )
-        version_label.pack(side=tk.RIGHT)
+        self.sync_button.pack(side="right", padx=10)
         
-        # Notebook (sekmeler)
-        self.notebook = ttk.Notebook(main_frame)
-        self.notebook.pack(fill=tk.BOTH, expand=True)
+        version_label = ctk.CTkLabel(
+            sync_frame,
+            text="v2.0 Portable",
+            font=ctk.CTkFont(size=12),
+            text_color="gray"
+        )
+        version_label.pack(side="right", padx=10)
         
-        # Sekmeler oluştur
+        # Ana içerik alanı
+        content_frame = ctk.CTkFrame(self.root)
+        content_frame.pack(fill="both", expand=True, padx=20, pady=(0, 10))
+        
+        # Sekme sistemi
+        self.tabview = ctk.CTkTabview(content_frame, width=1350, height=650)
+        self.tabview.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        # Sekmeleri oluştur
         self.create_customers_tab()
-        self.create_sales_tab()
+        self.create_sales_tab() 
+        self.create_products_tab()
         self.create_reports_tab()
         self.create_backup_tab()
         
         # Alt durum çubuğu
-        status_frame = ttk.Frame(main_frame)
-        status_frame.pack(fill=tk.X, pady=(10, 0))
+        status_frame = ctk.CTkFrame(self.root, height=40)
+        status_frame.pack(fill="x", padx=20, pady=(0, 20))
+        status_frame.pack_propagate(False)
         
-        self.status_label = ttk.Label(
+        self.status_label = ctk.CTkLabel(
             status_frame,
-            text=f"📅 {datetime.now().strftime('%d.%m.%Y')} | 💾 Data: {self.data_path}",
-            font=("Arial", 8)
+            text=f"📅 {datetime.now().strftime('%d.%m.%Y %H:%M')} | 💾 Veri Klasörü: {self.data_path}",
+            font=ctk.CTkFont(size=11)
         )
-        self.status_label.pack(side=tk.LEFT)
-        
-        # Sağ alt köşe
-        info_label = ttk.Label(
-            status_frame,
-            text="Portable POS - Kurulum Gerektirmez",
-            font=("Arial", 8),
-            foreground="blue"
-        )
-        info_label.pack(side=tk.RIGHT)
+        self.status_label.pack(side="left", padx=20, pady=10)
         
     def create_customers_tab(self):
         """Müşteriler sekmesi"""
