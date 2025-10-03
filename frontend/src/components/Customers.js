@@ -333,9 +333,19 @@ const Customers = () => {
   };
 
   const getDebtStatus = (customer) => {
-    // This would need to be calculated from account summary
-    // For now, return a placeholder
-    return { debt: 0, status: 'clear' };
+    const debt = customer.current_debt || 0;
+    const overdueDebt = customer.overdue_debt || 0;
+    const hasOverdue = customer.has_overdue || false;
+    
+    if (hasOverdue && overdueDebt > 0) {
+      return { debt: debt, overdue: overdueDebt, status: 'overdue' };
+    } else if (debt > customer.credit_limit * 0.8) {
+      return { debt: debt, overdue: 0, status: 'warning' };
+    } else if (debt > 0) {
+      return { debt: debt, overdue: 0, status: 'normal' };
+    } else {
+      return { debt: 0, overdue: 0, status: 'clear' };
+    }
   };
 
   if (loading) {
