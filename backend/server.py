@@ -544,7 +544,7 @@ async def get_customers(
         customer = Customer(**customer_data)
         
         # Calculate debt and overdue status
-        total_debt = await calculate_customer_total_debt(customer.id)
+        total_debt = await get_customer_total_debt(customer.id)
         overdue_debt = await calculate_customer_overdue_debt(customer.id)
         
         # Convert to dict and add debt info
