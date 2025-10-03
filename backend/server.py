@@ -1052,6 +1052,76 @@ async def get_sales_report(
         "data": report_data
     }
 
+# Backup and Restore endpoints
+@api_router.get("/backup/export")
+async def export_system_data():
+    """Export all system data for backup"""
+    backup_data = {
+        "export_date": datetime.now(timezone.utc).isoformat(),
+        "version": "1.0",
+        "data": {}
+    }
+    
+    # Export all collections
+    collections_to_backup = ["customers", "products", "categories", "sales", "credit_sales", "stock_transactions", "payments"]
+    
+    for collection_name in collections_to_backup:
+        collection = db[collection_name]
+        documents = await collection.find({}).to_list(None)
+        
+        # Convert ObjectId and datetime objects to strings
+        for doc in documents:
+            if "_id" in doc:
+                del doc["_id"]  # Remove MongoDB ObjectId
+            
+            # Convert datetime objects to ISO strings
+            for key, value in doc.items():
+                if isinstance(value, datetime):
+                    doc[key] = value.isoformat()
+        
+        backup_data["data"][collection_name] = documents
+    
+    return backup_data
+
+@api_router.post("/backup/import")
+async def import_system_data(backup_data: dict):
+    """Import system data from backup"""
+    try:
+        if "data" not in backup_data:
+            raise HTTPException(status_code=400, detail="Invalid backup format")
+        
+        import_results = {}
+        
+        for collection_name, documents in backup_data["data"].items():
+            if collection_name in ["customers", "products", "categories", "sales", "credit_sales", "stock_transactions", "payments"]:
+                collection = db[collection_name]
+                
+                # Convert datetime strings back to datetime objects
+                for doc in documents:
+                    for key, value in doc.items():
+                        if key.endswith("_at") or key == "created_at" or key == "due_date":
+                            try:
+                                if isinstance(value, str):
+                                    doc[key] = datetime.fromisoformat(value.replace('Z', '+00:00'))
+                            except:
+                                pass  # Skip invalid dates
+                
+                # Clear existing data and insert new data
+                await collection.delete_many({})
+                if documents:
+                    await collection.insert_many(documents)
+                
+                import_results[collection_name] = len(documents)
+        
+        return {
+            "success": True,
+            "message": "Backup imported successfully",
+            "imported_collections": import_results
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Import failed: {str(e)}")
+
 # Include the router in the main app
 app.include_router(api_router)
 
