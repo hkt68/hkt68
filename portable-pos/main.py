@@ -1234,7 +1234,6 @@ class ElitePOS:
             return
             
         values = self.customers_tree.item(selection[0])['values']
-        customer_id = f"cust_{values[0]}"  # ID'yi geri çevir
         
         customers = self.load_data('customers')
         customer = next((c for c in customers if c['id'].endswith(values[0])), None)
