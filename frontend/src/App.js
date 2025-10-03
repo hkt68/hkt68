@@ -118,6 +118,7 @@ function App() {
                 <Route path="stock" element={<StockTransactions />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="alerts" element={<Alerts />} />
+                <Route path="backup" element={<Backup />} />
               </Routes>
             </Layout>
           } />
