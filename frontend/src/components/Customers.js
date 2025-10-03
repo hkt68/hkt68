@@ -176,6 +176,20 @@ const Customers = () => {
       
       const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/payments/customer`, payment);
       
+      // Show detailed payment result message
+      const result = response.data;
+      let message = `✅ Ödeme kaydedildi: ₺${result.amount.toFixed(2)}`;
+      
+      if (result.credit_balance > 0) {
+        message += `\n\n💰 Müşteri alacaklı oldu!\n`;
+        message += `Önceki borç: ₺${result.previous_debt.toFixed(2)}\n`;
+        message += `Kalan alacak: ₺${result.credit_balance.toFixed(2)}`;
+      } else if (result.remaining_debt > 0) {
+        message += `\n\nKalan borç: ₺${result.remaining_debt.toFixed(2)}`;
+      } else {
+        message += `\n\n✅ Tüm borç ödendi!`;
+      }
+      
       // Refresh account details
       await showAccountDetails(selectedCustomer);
       
@@ -188,7 +202,7 @@ const Customers = () => {
       });
       setShowPaymentModal(false);
       
-      alert(`✅ Ödeme kaydedildi!\nTutar: ₺${paymentAmount.toFixed(2)}\nKalan Borç: ₺${(unpaidCreditSale.remaining_amount - paymentAmount).toFixed(2)}`);
+      alert(message);
       
     } catch (err) {
       if (err.response?.data?.detail) {
