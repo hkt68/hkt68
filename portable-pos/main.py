@@ -442,38 +442,62 @@ class ElitePOS:
             self.total_label.configure(text="Toplam: ₺0.00")
         
     def create_reports_tab(self):
-        """Raporlar sekmesi"""
-        reports_frame = ttk.Frame(self.notebook)
-        self.notebook.add(reports_frame, text="📊 Raporlar")
+        """Modern raporlar sekmesi"""
+        self.tabview.add("📊 Raporlar")
+        reports_frame = self.tabview.tab("📊 Raporlar")
+        
+        # Başlık
+        title = ctk.CTkLabel(reports_frame, text="📊 Raporlar ve Analizler", font=ctk.CTkFont(size=24, weight="bold"))
+        title.pack(pady=30)
+        
+        # Ana içerik frame'i
+        main_frame = ctk.CTkFrame(reports_frame)
+        main_frame.pack(fill="both", expand=True, padx=40, pady=20)
         
         # Rapor butonları
-        buttons_frame = ttk.Frame(reports_frame)
-        buttons_frame.pack(pady=20)
+        buttons_section = ctk.CTkFrame(main_frame)
+        buttons_section.pack(fill="x", padx=20, pady=(20, 10))
         
-        ttk.Button(
-            buttons_frame,
+        ctk.CTkLabel(buttons_section, text="📈 Rapor Türleri", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=15)
+        
+        button_frame = ctk.CTkFrame(buttons_section, fg_color="transparent")
+        button_frame.pack(pady=10)
+        
+        ctk.CTkButton(
+            button_frame,
             text="👥 Müşteri Borç Raporu",
             command=self.customer_debt_report,
-            width=25
-        ).pack(pady=5)
+            width=200,
+            height=40,
+            font=ctk.CTkFont(size=14)
+        ).pack(side="left", padx=10)
         
-        ttk.Button(
-            buttons_frame,
+        ctk.CTkButton(
+            button_frame,
             text="💰 Ödeme Geçmişi",
             command=self.payment_history_report,
-            width=25
-        ).pack(pady=5)
+            width=200,
+            height=40,
+            font=ctk.CTkFont(size=14)
+        ).pack(side="left", padx=10)
         
-        ttk.Button(
-            buttons_frame,
+        ctk.CTkButton(
+            button_frame,
             text="📈 Özet Rapor",
             command=self.summary_report,
-            width=25
-        ).pack(pady=5)
+            width=200,
+            height=40,
+            font=ctk.CTkFont(size=14)
+        ).pack(side="left", padx=10)
         
         # Rapor gösterim alanı
-        self.report_text = tk.Text(reports_frame, height=20, font=("Courier", 10))
-        self.report_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        report_section = ctk.CTkFrame(main_frame)
+        report_section.pack(fill="both", expand=True, padx=20, pady=(10, 20))
+        
+        ctk.CTkLabel(report_section, text="📄 Rapor Sonuçları", font=ctk.CTkFont(size=16, weight="bold")).pack(pady=(15, 5))
+        
+        self.report_text = ctk.CTkTextbox(report_section, width=800, height=400, font=ctk.CTkFont(family="Courier", size=12))
+        self.report_text.pack(fill="both", expand=True, padx=20, pady=(0, 20))
         
     def create_backup_tab(self):
         """Modern yedekleme sekmesi"""
