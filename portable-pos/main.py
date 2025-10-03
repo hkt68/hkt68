@@ -476,30 +476,155 @@ class ElitePOS:
         self.report_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
     def create_backup_tab(self):
-        """Yedekleme sekmesi"""
-        backup_frame = ttk.Frame(self.notebook)
-        self.notebook.add(backup_frame, text="💾 Yedekleme")
+        """Modern yedekleme sekmesi"""
+        self.tabview.add("💾 Yedekleme")
+        backup_frame = self.tabview.tab("💾 Yedekleme")
+        
+        # Başlık
+        title = ctk.CTkLabel(backup_frame, text="💾 Veri Yönetimi", font=ctk.CTkFont(size=24, weight="bold"))
+        title.pack(pady=30)
+        
+        # Ana işlemler frame'i
+        main_frame = ctk.CTkFrame(backup_frame)
+        main_frame.pack(fill="both", expand=True, padx=40, pady=20)
         
         # Yedekleme işlemleri
-        backup_buttons = ttk.Frame(backup_frame)
-        backup_buttons.pack(pady=50)
+        backup_section = ctk.CTkFrame(main_frame)
+        backup_section.pack(fill="x", padx=20, pady=(20, 10))
         
-        ttk.Label(
-            backup_buttons,
-            text="💾 Veri Yedekleme İşlemleri",
-            font=("Arial", 14, "bold")
-        ).pack(pady=20)
+        ctk.CTkLabel(backup_section, text="📤 Yerel Yedekleme", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=15)
         
-        ttk.Button(
-            backup_buttons,
+        button_frame1 = ctk.CTkFrame(backup_section, fg_color="transparent")
+        button_frame1.pack(pady=10)
+        
+        ctk.CTkButton(
+            button_frame1,
             text="📤 Verileri Dışa Aktar",
             command=self.export_data,
-            width=30
-        ).pack(pady=10)
+            width=200,
+            height=40,
+            font=ctk.CTkFont(size=14)
+        ).pack(side="left", padx=10)
         
-        ttk.Button(
-            backup_buttons,
+        ctk.CTkButton(
+            button_frame1,
             text="📥 Verileri İçe Aktar",
+            command=self.import_data,
+            width=200,
+            height=40,
+            font=ctk.CTkFont(size=14)
+        ).pack(side="left", padx=10)
+        
+        # Web sync işlemleri
+        web_section = ctk.CTkFrame(main_frame)
+        web_section.pack(fill="x", padx=20, pady=10)
+        
+        ctk.CTkLabel(web_section, text="🌐 Web Senkronizasyonu", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=15)
+        
+        button_frame2 = ctk.CTkFrame(web_section, fg_color="transparent")
+        button_frame2.pack(pady=10)
+        
+        ctk.CTkButton(
+            button_frame2,
+            text="📥 Web'den Veri Al",
+            command=self.sync_from_web,
+            width=200,
+            height=40,
+            font=ctk.CTkFont(size=14)
+        ).pack(side="left", padx=10)
+        
+        ctk.CTkButton(
+            button_frame2,
+            text="⚙️ Web Ayarları",
+            command=self.web_settings_dialog,
+            width=200,
+            height=40,
+            font=ctk.CTkFont(size=14)
+        ).pack(side="left", padx=10)
+        
+        # Bilgi paneli
+        info_section = ctk.CTkFrame(main_frame)
+        info_section.pack(fill="x", padx=20, pady=(10, 20))
+        
+        ctk.CTkLabel(info_section, text="ℹ️ Bilgiler", font=ctk.CTkFont(size=16, weight="bold")).pack(pady=(15, 5))
+        
+        info_text = f"""
+💾 Veri Klasörü: {self.data_path}
+
+📤 Dışa Aktar: Tüm verilerinizi JSON dosyası olarak kaydeder
+📥 İçe Aktar: Önceden kaydedilmiş verileri geri yükler  
+🌐 Web Sync: Web uygulamanızdan gerçek zamanlı veri alır
+⚠️ İçe aktarma mevcut tüm verileri siler!
+"""
+        
+        info_label = ctk.CTkLabel(
+            info_section,
+            text=info_text,
+            justify="left",
+            font=ctk.CTkFont(size=12)
+        )
+        info_label.pack(padx=20, pady=(0, 15))
+    
+    def web_settings_dialog(self):
+        """Web ayarları dialogu"""
+        dialog = ctk.CTkToplevel(self.root)
+        dialog.title("Web Ayarları")
+        dialog.geometry("500x300")
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        settings = self.load_data('settings')
+        current_url = settings.get('web_api_url', 'https://pos-crm-elite.preview.emergentagent.com/api')
+        
+        # Başlık
+        title = ctk.CTkLabel(dialog, text="🌐 Web API Ayarları", font=ctk.CTkFont(size=18, weight="bold"))
+        title.pack(pady=20)
+        
+        # Form
+        form_frame = ctk.CTkFrame(dialog)
+        form_frame.pack(fill="both", expand=True, padx=20, pady=10)
+        
+        ctk.CTkLabel(form_frame, text="Web API URL:", font=ctk.CTkFont(size=14)).pack(anchor="w", padx=15, pady=(20, 5))
+        
+        url_entry = ctk.CTkEntry(form_frame, width=450, height=35, font=ctk.CTkFont(size=12))
+        url_entry.pack(padx=15, pady=(0, 20))
+        url_entry.insert(0, current_url)
+        
+        # Test bağlantısı
+        def test_connection():
+            test_url = url_entry.get().strip()
+            if not test_url:
+                messagebox.showerror("Hata", "URL boş olamaz!")
+                return
+                
+            try:
+                # Test isteği gönder
+                response = requests.get(f"{test_url.rstrip('/')}/backup/export", timeout=10)
+                if response.status_code == 200:
+                    messagebox.showinfo("Başarılı", "✅ Bağlantı başarılı!")
+                else:
+                    messagebox.showerror("Hata", f"❌ HTTP {response.status_code}")
+            except Exception as e:
+                messagebox.showerror("Bağlantı Hatası", f"❌ Bağlanamadı:\n{str(e)}")
+        
+        def save_settings():
+            new_url = url_entry.get().strip()
+            if not new_url:
+                messagebox.showerror("Hata", "URL boş olamaz!")
+                return
+                
+            settings['web_api_url'] = new_url
+            if self.save_data('settings', settings):
+                messagebox.showinfo("Başarılı", "Ayarlar kaydedildi!")
+                dialog.destroy()
+        
+        # Butonlar
+        button_frame = ctk.CTkFrame(dialog)
+        button_frame.pack(fill="x", padx=20, pady=(0, 20))
+        
+        ctk.CTkButton(button_frame, text="🔧 Bağlantıyı Test Et", command=test_connection, width=150).pack(side="left", padx=10, pady=10)
+        ctk.CTkButton(button_frame, text="💾 Kaydet", command=save_settings, width=100).pack(side="right", padx=10, pady=10)
+        ctk.CTkButton(button_frame, text="❌ İptal", command=dialog.destroy, width=80).pack(side="right", padx=(0, 10), pady=10)
     
     # === Web Sync İşlemleri ===
     
@@ -715,27 +840,6 @@ class ElitePOS:
             width=100,
             height=35
         ).pack(side="right", padx=10, pady=10)
-            command=self.import_data,
-            width=30
-        ).pack(pady=5)
-        
-        # Bilgi
-        info_frame = ttk.Frame(backup_frame)
-        info_frame.pack(pady=30)
-        
-        info_text = """ℹ️ Yedekleme Bilgileri:
-
-• Dışa Aktar: Tüm verilerinizi JSON dosyası olarak kaydeder
-• İçe Aktar: Önceden kaydedilmiş verileri geri yükler
-• Veriler: {data_path}
-• Güvenli ve taşınabilir format""".format(data_path=self.data_path)
-        
-        ttk.Label(
-            info_frame,
-            text=info_text,
-            justify=tk.LEFT,
-            font=("Arial", 9)
-        ).pack()
         
     # === Müşteri İşlemleri ===
     
