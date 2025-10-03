@@ -106,3 +106,7 @@ android-sdk/ -e
 *.env
 *.env.*
 electron-pos/node_modules/electron/dist/electron
+-e 
+# Environment files
+*.env
+*.env.*
