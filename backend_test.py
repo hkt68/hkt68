@@ -186,13 +186,13 @@ class CustomerCRMTester:
             self.log(f"❌ Failed to retrieve account summary: {result.get('error', 'Unknown error')}", "ERROR")
             return False
     
-    def test_purchase_history(self) -> bool:
-        """Test retrieving customer purchase history"""
+    def test_purchase_history_with_manual_credits(self) -> bool:
+        """Test retrieving customer purchase history including manual credit entries with notes"""
         if not self.test_customer_id:
             self.log("❌ No test customer available for purchase history", "ERROR")
             return False
             
-        self.log("Testing customer purchase history retrieval...")
+        self.log("Testing customer purchase history with manual credit entries...")
         
         result = self.make_request("GET", f"/customers/{self.test_customer_id}/purchase-history")
         
@@ -200,14 +200,48 @@ class CustomerCRMTester:
             data = result["data"]
             self.log(f"✅ Purchase history retrieved successfully ({len(data)} records)")
             
-            # Since we only added manual credit (not actual product sales), 
-            # the purchase history might be empty, which is expected
-            if len(data) == 0:
-                self.log("   - No purchase records found (expected for manual credit only)")
-            else:
-                for i, purchase in enumerate(data[:3]):  # Show first 3 records
-                    self.log(f"   - Purchase {i+1}: {purchase.get('product_name')} - ₺{purchase.get('total_amount', 0):.2f}")
+            # Look for manual credit entries
+            manual_credit_found = False
+            for purchase in data:
+                if purchase.get('type') == 'manual_credit':
+                    manual_credit_found = True
+                    self.log("✅ Manual credit entry found in purchase history:")
+                    self.log(f"   - Product Name: {purchase.get('product_name')}")
+                    self.log(f"   - Description: {purchase.get('description')}")
+                    self.log(f"   - Notes: {purchase.get('notes')}")
+                    self.log(f"   - Amount: ₺{purchase.get('total_amount', 0):.2f}")
+                    self.log(f"   - Type: {purchase.get('type')}")
+                    
+                    # Verify required fields for manual credit entries
+                    required_fields = ['product_name', 'description', 'notes', 'type', 'total_amount']
+                    missing_fields = [field for field in required_fields if field not in purchase]
+                    
+                    if missing_fields:
+                        self.log(f"❌ Missing required fields in manual credit entry: {missing_fields}", "ERROR")
+                        return False
+                    
+                    # Verify specific values
+                    if purchase.get('product_name') != "Manuel Borç Girişi":
+                        self.log(f"❌ Expected product_name 'Manuel Borç Girişi', got '{purchase.get('product_name')}'", "ERROR")
+                        return False
+                    
+                    if purchase.get('type') != "manual_credit":
+                        self.log(f"❌ Expected type 'manual_credit', got '{purchase.get('type')}'", "ERROR")
+                        return False
+                    
+                    # Verify notes contain the expected content
+                    expected_notes = "Stoktan alınan ofis malzemeleri - 3 adet kalem, 2 adet defter"
+                    if purchase.get('notes') != expected_notes:
+                        self.log(f"❌ Expected notes '{expected_notes}', got '{purchase.get('notes')}'", "ERROR")
+                        return False
+                    
+                    break
             
+            if not manual_credit_found:
+                self.log("❌ No manual credit entry found in purchase history", "ERROR")
+                return False
+            
+            self.log("✅ Manual credit entry validation passed")
             return True
         else:
             self.log(f"❌ Failed to retrieve purchase history: {result.get('error', 'Unknown error')}", "ERROR")
