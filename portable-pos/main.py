@@ -720,6 +720,205 @@ class ElitePOS:
         # Form alanları
         ttk.Label(dialog, text="Müşteri Adı *").grid(row=0, column=0, sticky=tk.W, padx=10, pady=5)
         name_entry = ttk.Entry(dialog, width=30)
+    
+    def create_products_tab(self):
+        """Ürünler sekmesi"""
+        self.tabview.add("📦 Ürünler")
+        products_frame = self.tabview.tab("📦 Ürünler")
+        
+        # Üst kontrol paneli
+        control_frame = ctk.CTkFrame(products_frame)
+        control_frame.pack(fill="x", padx=10, pady=(10, 5))
+        
+        # Sol butonlar
+        left_buttons = ctk.CTkFrame(control_frame, fg_color="transparent")
+        left_buttons.pack(side="left", padx=10, pady=10)
+        
+        ctk.CTkButton(
+            left_buttons,
+            text="➕ Yeni Ürün",
+            command=self.new_product_dialog,
+            width=120,
+            height=32
+        ).pack(side="left", padx=(0, 10))
+        
+        ctk.CTkButton(
+            left_buttons,
+            text="🔄 Yenile",
+            command=self.refresh_products,
+            width=80,
+            height=32
+        ).pack(side="left")
+        
+        # Sağ arama
+        search_frame = ctk.CTkFrame(control_frame, fg_color="transparent")
+        search_frame.pack(side="right", padx=10, pady=10)
+        
+        ctk.CTkLabel(search_frame, text="🔍 Ürün Ara:", font=ctk.CTkFont(size=12)).pack(side="left", padx=(0, 5))
+        self.product_search = ctk.CTkEntry(search_frame, placeholder_text="İsim veya barkod...", width=200)
+        self.product_search.pack(side="left")
+        self.product_search.bind('<KeyRelease>', self.filter_products)
+        
+        # Ürün listesi frame
+        list_frame = ctk.CTkFrame(products_frame)
+        list_frame.pack(fill="both", expand=True, padx=10, pady=5)
+        
+        # Treeview için frame
+        tree_frame = tk.Frame(list_frame, bg='#212121' if ctk.get_appearance_mode() == "Dark" else '#f0f0f0')
+        tree_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        # Ürün listesi
+        columns = ("ID", "İsim", "Barkod", "Fiyat", "Stok")
+        self.products_tree = tk.ttk.Treeview(tree_frame, columns=columns, show="headings", height=20)
+        
+        # Kolon başlıkları ve genişlikleri
+        headers = {
+            "ID": ("ID", 80),
+            "İsim": ("Ürün Adı", 300), 
+            "Barkod": ("Barkod", 150),
+            "Fiyat": ("Satış Fiyatı", 120),
+            "Stok": ("Stok Adedi", 100)
+        }
+        
+        for col, (header, width) in headers.items():
+            self.products_tree.heading(col, text=header)
+            self.products_tree.column(col, width=width)
+        
+        # Scrollbar
+        scrollbar = tk.ttk.Scrollbar(tree_frame, orient="vertical", command=self.products_tree.yview)
+        self.products_tree.configure(yscrollcommand=scrollbar.set)
+        
+        self.products_tree.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+        
+        # Events
+        self.products_tree.bind("<Double-1>", self.edit_product_dialog)
+        
+        # Veriyi yükle
+        self.refresh_products()
+    
+    def refresh_products(self):
+        """Ürün listesini yenile"""
+        for item in self.products_tree.get_children():
+            self.products_tree.delete(item)
+            
+        products = self.load_data('products')
+        
+        for product in products:
+            self.products_tree.insert("", "end", values=(
+                product['id'][-6:],
+                product['name'],
+                product.get('barcode', ''),
+                f"₺{product['price']:.2f}",
+                product.get('stock', 0)
+            ))
+    
+    def filter_products(self, event=None):
+        """Ürün arama"""
+        search_term = self.product_search.get().lower()
+        
+        for item in self.products_tree.get_children():
+            self.products_tree.delete(item)
+            
+        products = self.load_data('products')
+        
+        for product in products:
+            if (search_term in product['name'].lower() or 
+                search_term in product.get('barcode', '').lower()):
+                self.products_tree.insert("", "end", values=(
+                    product['id'][-6:],
+                    product['name'],
+                    product.get('barcode', ''),
+                    f"₺{product['price']:.2f}",
+                    product.get('stock', 0)
+                ))
+    
+    def new_product_dialog(self):
+        """Yeni ürün ekleme dialogu"""
+        dialog = ctk.CTkToplevel(self.root)
+        dialog.title("Yeni Ürün")
+        dialog.geometry("450x400")
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Başlık
+        title = ctk.CTkLabel(dialog, text="📦 Yeni Ürün Ekle", font=ctk.CTkFont(size=18, weight="bold"))
+        title.pack(pady=20)
+        
+        # Form frame
+        form_frame = ctk.CTkFrame(dialog)
+        form_frame.pack(fill="both", expand=True, padx=20, pady=10)
+        
+        # Form alanları
+        ctk.CTkLabel(form_frame, text="Ürün Adı *", font=ctk.CTkFont(size=12)).pack(anchor="w", padx=10, pady=(15, 5))
+        name_entry = ctk.CTkEntry(form_frame, width=400, placeholder_text="Ürün adını girin...")
+        name_entry.pack(padx=10, pady=(0, 10))
+        name_entry.focus()
+        
+        ctk.CTkLabel(form_frame, text="Barkod", font=ctk.CTkFont(size=12)).pack(anchor="w", padx=10, pady=(0, 5))
+        barcode_entry = ctk.CTkEntry(form_frame, width=400, placeholder_text="Barkod numarası...")
+        barcode_entry.pack(padx=10, pady=(0, 10))
+        
+        ctk.CTkLabel(form_frame, text="Satış Fiyatı (₺) *", font=ctk.CTkFont(size=12)).pack(anchor="w", padx=10, pady=(0, 5))
+        price_entry = ctk.CTkEntry(form_frame, width=400, placeholder_text="0.00")
+        price_entry.pack(padx=10, pady=(0, 10))
+        
+        ctk.CTkLabel(form_frame, text="Başlangıç Stok Adedi", font=ctk.CTkFont(size=12)).pack(anchor="w", padx=10, pady=(0, 5))
+        stock_entry = ctk.CTkEntry(form_frame, width=400, placeholder_text="0")
+        stock_entry.pack(padx=10, pady=(0, 15))
+        stock_entry.insert(0, "0")
+        
+        def save_product():
+            name = name_entry.get().strip()
+            if not name:
+                messagebox.showerror("Hata", "Ürün adı gerekli!")
+                return
+                
+            try:
+                price = float(price_entry.get().replace(',', '.'))
+                if price < 0:
+                    raise ValueError("Fiyat negatif olamaz")
+            except ValueError:
+                messagebox.showerror("Hata", "Geçerli bir fiyat girin!")
+                return
+                
+            try:
+                stock = int(stock_entry.get())
+                if stock < 0:
+                    raise ValueError("Stok negatif olamaz")
+            except ValueError:
+                messagebox.showerror("Hata", "Geçerli bir stok adedi girin!")
+                return
+                
+            products = self.load_data('products')
+            
+            new_product = {
+                "id": f"prod_{len(products)+1:03d}",
+                "name": name,
+                "barcode": barcode_entry.get().strip(),
+                "price": price,
+                "stock": stock,
+                "created_at": datetime.now().isoformat()
+            }
+            
+            products.append(new_product)
+            
+            if self.save_data('products', products):
+                messagebox.showinfo("Başarılı", "Ürün eklendi!")
+                dialog.destroy()
+                self.refresh_products()
+                self.refresh_sale_combos()
+        
+        # Butonlar
+        button_frame = ctk.CTkFrame(dialog)
+        button_frame.pack(fill="x", padx=20, pady=(0, 20))
+        
+        ctk.CTkButton(button_frame, text="💾 Kaydet", command=save_product, width=120).pack(side="left", padx=10, pady=10)
+        ctk.CTkButton(button_frame, text="❌ İptal", command=dialog.destroy, width=100).pack(side="right", padx=10, pady=10)
+    
+    def edit_product_dialog(self, event=None):
+        """Ürün düzenleme (gelecek sürümde)"""
+        messagebox.showinfo("Bilgi", "Ürün düzenleme özelliği gelecek versiyonda eklenecek.")
         name_entry.grid(row=0, column=1, padx=10, pady=5)
         name_entry.focus()
         
