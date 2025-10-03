@@ -174,7 +174,7 @@ const Customers = () => {
         created_by: 'Cari Hesap Ekranı'
       };
       
-      await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/payments`, payment);
+      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/payments/customer`, payment);
       
       // Refresh account details
       await showAccountDetails(selectedCustomer);
