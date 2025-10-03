@@ -1,0 +1,22 @@
+[
+  {
+    "id": "9fd3b112-aa11-44bb-a5b3-76084edd241d",
+    "customer_id": "0da511c3-2378-486f-9dc8-7c0fdf8e2d80",
+    "total_amount": 80,
+    "remaining_amount": 80,
+    "due_date": "2025-11-02T00:00:00",
+    "payment_status": "unpaid",
+    "notes": "Debt for overpayment test",
+    "created_at": "2025-10-03T06:29:24.170000"
+  },
+  {
+    "id": "c70df8f7-d982-4073-8490-dc4ee62f88bb",
+    "customer_id": "2162c44f-7fbf-48c3-a0c9-5313499fb70d",
+    "total_amount": 5000,
+    "remaining_amount": 5000,
+    "due_date": null,
+    "payment_status": "unpaid",
+    "notes": "KAMERA",
+    "created_at": "2025-10-03T06:37:25.436000"
+  }
+]

@@ -1,0 +1,42 @@
+[
+  {
+    "id": "c22f2c9a-d59b-4f3d-bc25-63daa4611468",
+    "name": "Import Test Customer Final",
+    "phone": "",
+    "email": "",
+    "address": "",
+    "credit_limit": 500,
+    "notes": "",
+    "created_at": "2025-10-03T06:29:24.104000"
+  },
+  {
+    "id": "0da511c3-2378-486f-9dc8-7c0fdf8e2d80",
+    "name": "Final Test Customer - Overpayment",
+    "phone": "+90 532 777 6655",
+    "email": "final.overpay@test.com",
+    "address": null,
+    "credit_limit": 3000,
+    "notes": null,
+    "created_at": "2025-10-03T06:29:24.160000"
+  },
+  {
+    "id": "65bd421c-278a-450c-a38e-b3ed93886bb4",
+    "name": "Final Test Customer - Delete",
+    "phone": "+90 532 555 4433",
+    "email": "final.delete@test.com",
+    "address": null,
+    "credit_limit": 2000,
+    "notes": null,
+    "created_at": "2025-10-03T06:29:24.229000"
+  },
+  {
+    "id": "2162c44f-7fbf-48c3-a0c9-5313499fb70d",
+    "name": "YUNUS KOÇPINAR",
+    "phone": "5555555555",
+    "email": "",
+    "address": "",
+    "credit_limit": 10000,
+    "notes": "",
+    "created_at": "2025-10-03T06:37:08.644000"
+  }
+]

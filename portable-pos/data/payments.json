@@ -1,0 +1,10 @@
+[
+  {
+    "id": "db411641-9bbb-4d20-a3d7-da8ce9810152",
+    "customer_id": "0da511c3-2378-486f-9dc8-7c0fdf8e2d80",
+    "amount": 120,
+    "payment_method": "cash",
+    "notes": "Overpayment test",
+    "created_at": "2025-10-03T06:29:24.180000"
+  }
+]
