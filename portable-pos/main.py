@@ -404,6 +404,221 @@ class ElitePOS:
         ttk.Button(
             backup_buttons,
             text="📥 Verileri İçe Aktar",
+    
+    # === Web Sync İşlemleri ===
+    
+    def sync_from_web(self):
+        """Web uygulamasından verileri çek"""
+        settings = self.load_data('settings')
+        web_url = settings.get('web_api_url', 'https://pos-crm-elite.preview.emergentagent.com/api')
+        
+        # Sync dialogu
+        sync_window = ctk.CTkToplevel(self.root)
+        sync_window.title("Web'den Veri Çekme")
+        sync_window.geometry("500x400")
+        sync_window.transient(self.root)
+        sync_window.grab_set()
+        
+        # Başlık
+        title_label = ctk.CTkLabel(
+            sync_window, 
+            text="🔄 Web Uygulamasından Veri Çekme",
+            font=ctk.CTkFont(size=18, weight="bold")
+        )
+        title_label.pack(pady=20)
+        
+        # URL ayarı
+        url_frame = ctk.CTkFrame(sync_window)
+        url_frame.pack(fill="x", padx=20, pady=10)
+        
+        ctk.CTkLabel(url_frame, text="Web API URL:", font=ctk.CTkFont(size=12)).pack(anchor="w", padx=10, pady=(10, 5))
+        url_entry = ctk.CTkEntry(url_frame, width=450, placeholder_text="https://...")
+        url_entry.pack(padx=10, pady=(0, 10))
+        url_entry.insert(0, web_url)
+        
+        # İlerleme çubuğu
+        progress = ctk.CTkProgressBar(sync_window, width=450)
+        progress.pack(pady=20)
+        progress.set(0)
+        
+        # Durum yazısı
+        status_label = ctk.CTkLabel(sync_window, text="Hazır", font=ctk.CTkFont(size=12))
+        status_label.pack(pady=10)
+        
+        # Log alanı
+        log_frame = ctk.CTkFrame(sync_window)
+        log_frame.pack(fill="both", expand=True, padx=20, pady=(0, 10))
+        
+        log_text = ctk.CTkTextbox(log_frame, width=450, height=150, font=ctk.CTkFont(family="Courier"))
+        log_text.pack(padx=10, pady=10)
+        
+        def update_log(message):
+            log_text.insert("end", f"{datetime.now().strftime('%H:%M:%S')} - {message}\n")
+            log_text.see("end")
+            sync_window.update()
+        
+        def sync_data():
+            try:
+                url = url_entry.get().strip()
+                if not url:
+                    messagebox.showerror("Hata", "URL boş olamaz!")
+                    return
+                
+                # URL'yi settings'e kaydet
+                settings['web_api_url'] = url
+                self.save_data('settings', settings)
+                
+                self.sync_button.configure(state="disabled", text="⏳ Çekiliyor...")
+                progress.set(0)
+                
+                update_log("Web API'ye bağlanıyor...")
+                
+                # Backup endpoint'inden tüm verileri çek
+                backup_url = f"{url.rstrip('/')}/backup/export"
+                
+                update_log(f"İstek gönderiliyor: {backup_url}")
+                progress.set(0.2)
+                
+                response = requests.get(backup_url, timeout=30)
+                response.raise_for_status()
+                
+                update_log("Veri başarıyla alındı!")
+                progress.set(0.5)
+                
+                backup_data = response.json()
+                
+                if 'data' not in backup_data:
+                    raise ValueError("Geçersiz veri formatı!")
+                
+                update_log("Veriler işleniyor...")
+                progress.set(0.7)
+                
+                # Veri mapping ve convert
+                web_data = backup_data['data']
+                imported_counts = {}
+                
+                # Customers
+                if 'customers' in web_data:
+                    customers = []
+                    for c in web_data['customers']:
+                        customer = {
+                            "id": c.get('id', str(uuid.uuid4())),
+                            "name": c.get('name', ''),
+                            "phone": c.get('phone', ''),
+                            "email": c.get('email', ''),
+                            "address": c.get('address', ''),
+                            "credit_limit": c.get('credit_limit', 0.0),
+                            "notes": c.get('notes', ''),
+                            "created_at": c.get('created_at', datetime.now().isoformat())
+                        }
+                        customers.append(customer)
+                    
+                    self.save_data('customers', customers)
+                    imported_counts['customers'] = len(customers)
+                    update_log(f"✓ Müşteriler: {len(customers)} kayıt")
+                
+                progress.set(0.8)
+                
+                # Credit Sales
+                if 'credit_sales' in web_data:
+                    credit_sales = []
+                    for cs in web_data['credit_sales']:
+                        credit_sale = {
+                            "id": cs.get('id', str(uuid.uuid4())),
+                            "customer_id": cs.get('customer_id', ''),
+                            "total_amount": cs.get('total_amount', 0.0),
+                            "remaining_amount": cs.get('remaining_amount', 0.0),
+                            "due_date": cs.get('due_date', ''),
+                            "payment_status": cs.get('payment_status', 'unpaid'),
+                            "notes": cs.get('notes', ''),
+                            "created_at": cs.get('created_at', datetime.now().isoformat())
+                        }
+                        credit_sales.append(credit_sale)
+                    
+                    self.save_data('credit_sales', credit_sales)
+                    imported_counts['credit_sales'] = len(credit_sales)
+                    update_log(f"✓ Borçlar: {len(credit_sales)} kayıt")
+                
+                # Payments  
+                if 'payments' in web_data:
+                    payments = []
+                    for p in web_data['payments']:
+                        payment = {
+                            "id": p.get('id', str(uuid.uuid4())),
+                            "customer_id": p.get('customer_id', ''),
+                            "amount": p.get('amount', 0.0),
+                            "payment_method": p.get('payment_method', 'cash'),
+                            "notes": p.get('notes', ''),
+                            "created_at": p.get('created_at', datetime.now().isoformat())
+                        }
+                        payments.append(payment)
+                    
+                    self.save_data('payments', payments)
+                    imported_counts['payments'] = len(payments)
+                    update_log(f"✓ Ödemeler: {len(payments)} kayıt")
+                
+                # Products
+                if 'products' in web_data:
+                    products = []
+                    for p in web_data['products']:
+                        product = {
+                            "id": p.get('id', str(uuid.uuid4())),
+                            "name": p.get('name', ''),
+                            "barcode": p.get('barcode', ''),
+                            "price": p.get('selling_price', p.get('price', 0.0)),
+                            "stock": p.get('current_stock', p.get('stock', 0)),
+                            "created_at": p.get('created_at', datetime.now().isoformat())
+                        }
+                        products.append(product)
+                    
+                    self.save_data('products', products)
+                    imported_counts['products'] = len(products)
+                    update_log(f"✓ Ürünler: {len(products)} kayıt")
+                
+                progress.set(1.0)
+                
+                total_records = sum(imported_counts.values())
+                update_log(f"\n🎉 BAŞARILI! Toplam {total_records} kayıt içe aktarıldı")
+                
+                # Arayüzü yenile
+                self.refresh_customers()
+                self.refresh_sale_combos()
+                
+                messagebox.showinfo(
+                    "Başarılı", 
+                    f"Web'den veri çekme tamamlandı!\n\nTopam {total_records} kayıt güncellendi:\n" +
+                    "\n".join([f"• {k.title()}: {v} kayıt" for k, v in imported_counts.items()])
+                )
+                
+            except requests.exceptions.RequestException as e:
+                update_log(f"❌ Bağlantı hatası: {str(e)}")
+                messagebox.showerror("Bağlantı Hatası", f"Web API'ye bağlanılamadı:\n{str(e)}")
+            except Exception as e:
+                update_log(f"❌ Hata: {str(e)}")
+                messagebox.showerror("Hata", f"Veri çekme sırasında hata:\n{str(e)}")
+            finally:
+                self.sync_button.configure(state="normal", text="🔄 Web'den Veri Çek")
+                progress.set(0)
+        
+        # Butonlar
+        button_frame = ctk.CTkFrame(sync_window)
+        button_frame.pack(fill="x", padx=20, pady=(0, 20))
+        
+        ctk.CTkButton(
+            button_frame,
+            text="🚀 Veri Çekmeyi Başlat",
+            command=lambda: threading.Thread(target=sync_data, daemon=True).start(),
+            width=150,
+            height=35
+        ).pack(side="left", padx=10, pady=10)
+        
+        ctk.CTkButton(
+            button_frame,
+            text="❌ İptal",
+            command=sync_window.destroy,
+            width=100,
+            height=35
+        ).pack(side="right", padx=10, pady=10)
             command=self.import_data,
             width=30
         ).pack(pady=5)
