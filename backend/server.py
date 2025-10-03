@@ -520,7 +520,7 @@ async def create_customer(customer: CustomerCreate):
     await db.customers.insert_one(customer_obj.dict())
     return customer_obj
 
-@api_router.get("/customers", response_model=List[Customer])
+@api_router.get("/customers")
 async def get_customers(
     search: Optional[str] = None,
     active_only: bool = True
@@ -537,8 +537,43 @@ async def get_customers(
             {"email": {"$regex": search, "$options": "i"}}
         ]
     
-    customers = await db.customers.find(query).sort("name", 1).to_list(1000)
-    return [Customer(**customer) for customer in customers]
+    customers_data = await db.customers.find(query).sort("name", 1).to_list(1000)
+    customers_with_debt = []
+    
+    for customer_data in customers_data:
+        customer = Customer(**customer_data)
+        
+        # Calculate debt and overdue status
+        total_debt = await calculate_customer_total_debt(customer.id)
+        overdue_debt = await calculate_customer_overdue_debt(customer.id)
+        
+        # Convert to dict and add debt info
+        customer_dict = customer.dict()
+        customer_dict["current_debt"] = total_debt
+        customer_dict["overdue_debt"] = overdue_debt
+        customer_dict["has_overdue"] = overdue_debt > 0
+        
+        customers_with_debt.append(customer_dict)
+    
+    return customers_with_debt
+
+# Helper function for calculating overdue debt
+async def calculate_customer_overdue_debt(customer_id: str) -> float:
+    """Calculate overdue debt for a customer"""
+    pipeline = [
+        {"$match": {
+            "customer_id": customer_id,
+            "payment_status": "unpaid",
+            "due_date": {"$lt": datetime.now(timezone.utc)}  # Past due date
+        }},
+        {"$group": {
+            "_id": None,
+            "total_overdue": {"$sum": "$remaining_amount"}
+        }}
+    ]
+    
+    result = await db.credit_sales.aggregate(pipeline).to_list(1)
+    return result[0]["total_overdue"] if result else 0.0
 
 @api_router.get("/customers/{customer_id}", response_model=Customer)
 async def get_customer(customer_id: str):
