@@ -1103,7 +1103,7 @@ async def import_system_data(backup_data: dict):
                             try:
                                 if isinstance(value, str):
                                     doc[key] = datetime.fromisoformat(value.replace('Z', '+00:00'))
-                            except:
+                            except (ValueError, TypeError):
                                 pass  # Skip invalid dates
                 
                 # Clear existing data and insert new data
