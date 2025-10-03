@@ -315,9 +315,9 @@ class CustomerCRMTester:
         test_results["api_health"] = self.test_api_health()
         test_results["create_customer"] = self.test_create_customer()
         test_results["manual_credit_addition"] = self.test_manual_credit_addition()
+        test_results["purchase_history_with_manual_credits"] = self.test_purchase_history_with_manual_credits()
         test_results["payment_recording"] = self.test_payment_recording()
         test_results["account_summary"] = self.test_account_summary()
-        test_results["purchase_history"] = self.test_purchase_history()
         test_results["detailed_report"] = self.test_detailed_report()
         
         # Summary
