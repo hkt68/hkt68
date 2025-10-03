@@ -935,15 +935,80 @@ class ElitePOS:
                 
     def new_customer_dialog(self):
         """Yeni müşteri ekleme dialogu"""
-        dialog = tk.Toplevel(self.root)
+        dialog = ctk.CTkToplevel(self.root)
         dialog.title("Yeni Müşteri")
-        dialog.geometry("400x350")
+        dialog.geometry("450x400")
         dialog.transient(self.root)
         dialog.grab_set()
         
+        # Başlık
+        title = ctk.CTkLabel(dialog, text="👤 Yeni Müşteri Ekle", font=ctk.CTkFont(size=18, weight="bold"))
+        title.pack(pady=20)
+        
+        # Form frame
+        form_frame = ctk.CTkFrame(dialog)
+        form_frame.pack(fill="both", expand=True, padx=20, pady=10)
+        
         # Form alanları
-        ttk.Label(dialog, text="Müşteri Adı *").grid(row=0, column=0, sticky=tk.W, padx=10, pady=5)
-        name_entry = ttk.Entry(dialog, width=30)
+        ctk.CTkLabel(form_frame, text="Müşteri Adı *", font=ctk.CTkFont(size=12)).pack(anchor="w", padx=10, pady=(15, 5))
+        name_entry = ctk.CTkEntry(form_frame, width=400, placeholder_text="Müşteri adını girin...")
+        name_entry.pack(padx=10, pady=(0, 10))
+        name_entry.focus()
+        
+        ctk.CTkLabel(form_frame, text="Telefon", font=ctk.CTkFont(size=12)).pack(anchor="w", padx=10, pady=(0, 5))
+        phone_entry = ctk.CTkEntry(form_frame, width=400, placeholder_text="Telefon numarası...")
+        phone_entry.pack(padx=10, pady=(0, 10))
+        
+        ctk.CTkLabel(form_frame, text="E-posta", font=ctk.CTkFont(size=12)).pack(anchor="w", padx=10, pady=(0, 5))
+        email_entry = ctk.CTkEntry(form_frame, width=400, placeholder_text="E-posta adresi...")
+        email_entry.pack(padx=10, pady=(0, 10))
+        
+        ctk.CTkLabel(form_frame, text="Adres", font=ctk.CTkFont(size=12)).pack(anchor="w", padx=10, pady=(0, 5))
+        address_text = ctk.CTkTextbox(form_frame, width=400, height=60)
+        address_text.pack(padx=10, pady=(0, 10))
+        
+        ctk.CTkLabel(form_frame, text="Kredi Limiti (₺)", font=ctk.CTkFont(size=12)).pack(anchor="w", padx=10, pady=(0, 5))
+        credit_entry = ctk.CTkEntry(form_frame, width=400, placeholder_text="5000.00")
+        credit_entry.pack(padx=10, pady=(0, 10))
+        credit_entry.insert(0, "5000.00")
+        
+        ctk.CTkLabel(form_frame, text="Notlar", font=ctk.CTkFont(size=12)).pack(anchor="w", padx=10, pady=(0, 5))
+        notes_text = ctk.CTkTextbox(form_frame, width=400, height=60)
+        notes_text.pack(padx=10, pady=(0, 15))
+        
+        def save_customer():
+            name = name_entry.get().strip()
+            if not name:
+                messagebox.showerror("Hata", "Müşteri adı gerekli!")
+                return
+                
+            customers = self.load_data('customers')
+            
+            new_customer = {
+                "id": f"cust_{len(customers)+1:03d}",
+                "name": name,
+                "phone": phone_entry.get().strip(),
+                "email": email_entry.get().strip(),
+                "address": address_text.get("1.0", "end-1c").strip(),
+                "credit_limit": float(credit_entry.get().replace(',', '.') or 0),
+                "notes": notes_text.get("1.0", "end-1c").strip(),
+                "created_at": datetime.now().isoformat()
+            }
+            
+            customers.append(new_customer)
+            
+            if self.save_data('customers', customers):
+                messagebox.showinfo("Başarılı", "Müşteri eklendi!")
+                dialog.destroy()
+                self.refresh_customers()
+                self.refresh_sale_combos()
+        
+        # Butonlar
+        button_frame = ctk.CTkFrame(dialog)
+        button_frame.pack(fill="x", padx=20, pady=(0, 20))
+        
+        ctk.CTkButton(button_frame, text="💾 Kaydet", command=save_customer, width=120).pack(side="left", padx=10, pady=10)
+        ctk.CTkButton(button_frame, text="❌ İptal", command=dialog.destroy, width=100).pack(side="right", padx=10, pady=10)
     
     def create_products_tab(self):
         """Ürünler sekmesi"""
