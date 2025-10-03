@@ -164,6 +164,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ PASSED - GET /api/customers/{customer_id}/purchase-history working correctly. Returns empty array for manual credit entries (expected behavior). Endpoint structure and response format correct."
+      - working: true
+        agent: "testing"
+        comment: "✅ UPDATED & TESTED - Purchase history endpoint now correctly includes manual credit entries with notes/descriptions. Manual credits show as 'Manuel Borç Girişi' with proper description, notes, and type='manual_credit' fields. Tested with detailed notes 'Stoktan alınan ofis malzemeleri - 3 adet kalem, 2 adet defter'. Mixed history with both regular sales and manual credits working perfectly. All required fields present and properly formatted."
 
   - task: "Detailed customer report API endpoint"
     implemented: true
