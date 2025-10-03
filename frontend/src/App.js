@@ -48,6 +48,7 @@ const Navigation = () => {
     { path: '/sales', label: 'Satışlar', icon: '💰' },
     { path: '/stock', label: 'Stok İşlemleri', icon: '📋' },
     { path: '/reports', label: 'Raporlar', icon: '📈' },
+    { path: '/backup', label: 'Yedekleme', icon: '💾' },
     { path: '/alerts', label: `Uyarılar ${alertCount > 0 ? `(${alertCount})` : ''}`, icon: '🚨' }
   ];
 
