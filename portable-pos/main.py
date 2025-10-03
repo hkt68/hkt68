@@ -508,6 +508,39 @@ class ElitePOS:
         self.report_text = ctk.CTkTextbox(report_section, width=800, height=400, font=ctk.CTkFont(family="Courier", size=12))
         self.report_text.pack(fill="both", expand=True, padx=20, pady=(0, 20))
         
+        # İlk raporu yükle
+        self.summary_report()
+    
+    def print_report(self):
+        """Raporu yazdırma özelliği"""
+        report_content = self.report_text.get("1.0", "end-1c")
+        if not report_content.strip():
+            messagebox.showwarning("Uyarı", "Yazdırılacak rapor bulunamadı!")
+            return
+            
+        # Basit txt dosyası olarak kaydet ve varsayılan program ile aç
+        try:
+            filename = filedialog.asksaveasfilename(
+                title="Raporu Kaydet",
+                defaultextension=".txt",
+                filetypes=[("Metin Dosyası", "*.txt")],
+                initialname=f"elite-pos-rapor-{datetime.now().strftime('%Y%m%d-%H%M')}.txt"
+            )
+            
+            if filename:
+                with open(filename, 'w', encoding='utf-8') as f:
+                    f.write(report_content)
+                    
+                messagebox.showinfo("Başarılı", f"Rapor kaydedildi:\n{filename}")
+                
+                # Dosyayı varsayılan programla aç
+                import subprocess, platform
+                if platform.system() == 'Windows':
+                    os.startfile(filename)
+                    
+        except Exception as e:
+            messagebox.showerror("Hata", f"Rapor kaydedilemedi: {e}")
+        
     def create_backup_tab(self):
         """Modern yedekleme sekmesi"""
         self.tabview.add("💾 Yedekleme")
