@@ -1144,40 +1144,6 @@ class ElitePOS:
         """Ürün düzenleme (gelecek sürümde)"""
         messagebox.showinfo("Bilgi", "Ürün düzenleme özelliği gelecek versiyonda eklenecek.")
         
-        def save_customer():
-            name = name_entry.get().strip()
-            if not name:
-                messagebox.showerror("Hata", "Müşteri adı gerekli!")
-                return
-                
-            customers = self.load_data('customers')
-            
-            new_customer = {
-                "id": f"cust_{len(customers)+1:03d}",
-                "name": name,
-                "phone": phone_entry.get().strip(),
-                "email": email_entry.get().strip(),
-                "address": address_text.get("1.0", tk.END).strip(),
-                "credit_limit": float(credit_entry.get() or 0),
-                "notes": notes_text.get("1.0", tk.END).strip(),
-                "created_at": datetime.now().isoformat()
-            }
-            
-            customers.append(new_customer)
-            
-            if self.save_data('customers', customers):
-                messagebox.showinfo("Başarılı", "Müşteri eklendi!")
-                dialog.destroy()
-                self.refresh_customers()
-                self.refresh_sale_combos()
-            
-        # Butonlar
-        buttons_frame = ttk.Frame(dialog)
-        buttons_frame.grid(row=6, column=0, columnspan=2, pady=20)
-        
-        ttk.Button(buttons_frame, text="💾 Kaydet", command=save_customer).pack(side=tk.LEFT, padx=5)
-        ttk.Button(buttons_frame, text="❌ İptal", command=dialog.destroy).pack(side=tk.LEFT)
-        
     def customer_context_menu(self, event):
         """Müşteri sağ tık menüsü"""
         item = self.customers_tree.selection()
