@@ -20,21 +20,24 @@ from typing import Dict, List, Optional
 
 class ElitePOS:
     def __init__(self):
-        self.root = tk.Tk()
+        # CustomTkinter ayarları
+        ctk.set_appearance_mode("light")  # "light" veya "dark"
+        ctk.set_default_color_theme("blue")  # "blue", "green", "dark-blue"
+        
+        self.root = ctk.CTk()
         self.setup_window()
         self.setup_data()
         self.create_widgets()
         
     def setup_window(self):
         """Ana pencere ayarları"""
-        self.root.title("Elite Medya Bilişim POS v1.0")
-        self.root.geometry("1200x700")
-        self.root.minsize(1000, 600)
+        self.root.title("🏪 Elite Medya Bilişim POS v2.0")
+        self.root.geometry("1400x800")
+        self.root.minsize(1200, 700)
         
         # Icon (opsiyonel)
         try:
             if getattr(sys, 'frozen', False):
-                # PyInstaller bundle
                 base_path = sys._MEIPASS
             else:
                 base_path = os.path.dirname(__file__)
@@ -43,10 +46,6 @@ class ElitePOS:
                 self.root.iconbitmap(icon_path)
         except:
             pass
-            
-        # Modern tema
-        style = ttk.Style()
-        style.theme_use('clam')
         
         # Pencere kapatma eventi
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
