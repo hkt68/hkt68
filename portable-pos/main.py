@@ -977,15 +977,15 @@ class ElitePOS:
                 ))
                 
     def new_customer_dialog(self):
-        """Yeni müşteri ekleme dialogu"""
+        """Modern yeni müşteri ekleme dialogu"""
         dialog = ctk.CTkToplevel(self.root)
         dialog.title("Yeni Müşteri")
-        dialog.geometry("450x400")
+        dialog.geometry("500x600")
         dialog.transient(self.root)
         dialog.grab_set()
         
         # Başlık
-        title = ctk.CTkLabel(dialog, text="👤 Yeni Müşteri Ekle", font=ctk.CTkFont(size=18, weight="bold"))
+        title = ctk.CTkLabel(dialog, text="👤 Yeni Müşteri Ekle", font=ctk.CTkFont(size=20, weight="bold"))
         title.pack(pady=20)
         
         # Form frame
@@ -993,31 +993,31 @@ class ElitePOS:
         form_frame.pack(fill="both", expand=True, padx=20, pady=10)
         
         # Form alanları
-        ctk.CTkLabel(form_frame, text="Müşteri Adı *", font=ctk.CTkFont(size=12)).pack(anchor="w", padx=10, pady=(15, 5))
-        name_entry = ctk.CTkEntry(form_frame, width=400, placeholder_text="Müşteri adını girin...")
-        name_entry.pack(padx=10, pady=(0, 10))
+        ctk.CTkLabel(form_frame, text="Müşteri Adı *", font=ctk.CTkFont(size=12, weight="bold")).pack(anchor="w", padx=15, pady=(20, 5))
+        name_entry = ctk.CTkEntry(form_frame, width=450, height=35, placeholder_text="Müşteri adını girin...")
+        name_entry.pack(padx=15, pady=(0, 15))
         name_entry.focus()
         
-        ctk.CTkLabel(form_frame, text="Telefon", font=ctk.CTkFont(size=12)).pack(anchor="w", padx=10, pady=(0, 5))
-        phone_entry = ctk.CTkEntry(form_frame, width=400, placeholder_text="Telefon numarası...")
-        phone_entry.pack(padx=10, pady=(0, 10))
+        ctk.CTkLabel(form_frame, text="Telefon", font=ctk.CTkFont(size=12)).pack(anchor="w", padx=15, pady=(0, 5))
+        phone_entry = ctk.CTkEntry(form_frame, width=450, height=35, placeholder_text="0532 123 4567")
+        phone_entry.pack(padx=15, pady=(0, 15))
         
-        ctk.CTkLabel(form_frame, text="E-posta", font=ctk.CTkFont(size=12)).pack(anchor="w", padx=10, pady=(0, 5))
-        email_entry = ctk.CTkEntry(form_frame, width=400, placeholder_text="E-posta adresi...")
-        email_entry.pack(padx=10, pady=(0, 10))
+        ctk.CTkLabel(form_frame, text="E-posta", font=ctk.CTkFont(size=12)).pack(anchor="w", padx=15, pady=(0, 5))
+        email_entry = ctk.CTkEntry(form_frame, width=450, height=35, placeholder_text="ornek@email.com")
+        email_entry.pack(padx=15, pady=(0, 15))
         
-        ctk.CTkLabel(form_frame, text="Adres", font=ctk.CTkFont(size=12)).pack(anchor="w", padx=10, pady=(0, 5))
-        address_text = ctk.CTkTextbox(form_frame, width=400, height=60)
-        address_text.pack(padx=10, pady=(0, 10))
+        ctk.CTkLabel(form_frame, text="Adres", font=ctk.CTkFont(size=12)).pack(anchor="w", padx=15, pady=(0, 5))
+        address_text = ctk.CTkTextbox(form_frame, width=450, height=80)
+        address_text.pack(padx=15, pady=(0, 15))
         
-        ctk.CTkLabel(form_frame, text="Kredi Limiti (₺)", font=ctk.CTkFont(size=12)).pack(anchor="w", padx=10, pady=(0, 5))
-        credit_entry = ctk.CTkEntry(form_frame, width=400, placeholder_text="5000.00")
-        credit_entry.pack(padx=10, pady=(0, 10))
+        ctk.CTkLabel(form_frame, text="Kredi Limiti (₺)", font=ctk.CTkFont(size=12)).pack(anchor="w", padx=15, pady=(0, 5))
+        credit_entry = ctk.CTkEntry(form_frame, width=450, height=35, placeholder_text="5000.00")
+        credit_entry.pack(padx=15, pady=(0, 15))
         credit_entry.insert(0, "5000.00")
         
-        ctk.CTkLabel(form_frame, text="Notlar", font=ctk.CTkFont(size=12)).pack(anchor="w", padx=10, pady=(0, 5))
-        notes_text = ctk.CTkTextbox(form_frame, width=400, height=60)
-        notes_text.pack(padx=10, pady=(0, 15))
+        ctk.CTkLabel(form_frame, text="Notlar", font=ctk.CTkFont(size=12)).pack(anchor="w", padx=15, pady=(0, 5))
+        notes_text = ctk.CTkTextbox(form_frame, width=450, height=60)
+        notes_text.pack(padx=15, pady=(0, 15))
         
         def save_customer():
             name = name_entry.get().strip()
@@ -1025,15 +1025,23 @@ class ElitePOS:
                 messagebox.showerror("Hata", "Müşteri adı gerekli!")
                 return
                 
+            try:
+                credit_limit = float(credit_entry.get().replace(',', '.') or 0)
+                if credit_limit < 0:
+                    raise ValueError("Kredi limiti negatif olamaz")
+            except ValueError:
+                messagebox.showerror("Hata", "Geçerli bir kredi limiti girin!")
+                return
+                
             customers = self.load_data('customers')
             
             new_customer = {
-                "id": f"cust_{len(customers)+1:03d}",
+                "id": f"cust_{len(customers)+1:03d}_{str(uuid.uuid4())[:8]}",
                 "name": name,
                 "phone": phone_entry.get().strip(),
                 "email": email_entry.get().strip(),
                 "address": address_text.get("1.0", "end-1c").strip(),
-                "credit_limit": float(credit_entry.get().replace(',', '.') or 0),
+                "credit_limit": credit_limit,
                 "notes": notes_text.get("1.0", "end-1c").strip(),
                 "created_at": datetime.now().isoformat()
             }
@@ -1041,7 +1049,7 @@ class ElitePOS:
             customers.append(new_customer)
             
             if self.save_data('customers', customers):
-                messagebox.showinfo("Başarılı", "Müşteri eklendi!")
+                messagebox.showinfo("Başarılı", f"✅ Müşteri eklendi!\n\n👤 {name}\n📞 {phone_entry.get() or 'Telefon yok'}")
                 dialog.destroy()
                 self.refresh_customers()
                 self.refresh_sale_combos()
@@ -1050,8 +1058,22 @@ class ElitePOS:
         button_frame = ctk.CTkFrame(dialog)
         button_frame.pack(fill="x", padx=20, pady=(0, 20))
         
-        ctk.CTkButton(button_frame, text="💾 Kaydet", command=save_customer, width=120).pack(side="left", padx=10, pady=10)
-        ctk.CTkButton(button_frame, text="❌ İptal", command=dialog.destroy, width=100).pack(side="right", padx=10, pady=10)
+        ctk.CTkButton(
+            button_frame, 
+            text="💾 Müşteriyi Kaydet", 
+            command=save_customer,
+            width=150,
+            height=40,
+            font=ctk.CTkFont(size=14, weight="bold")
+        ).pack(side="left", padx=15, pady=15)
+        
+        ctk.CTkButton(
+            button_frame, 
+            text="❌ İptal", 
+            command=dialog.destroy,
+            width=100,
+            height=40
+        ).pack(side="right", padx=15, pady=15)
     
     def create_products_tab(self):
         """Ürünler sekmesi"""
