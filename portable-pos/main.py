@@ -155,7 +155,8 @@ class ElitePOS:
             settings = {
                 "company_name": "Elite Medya Bilişim",
                 "currency": "TRY",
-                "version": "1.0"
+                "version": "2.0",
+                "web_api_url": "https://pos-crm-elite.preview.emergentagent.com/api"
             }
             self.save_data('settings', settings)
             
