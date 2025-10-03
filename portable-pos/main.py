@@ -938,11 +938,12 @@ class ElitePOS:
             
             self.customers_tree.insert(
                 "", 
-                tk.END, 
+                "end", 
                 values=(
                     customer['id'][-6:],  # Son 6 karakter
                     customer['name'],
                     customer.get('phone', ''),
+                    customer.get('email', ''),
                     f"₺{total_debt:.2f}",
                     status
                 ),
