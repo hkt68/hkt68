@@ -7,7 +7,7 @@ import requests
 import json
 from datetime import datetime
 
-BACKEND_URL = "https://elite-pos-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://pos-crm-elite.preview.emergentagent.com/api"
 
 def test_mixed_purchase_history():
     """Test purchase history with both regular sales and manual credits"""

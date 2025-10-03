@@ -16,7 +16,7 @@ from typing import Dict, Any, Optional
 import uuid
 
 # Backend URL from environment
-BACKEND_URL = "https://elite-pos-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://pos-crm-elite.preview.emergentagent.com/api"
 
 class ElitePOSEnhancementsTester:
     def __init__(self):

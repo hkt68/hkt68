@@ -4,7 +4,7 @@
 import { fetch } from 'wix-fetch';
 
 // Configuration
-const API_BASE_URL = 'https://elite-pos-1.preview.emergentagent.com/api';
+const API_BASE_URL = 'https://pos-crm-elite.preview.emergentagent.com/api';
 const API_TIMEOUT = 10000;
 
 // Generic API request handler

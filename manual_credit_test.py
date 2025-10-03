@@ -9,7 +9,7 @@ import json
 from datetime import datetime
 
 # Backend URL
-BACKEND_URL = "https://elite-pos-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://pos-crm-elite.preview.emergentagent.com/api"
 
 def test_manual_credit_purchase_history():
     """Test the specific requirements from the review request"""
