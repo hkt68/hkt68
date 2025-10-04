@@ -2193,12 +2193,120 @@ function CustomerManagement() {
           </div>
         </div>
 
+        {/* Müşteri Ekleme/Düzenleme Modal */}
+        {(showAddCustomer || editingCustomer) && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+              <div className="p-6">
+                <h3 className="text-lg font-bold text-gray-800 mb-4">
+                  {editingCustomer ? '✏️ Müşteri Düzenle' : '➕ Yeni Müşteri Ekle'}
+                </h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Müşteri Adı *
+                    </label>
+                    <input
+                      type="text"
+                      value={newCustomer.name}
+                      onChange={(e) => setNewCustomer({...newCustomer, name: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="Müşteri adı..."
+                      data-testid="customer-name-input"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Telefon
+                    </label>
+                    <input
+                      type="text"
+                      value={newCustomer.phone}
+                      onChange={(e) => setNewCustomer({...newCustomer, phone: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="0555 123 45 67"
+                      data-testid="customer-phone-input"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      E-posta
+                    </label>
+                    <input
+                      type="email"
+                      value={newCustomer.email}
+                      onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="ornek@email.com"
+                      data-testid="customer-email-input"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Adres
+                    </label>
+                    <textarea
+                      value={newCustomer.address}
+                      onChange={(e) => setNewCustomer({...newCustomer, address: e.target.value})}
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="Müşteri adresi..."
+                      data-testid="customer-address-input"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Vergi No
+                    </label>
+                    <input
+                      type="text"
+                      value={newCustomer.tax_number}
+                      onChange={(e) => setNewCustomer({...newCustomer, tax_number: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="1234567890"
+                      data-testid="customer-tax-input"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex space-x-3 pt-6">
+                  <button
+                    onClick={() => {
+                      setShowAddCustomer(false);
+                      setEditingCustomer(null);
+                      setNewCustomer({ name: '', phone: '', email: '', address: '', tax_number: '' });
+                    }}
+                    className="flex-1 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+                  >
+                    İptal
+                  </button>
+                  <button
+                    onClick={addCustomer}
+                    disabled={isLoading}
+                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300"
+                    data-testid="save-customer-button"
+                  >
+                    {isLoading ? 'Kaydediliyor...' : editingCustomer ? 'Güncelle' : 'Kaydet'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Manuel Borç Ekleme Modal */}
         {showAddTransaction && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
               <div className="p-6">
-                <h3 className="text-lg font-bold text-gray-800 mb-4">💰 Manuel Hareket Ekle</h3>
+                <h3 className="text-lg font-bold text-gray-800 mb-4">
+                  {newTransaction.transaction_type === 'payment' ? '💵 Tahsilat Yap' : '📝 Manuel Borç Ekle'}
+                </h3>
                 
                 <div className="space-y-4">
                   <div>
