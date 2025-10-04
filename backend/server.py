@@ -629,6 +629,250 @@ async def delete_customer_transaction(customer_id: str, transaction_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Hareket silinemedi: {str(e)}")
 
+# ==== REPORTS ROUTES ====
+@api_router.get("/reports/sales")
+async def get_sales_report(start_date: str = None, end_date: str = None):
+    """Satış raporu - tarih aralığına göre"""
+    try:
+        # Varsayılan tarih aralığı: son 30 gün
+        if not start_date:
+            start_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+        if not end_date:
+            end_date = datetime.now().strftime('%Y-%m-%d')
+        
+        # Satış özeti
+        sales_summary = await db.fetch_one(
+            """
+            SELECT 
+                COUNT(*) as total_sales,
+                SUM(total_amount) as total_revenue,
+                AVG(total_amount) as avg_sale_amount,
+                SUM(CASE WHEN payment_method = 'cash' THEN total_amount ELSE 0 END) as cash_sales,
+                SUM(CASE WHEN payment_method = 'card' THEN total_amount ELSE 0 END) as card_sales,
+                SUM(CASE WHEN payment_method = 'credit' THEN total_amount ELSE 0 END) as credit_sales
+            FROM sales 
+            WHERE DATE(created_at) BETWEEN ? AND ?
+            """, (start_date, end_date)
+        )
+        
+        # Günlük bazda satışlar
+        daily_sales = await db.fetch_all(
+            """
+            SELECT 
+                DATE(created_at) as sale_date,
+                COUNT(*) as sale_count,
+                SUM(total_amount) as daily_revenue
+            FROM sales 
+            WHERE DATE(created_at) BETWEEN ? AND ?
+            GROUP BY DATE(created_at)
+            ORDER BY sale_date DESC
+            """, (start_date, end_date)
+        )
+        
+        # En çok satılan ürünler
+        top_products = await db.fetch_all(
+            """
+            SELECT 
+                p.name as product_name,
+                p.sale_price,
+                SUM(si.quantity) as total_quantity,
+                SUM(si.total_price) as total_sales_amount,
+                COUNT(DISTINCT si.sale_id) as sale_count
+            FROM sale_items si
+            JOIN products p ON si.product_id = p.id
+            JOIN sales s ON si.sale_id = s.id
+            WHERE DATE(s.created_at) BETWEEN ? AND ?
+            GROUP BY p.id, p.name, p.sale_price
+            ORDER BY total_quantity DESC
+            LIMIT 10
+            """, (start_date, end_date)
+        )
+        
+        return {
+            "success": True,
+            "data": {
+                "period": {"start_date": start_date, "end_date": end_date},
+                "summary": sales_summary,
+                "daily_sales": daily_sales,
+                "top_products": top_products
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Satış raporu alınamadı: {str(e)}")
+
+@api_router.get("/reports/inventory")
+async def get_inventory_report():
+    """Stok raporu"""
+    try:
+        # Düşük stok ürünleri
+        low_stock = await db.fetch_all(
+            """
+            SELECT p.*, c.name as category_name
+            FROM products p
+            LEFT JOIN categories c ON p.category_id = c.id
+            WHERE p.stock_quantity <= p.min_stock_level AND p.is_active = 1
+            ORDER BY (p.stock_quantity - p.min_stock_level) ASC
+            """
+        )
+        
+        # Stok değeri
+        inventory_value = await db.fetch_one(
+            """
+            SELECT 
+                SUM(p.stock_quantity * p.purchase_price) as total_purchase_value,
+                SUM(p.stock_quantity * p.sale_price) as total_sale_value,
+                COUNT(*) as total_products,
+                SUM(p.stock_quantity) as total_items
+            FROM products p 
+            WHERE p.is_active = 1
+            """
+        )
+        
+        # Kategori bazlı stok
+        category_stock = await db.fetch_all(
+            """
+            SELECT 
+                c.name as category_name,
+                COUNT(p.id) as product_count,
+                SUM(p.stock_quantity) as total_quantity,
+                SUM(p.stock_quantity * p.sale_price) as total_value
+            FROM products p
+            JOIN categories c ON p.category_id = c.id
+            WHERE p.is_active = 1
+            GROUP BY c.id, c.name
+            ORDER BY total_value DESC
+            """
+        )
+        
+        return {
+            "success": True,
+            "data": {
+                "inventory_summary": inventory_value,
+                "low_stock_products": low_stock,
+                "category_breakdown": category_stock
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Stok raporu alınamadı: {str(e)}")
+
+@api_router.get("/reports/customers")
+async def get_customer_report():
+    """Müşteri analiz raporu"""
+    try:
+        # Müşteri özeti
+        customer_summary = await db.fetch_one(
+            """
+            SELECT 
+                COUNT(*) as total_customers,
+                SUM(CASE WHEN balance > 0 THEN 1 ELSE 0 END) as customers_with_debt,
+                SUM(CASE WHEN balance > 0 THEN balance ELSE 0 END) as total_debt,
+                SUM(CASE WHEN balance < 0 THEN ABS(balance) ELSE 0 END) as total_credit,
+                AVG(balance) as avg_balance
+            FROM customers
+            WHERE is_active = 1
+            """
+        )
+        
+        # En borçlu müşteriler
+        top_debtors = await db.fetch_all(
+            """
+            SELECT name, phone, balance, created_at
+            FROM customers 
+            WHERE balance > 0 AND is_active = 1
+            ORDER BY balance DESC
+            LIMIT 10
+            """
+        )
+        
+        # En çok alışveriş yapan müşteriler
+        top_buyers = await db.fetch_all(
+            """
+            SELECT 
+                c.name,
+                c.phone,
+                COUNT(s.id) as total_sales,
+                SUM(s.total_amount) as total_spent
+            FROM customers c
+            JOIN sales s ON c.id = s.customer_id
+            WHERE c.is_active = 1
+            GROUP BY c.id, c.name, c.phone
+            ORDER BY total_spent DESC
+            LIMIT 10
+            """
+        )
+        
+        return {
+            "success": True,
+            "data": {
+                "customer_summary": customer_summary,
+                "top_debtors": top_debtors,
+                "top_buyers": top_buyers
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Müşteri raporu alınamadı: {str(e)}")
+
+@api_router.get("/reports/dashboard")
+async def get_dashboard_stats():
+    """Ana sayfa dashboard istatistikleri"""
+    try:
+        today = datetime.now().strftime('%Y-%m-%d')
+        
+        # Bugünkü satışlar
+        today_stats = await db.fetch_one(
+            """
+            SELECT 
+                COUNT(*) as today_sales,
+                COALESCE(SUM(total_amount), 0) as today_revenue
+            FROM sales 
+            WHERE DATE(created_at) = ?
+            """, (today,)
+        )
+        
+        # Genel istatistikler
+        general_stats = await db.fetch_all(
+            """
+            SELECT 
+                'products' as type, COUNT(*) as count FROM products WHERE is_active = 1
+            UNION ALL
+            SELECT 
+                'customers' as type, COUNT(*) as count FROM customers WHERE is_active = 1
+            UNION ALL
+            SELECT 
+                'low_stock' as type, COUNT(*) as count FROM products 
+                WHERE stock_quantity <= min_stock_level AND is_active = 1
+            """
+        )
+        
+        # Son 7 günlük satış trendi
+        weekly_trend = await db.fetch_all(
+            """
+            SELECT 
+                DATE(created_at) as date,
+                COUNT(*) as sales_count,
+                SUM(total_amount) as revenue
+            FROM sales 
+            WHERE created_at >= date('now', '-7 days')
+            GROUP BY DATE(created_at)
+            ORDER BY date ASC
+            """
+        )
+        
+        return {
+            "success": True,
+            "data": {
+                "today": today_stats,
+                "general": {stat['type']: stat['count'] for stat in general_stats},
+                "weekly_trend": weekly_trend
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Dashboard istatistikleri alınamadı: {str(e)}")
+
 # ==== BASIC ROUTES ====
 @api_router.get("/")
 async def root():
