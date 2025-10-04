@@ -182,6 +182,24 @@ async def get_product_suggestions(q: str, limit: int = 5):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Öneriler alınamadı: {str(e)}")
 
+@api_router.get("/products/{product_id}")
+async def get_product(product_id: str):
+    """Tek ürün detaylarını getir"""
+    try:
+        product = await db.fetch_one(
+            """
+            SELECT p.*, c.name as category_name 
+            FROM products p 
+            LEFT JOIN categories c ON p.category_id = c.id 
+            WHERE p.id = ?
+            """, (product_id,)
+        )
+        if not product:
+            raise HTTPException(status_code=404, detail="Ürün bulunamadı")
+        return ProductResponse(data=Product(**product))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ürün detayları alınamadı: {str(e)}")
+
 @api_router.post("/products", response_model=ProductResponse)
 async def create_product(product: ProductCreate):
     """Yeni ürün oluştur"""
