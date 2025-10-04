@@ -2140,6 +2140,18 @@ function CustomerManagement() {
                           {new Date(transaction.created_at).toLocaleString('tr-TR')}
                         </p>
                       </div>
+                      
+                      {/* Manuel borç ve ödeme kayıtları silinebilir */}
+                      {['manual_debt', 'payment'].includes(transaction.transaction_type) && (
+                        <button
+                          onClick={() => deleteTransaction(transaction.id, transaction.description)}
+                          className="ml-3 p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Hareketi sil"
+                          data-testid={`delete-transaction-${transaction.id}`}
+                        >
+                          🗑️
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
