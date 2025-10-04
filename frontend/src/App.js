@@ -2040,20 +2040,33 @@ function CustomerManagement() {
             </h2>
           </div>
           
-          <div className="flex space-x-3">
+          <div className="flex flex-wrap gap-3">
             <button
-              onClick={() => setShowAddTransaction(true)}
+              onClick={() => {
+                setNewTransaction({ transaction_type: 'manual_debt', amount: '', description: '' });
+                setShowAddTransaction(true);
+              }}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              data-testid="add-transaction-button"
+              data-testid="add-debt-button"
             >
-              💰 Manuel Borç Ekle
+              📝 Manuel Borç Ekle
+            </button>
+            <button
+              onClick={() => {
+                setNewTransaction({ transaction_type: 'payment', amount: '', description: '' });
+                setShowAddTransaction(true);
+              }}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              data-testid="add-payment-button"
+            >
+              💵 Tahsilat Yap
             </button>
             <button
               onClick={() => printCustomerStatement(selectedCustomer.customer, transactions)}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
               data-testid="print-statement-button"
             >
-              🖨️ Ekstre Yazdır
+              🖨️ A4 Ekstre Yazdır
             </button>
           </div>
         </div>
