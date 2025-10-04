@@ -105,17 +105,22 @@ async def get_products():
 
 @api_router.get("/products/search")
 async def search_products(q: str):
-    """Ürün arama (isim veya barkod)"""
+    """Ürün arama (isim veya barkod) - gelişmiş"""
     try:
         query = """
             SELECT p.*, c.name as category_name 
             FROM products p 
             LEFT JOIN categories c ON p.category_id = c.id 
             WHERE p.name LIKE ? OR p.barcode LIKE ? 
-            ORDER BY p.name
+            ORDER BY 
+                CASE 
+                    WHEN p.name LIKE ? THEN 1  -- Başlangıçta eşleşen öncelikli
+                    ELSE 2 
+                END, p.is_favorite DESC, p.name
         """
         search_term = f"%{q}%"
-        products = await db.fetch_all(query, (search_term, search_term))
+        exact_start = f"{q}%"
+        products = await db.fetch_all(query, (search_term, search_term, exact_start))
         return SearchResponse(
             data=[Product(**prod) for prod in products],
             query=q,
@@ -123,6 +128,59 @@ async def search_products(q: str):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Arama yapılamadı: {str(e)}")
+
+@api_router.get("/products/favorites")
+async def get_favorite_products():
+    """Favori ürünleri getir"""
+    try:
+        query = """
+            SELECT p.*, c.name as category_name 
+            FROM products p 
+            LEFT JOIN categories c ON p.category_id = c.id 
+            WHERE p.is_favorite = 1 AND p.is_active = 1
+            ORDER BY p.name
+        """
+        products = await db.fetch_all(query)
+        return ProductListResponse(data=[Product(**prod) for prod in products])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Favori ürünler alınamadı: {str(e)}")
+
+@api_router.put("/products/{product_id}/favorite")
+async def toggle_product_favorite(product_id: str):
+    """Ürün favori durumunu değiştir"""
+    try:
+        # Mevcut favori durumunu al
+        product = await db.fetch_one("SELECT is_favorite FROM products WHERE id = ?", (product_id,))
+        if not product:
+            raise HTTPException(status_code=404, detail="Ürün bulunamadı")
+        
+        new_favorite_status = 0 if product['is_favorite'] else 1
+        await db.execute(
+            "UPDATE products SET is_favorite = ? WHERE id = ?", 
+            (new_favorite_status, product_id)
+        )
+        
+        status = "eklendi" if new_favorite_status else "kaldırıldı"
+        return BaseResponse(message=f"Ürün favorilerden {status}")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Favori durumu güncellenemedi: {str(e)}")
+
+@api_router.get("/products/suggestions")
+async def get_product_suggestions(q: str, limit: int = 5):
+    """Ürün önerileri - hızlı arama"""
+    try:
+        query = """
+            SELECT p.name, p.barcode, p.sale_price, p.id, p.image_url
+            FROM products p 
+            WHERE (p.name LIKE ? OR p.barcode LIKE ?) AND p.is_active = 1
+            ORDER BY p.is_favorite DESC, p.name
+            LIMIT ?
+        """
+        search_term = f"%{q}%"
+        suggestions = await db.fetch_all(query, (search_term, search_term, limit))
+        return {"success": True, "data": suggestions}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Öneriler alınamadı: {str(e)}")
 
 @api_router.post("/products", response_model=ProductResponse)
 async def create_product(product: ProductCreate):
