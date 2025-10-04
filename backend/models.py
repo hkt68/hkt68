@@ -67,6 +67,9 @@ class ProductUpdate(BaseModel):
     min_stock_level: Optional[int] = None
     unit: Optional[str] = None
     description: Optional[str] = None
+    vat_rate: Optional[float] = None
+    image_url: Optional[str] = None
+    is_favorite: Optional[bool] = None
     is_active: Optional[bool] = None
 
 class ProductResponse(BaseResponse):
