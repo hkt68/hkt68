@@ -1695,48 +1695,130 @@ function CustomerManagement() {
   };
 
   const printCustomerStatement = (customer, transactions) => {
+    const totalDebt = transactions
+      .filter(t => ['debt', 'manual_debt', 'sale'].includes(t.transaction_type))
+      .reduce((sum, t) => sum + t.amount, 0);
+    
+    const totalPayments = transactions
+      .filter(t => t.transaction_type === 'payment')
+      .reduce((sum, t) => sum + t.amount, 0);
+
     const printContent = `
-      <div style="font-family: monospace; font-size: 12px; width: 58mm; margin: 0; padding: 5px;">
-        <div style="text-align: center; margin-bottom: 10px; border-bottom: 1px solid black; padding-bottom: 5px;">
-          <div style="font-weight: bold;">ELİTE MEDYA BİLİŞİM</div>
-          <div>CARİ HESAP EKSTRESİ</div>
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Cari Hesap Ekstresi</title>
+        <style>
+          @media print {
+            @page { size: A4; margin: 15mm; }
+            body { font-family: Arial, sans-serif; font-size: 11px; line-height: 1.4; margin: 0; }
+          }
+          body { font-family: Arial, sans-serif; font-size: 11px; line-height: 1.4; margin: 0; }
+          .header { text-align: center; margin-bottom: 30px; }
+          .company-name { font-size: 18px; font-weight: bold; color: #1e40af; }
+          .document-title { font-size: 14px; margin: 10px 0; }
+          .info-section { margin: 20px 0; }
+          .info-row { display: flex; justify-content: space-between; margin: 5px 0; }
+          .table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+          .table th, .table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          .table th { background-color: #f5f5f5; font-weight: bold; }
+          .amount-positive { color: #dc2626; font-weight: bold; }
+          .amount-negative { color: #16a34a; font-weight: bold; }
+          .summary { margin-top: 30px; }
+          .summary-item { display: flex; justify-content: space-between; margin: 8px 0; padding: 5px; background: #f9f9f9; }
+          .total-row { font-size: 14px; font-weight: bold; border-top: 2px solid #333; padding-top: 10px; }
+          .footer { margin-top: 40px; text-align: center; font-size: 10px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="company-name">ELİTE MEDYA BİLİŞİM</div>
+          <div>www.elitmedyabilisim.shop</div>
+          <div class="document-title">CARİ HESAP EKSTRESİ</div>
         </div>
-        
-        <div style="margin-bottom: 10px;">
-          <div><strong>Müşteri:</strong> ${customer.name}</div>
-          ${customer.phone ? `<div><strong>Telefon:</strong> ${customer.phone}</div>` : ''}
-          <div><strong>Tarih:</strong> ${new Date().toLocaleDateString('tr-TR')}</div>
-          <div><strong>Bakiye:</strong> ${customer.balance.toFixed(2)} TL</div>
+
+        <div class="info-section">
+          <div class="info-row">
+            <strong>Müşteri:</strong>
+            <span>${customer.name}</span>
+          </div>
+          ${customer.phone ? `
+          <div class="info-row">
+            <strong>Telefon:</strong>
+            <span>${customer.phone}</span>
+          </div>` : ''}
+          ${customer.email ? `
+          <div class="info-row">
+            <strong>E-posta:</strong>
+            <span>${customer.email}</span>
+          </div>` : ''}
+          <div class="info-row">
+            <strong>Ekstre Tarihi:</strong>
+            <span>${new Date().toLocaleDateString('tr-TR')} - ${new Date().toLocaleTimeString('tr-TR')}</span>
+          </div>
         </div>
-        
-        <div style="border-top: 1px solid black; margin: 10px 0;">
-          <div style="font-weight: bold; margin: 5px 0;">HAREKET LİSTESİ</div>
-          ${transactions.map(t => `
-            <div style="margin: 3px 0; font-size: 10px;">
-              <div style="display: flex; justify-content: space-between;">
-                <span>${formatTransactionType(t.transaction_type)}</span>
-                <span>${t.amount.toFixed(2)} TL</span>
-              </div>
-              ${t.description ? `<div style="color: gray; font-size: 9px;">${t.description}</div>` : ''}
-              <div style="color: gray; font-size: 8px;">${new Date(t.created_at).toLocaleDateString('tr-TR')}</div>
-            </div>
-          `).join('')}
+
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Tarih</th>
+              <th>İşlem Tipi</th>
+              <th>Açıklama</th>
+              <th>Borç</th>
+              <th>Alacak</th>
+              <th>Bakiye</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${transactions.map((t, index) => {
+              const isDebit = ['debt', 'manual_debt', 'sale'].includes(t.transaction_type);
+              const runningBalance = transactions
+                .slice(0, index + 1)
+                .reduce((bal, tr) => {
+                  return bal + (['debt', 'manual_debt', 'sale'].includes(tr.transaction_type) ? tr.amount : -tr.amount);
+                }, 0);
+              
+              return `
+                <tr>
+                  <td>${new Date(t.created_at).toLocaleDateString('tr-TR')}</td>
+                  <td>${formatTransactionType(t.transaction_type)}</td>
+                  <td>${t.description || '-'}</td>
+                  <td class="amount-positive">${isDebit ? t.amount.toFixed(2) + ' TL' : '-'}</td>
+                  <td class="amount-negative">${!isDebit ? t.amount.toFixed(2) + ' TL' : '-'}</td>
+                  <td>${runningBalance.toFixed(2)} TL</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+
+        <div class="summary">
+          <div class="summary-item">
+            <strong>Toplam Borç:</strong>
+            <span class="amount-positive">${totalDebt.toFixed(2)} TL</span>
+          </div>
+          <div class="summary-item">
+            <strong>Toplam Ödeme:</strong>
+            <span class="amount-negative">${totalPayments.toFixed(2)} TL</span>
+          </div>
+          <div class="summary-item total-row">
+            <strong>GÜNCEL BAKİYE:</strong>
+            <span class="${customer.balance >= 0 ? 'amount-positive' : 'amount-negative'}">
+              ${customer.balance.toFixed(2)} TL ${customer.balance >= 0 ? '(BORÇLU)' : '(ALACAKLI)'}
+            </span>
+          </div>
         </div>
-        
-        <div style="text-align: center; margin-top: 15px; border-top: 1px solid black; padding-top: 5px; font-size: 10px;">
-          <div>Bu belge bilgi amaçlıdır</div>
-          <div>Elite Medya Bilişim</div>
+
+        <div class="footer">
+          <p>Bu ekstre ${new Date().toLocaleDateString('tr-TR')} tarihinde Elite Medya POS sistemi tarafından oluşturulmuştur.</p>
+          <p>Herhangi bir sorunuz için: www.elitmedyabilisim.shop</p>
         </div>
-      </div>
+      </body>
+      </html>
     `;
 
     const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-      <html>
-        <head><title>Cari Hesap Ekstresi</title></head>
-        <body>${printContent}</body>
-      </html>
-    `);
+    printWindow.document.write(printContent);
     printWindow.document.close();
     printWindow.print();
   };
