@@ -1607,6 +1607,386 @@ function ProductManagement() {
   );
 }
 
+// Müşteri Detay ve Cari Hesap Komponenti
+function CustomerManagement() {
+  const [customers, setCustomers] = useState([]);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [transactions, setTransactions] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showAddTransaction, setShowAddTransaction] = useState(false);
+  const [newTransaction, setNewTransaction] = useState({
+    transaction_type: 'manual_debt',
+    amount: '',
+    description: ''
+  });
+
+  useEffect(() => {
+    loadCustomers();
+  }, []);
+
+  const loadCustomers = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get(`${API}/customers`);
+      setCustomers(response.data.data);
+    } catch (error) {
+      console.error('Müşteriler yüklenemedi:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadCustomerDetail = async (customerId) => {
+    try {
+      setIsLoading(true);
+      const [customerResponse, transactionsResponse] = await Promise.all([
+        axios.get(`${API}/customers/${customerId}`),
+        axios.get(`${API}/customers/${customerId}/transactions`)
+      ]);
+      
+      setSelectedCustomer(customerResponse.data.data);
+      setTransactions(transactionsResponse.data.data);
+    } catch (error) {
+      console.error('Müşteri detayları yüklenemedi:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const addTransaction = async () => {
+    if (!selectedCustomer || !newTransaction.amount) {
+      alert('Lütfen tüm alanları doldurun!');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await axios.post(
+        `${API}/customers/${selectedCustomer.customer.id}/transactions`,
+        {
+          ...newTransaction,
+          amount: parseFloat(newTransaction.amount)
+        }
+      );
+      
+      if (response.data.success) {
+        setNewTransaction({ transaction_type: 'manual_debt', amount: '', description: '' });
+        setShowAddTransaction(false);
+        loadCustomerDetail(selectedCustomer.customer.id);
+        loadCustomers(); // Bakiye güncellemesi için
+        alert('Hareket başarıyla eklendi!');
+      }
+    } catch (error) {
+      console.error('Hareket eklenemedi:', error);
+      alert('Hareket eklenemedi: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const formatTransactionType = (type) => {
+    const types = {
+      'manual_debt': '📝 Manuel Borç',
+      'debt': '💰 Borç',
+      'payment': '✅ Ödeme',
+      'sale': '🛒 Satış'
+    };
+    return types[type] || type;
+  };
+
+  const printCustomerStatement = (customer, transactions) => {
+    const printContent = `
+      <div style="font-family: monospace; font-size: 12px; width: 58mm; margin: 0; padding: 5px;">
+        <div style="text-align: center; margin-bottom: 10px; border-bottom: 1px solid black; padding-bottom: 5px;">
+          <div style="font-weight: bold;">ELİTE MEDYA BİLİŞİM</div>
+          <div>CARİ HESAP EKSTRESİ</div>
+        </div>
+        
+        <div style="margin-bottom: 10px;">
+          <div><strong>Müşteri:</strong> ${customer.name}</div>
+          ${customer.phone ? `<div><strong>Telefon:</strong> ${customer.phone}</div>` : ''}
+          <div><strong>Tarih:</strong> ${new Date().toLocaleDateString('tr-TR')}</div>
+          <div><strong>Bakiye:</strong> ${customer.balance.toFixed(2)} TL</div>
+        </div>
+        
+        <div style="border-top: 1px solid black; margin: 10px 0;">
+          <div style="font-weight: bold; margin: 5px 0;">HAREKET LİSTESİ</div>
+          ${transactions.map(t => `
+            <div style="margin: 3px 0; font-size: 10px;">
+              <div style="display: flex; justify-content: space-between;">
+                <span>${formatTransactionType(t.transaction_type)}</span>
+                <span>${t.amount.toFixed(2)} TL</span>
+              </div>
+              ${t.description ? `<div style="color: gray; font-size: 9px;">${t.description}</div>` : ''}
+              <div style="color: gray; font-size: 8px;">${new Date(t.created_at).toLocaleDateString('tr-TR')}</div>
+            </div>
+          `).join('')}
+        </div>
+        
+        <div style="text-align: center; margin-top: 15px; border-top: 1px solid black; padding-top: 5px; font-size: 10px;">
+          <div>Bu belge bilgi amaçlıdır</div>
+          <div>Elite Medya Bilişim</div>
+        </div>
+      </div>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+        <head><title>Cari Hesap Ekstresi</title></head>
+        <body>${printContent}</body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
+  if (!selectedCustomer) {
+    return (
+      <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-gray-800 mb-8">👥 Müşteri ve Cari Hesap Yönetimi</h2>
+
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Müşteri Listesi</h3>
+            
+            {isLoading ? (
+              <div className="text-center py-8">
+                <div className="loading-spinner inline-block"></div>
+                <span className="ml-2 text-gray-500">Müşteriler yükleniyor...</span>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {customers.map(customer => (
+                  <div 
+                    key={customer.id}
+                    onClick={() => loadCustomerDetail(customer.id)}
+                    className="p-4 border border-gray-200 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors"
+                    data-testid={`customer-card-${customer.id}`}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-semibold text-gray-800">{customer.name}</h4>
+                        {customer.phone && (
+                          <p className="text-sm text-gray-600">{customer.phone}</p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <span className={`text-lg font-bold ${
+                          customer.balance > 0 ? 'text-red-600' : 'text-green-600'
+                        }`}>
+                          {customer.balance.toFixed(2)} TL
+                        </span>
+                        <div className="text-xs text-gray-500">
+                          {customer.balance > 0 ? 'Borç' : 'Alacak'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {customers.length === 0 && !isLoading && (
+              <p className="text-gray-500 text-center py-8">Henüz müşteri kaydı yok</p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Müşteri detay sayfası
+  return (
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setSelectedCustomer(null)}
+              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+            >
+              ← Geri
+            </button>
+            <h2 className="text-3xl font-bold text-gray-800">
+              {selectedCustomer.customer.name} - Cari Hesap
+            </h2>
+          </div>
+          
+          <div className="flex space-x-3">
+            <button
+              onClick={() => setShowAddTransaction(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              data-testid="add-transaction-button"
+            >
+              💰 Manuel Borç Ekle
+            </button>
+            <button
+              onClick={() => printCustomerStatement(selectedCustomer.customer, transactions)}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              data-testid="print-statement-button"
+            >
+              🖨️ Ekstre Yazdır
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Müşteri Bilgileri */}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">📋 Müşteri Bilgileri</h3>
+            <div className="space-y-3">
+              <div>
+                <span className="text-sm text-gray-600">Ad Soyad:</span>
+                <p className="font-medium">{selectedCustomer.customer.name}</p>
+              </div>
+              {selectedCustomer.customer.phone && (
+                <div>
+                  <span className="text-sm text-gray-600">Telefon:</span>
+                  <p className="font-medium">{selectedCustomer.customer.phone}</p>
+                </div>
+              )}
+              {selectedCustomer.customer.email && (
+                <div>
+                  <span className="text-sm text-gray-600">E-posta:</span>
+                  <p className="font-medium">{selectedCustomer.customer.email}</p>
+                </div>
+              )}
+              <div className="border-t pt-3">
+                <span className="text-sm text-gray-600">Mevcut Bakiye:</span>
+                <p className={`text-2xl font-bold ${
+                  selectedCustomer.customer.balance > 0 ? 'text-red-600' : 'text-green-600'
+                }`}>
+                  {selectedCustomer.customer.balance.toFixed(2)} TL
+                </p>
+                <p className="text-sm text-gray-500">
+                  {selectedCustomer.customer.balance > 0 ? 'Borçlu' : 'Alacaklı'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Hareket Geçmişi */}
+          <div className="lg:col-span-2 bg-white rounded-xl shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">📊 Hareket Geçmişi</h3>
+            
+            {isLoading ? (
+              <div className="text-center py-8">
+                <div className="loading-spinner inline-block"></div>
+                <span className="ml-2 text-gray-500">Hareketler yükleniyor...</span>
+              </div>
+            ) : transactions.length > 0 ? (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {transactions.map(transaction => (
+                  <div key={transaction.id} className="p-4 border border-gray-200 rounded-lg">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-medium">
+                            {formatTransactionType(transaction.transaction_type)}
+                          </span>
+                          <span className={`text-lg font-bold ${
+                            ['debt', 'manual_debt', 'sale'].includes(transaction.transaction_type) 
+                              ? 'text-red-600' : 'text-green-600'
+                          }`}>
+                            {['debt', 'manual_debt', 'sale'].includes(transaction.transaction_type) ? '+' : '-'}
+                            {transaction.amount.toFixed(2)} TL
+                          </span>
+                        </div>
+                        {transaction.description && (
+                          <p className="text-sm text-gray-600 mt-1">{transaction.description}</p>
+                        )}
+                        <p className="text-xs text-gray-500 mt-1">
+                          {new Date(transaction.created_at).toLocaleString('tr-TR')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-8">Henüz hareket kaydı yok</p>
+            )}
+          </div>
+        </div>
+
+        {/* Manuel Borç Ekleme Modal */}
+        {showAddTransaction && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+              <div className="p-6">
+                <h3 className="text-lg font-bold text-gray-800 mb-4">💰 Manuel Hareket Ekle</h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Hareket Tipi
+                    </label>
+                    <select
+                      value={newTransaction.transaction_type}
+                      onChange={(e) => setNewTransaction({...newTransaction, transaction_type: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="manual_debt">📝 Manuel Borç</option>
+                      <option value="payment">✅ Ödeme</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tutar (TL)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={newTransaction.amount}
+                      onChange={(e) => setNewTransaction({...newTransaction, amount: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="0.00"
+                      data-testid="transaction-amount-input"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Açıklama
+                    </label>
+                    <textarea
+                      value={newTransaction.description}
+                      onChange={(e) => setNewTransaction({...newTransaction, description: e.target.value})}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="İşlem açıklaması..."
+                      data-testid="transaction-description-input"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex space-x-3 pt-6">
+                  <button
+                    onClick={() => setShowAddTransaction(false)}
+                    className="flex-1 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+                  >
+                    İptal
+                  </button>
+                  <button
+                    onClick={addTransaction}
+                    disabled={isLoading}
+                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300"
+                    data-testid="save-transaction-button"
+                  >
+                    {isLoading ? 'Kaydediliyor...' : 'Kaydet'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // Ana Uygulama
 function App() {
   const [activeMenu, setActiveMenu] = useState('sales');
@@ -1617,6 +1997,8 @@ function App() {
         return <SalesScreen />;
       case 'products':
         return <ProductManagement />;
+      case 'customers':
+        return <CustomerManagement />;
       default:
         return (
           <div className="p-6">
