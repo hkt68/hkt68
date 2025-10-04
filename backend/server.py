@@ -70,7 +70,7 @@ async def create_category(category: CategoryCreate):
         )
         
         new_category = await db.fetch_one(
-            "SELECT * FROM categories WHERE id = %s", (category_id,)
+            "SELECT * FROM categories WHERE id = ?", (category_id,)
         )
         return CategoryResponse(data=Category(**new_category))
     except Exception as e:
@@ -80,7 +80,7 @@ async def create_category(category: CategoryCreate):
 async def delete_category(category_id: str):
     """Kategori sil"""
     try:
-        result = await db.execute("DELETE FROM categories WHERE id = %s", (category_id,))
+        result = await db.execute("DELETE FROM categories WHERE id = ?", (category_id,))
         if result == 0:
             raise HTTPException(status_code=404, detail="Kategori bulunamadı")
         return BaseResponse(message="Kategori başarıyla silindi")
@@ -133,7 +133,7 @@ async def create_product(product: ProductCreate):
         # Barkod kontrolü
         if product.barcode:
             existing = await db.fetch_one(
-                "SELECT id FROM products WHERE barcode = %s", (product.barcode,)
+                "SELECT id FROM products WHERE barcode = ?", (product.barcode,)
             )
             if existing:
                 raise HTTPException(status_code=400, detail="Bu barkod zaten kullanılıyor")
@@ -143,7 +143,7 @@ async def create_product(product: ProductCreate):
             INSERT INTO products 
             (id, name, barcode, category_id, purchase_price, sale_price, 
              stock_quantity, min_stock_level, unit, description) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (product_id, product.name, product.barcode, product.category_id,
              product.purchase_price, product.sale_price, product.stock_quantity,
@@ -155,7 +155,7 @@ async def create_product(product: ProductCreate):
             SELECT p.*, c.name as category_name 
             FROM products p 
             LEFT JOIN categories c ON p.category_id = c.id 
-            WHERE p.id = %s
+            WHERE p.id = ?
             """, (product_id,)
         )
         return ProductResponse(data=Product(**new_product))
@@ -168,7 +168,7 @@ async def update_product(product_id: str, product: ProductUpdate):
     try:
         # Mevcut ürünü kontrol et
         existing = await db.fetch_one(
-            "SELECT * FROM products WHERE id = %s", (product_id,)
+            "SELECT * FROM products WHERE id = ?", (product_id,)
         )
         if not existing:
             raise HTTPException(status_code=404, detail="Ürün bulunamadı")
@@ -179,12 +179,12 @@ async def update_product(product_id: str, product: ProductUpdate):
         
         for field, value in product.dict(exclude_unset=True).items():
             if field != 'id':  # ID güncellenmez
-                update_fields.append(f"{field} = %s")
+                update_fields.append(f"{field} = ?")
                 update_values.append(value)
         
         if update_fields:
             update_values.append(product_id)
-            query = f"UPDATE products SET {', '.join(update_fields)} WHERE id = %s"
+            query = f"UPDATE products SET {', '.join(update_fields)} WHERE id = ?"
             await db.execute(query, tuple(update_values))
         
         # Güncellenmiş ürünü getir
@@ -193,7 +193,7 @@ async def update_product(product_id: str, product: ProductUpdate):
             SELECT p.*, c.name as category_name 
             FROM products p 
             LEFT JOIN categories c ON p.category_id = c.id 
-            WHERE p.id = %s
+            WHERE p.id = ?
             """, (product_id,)
         )
         return ProductResponse(data=Product(**updated_product))
@@ -204,7 +204,7 @@ async def update_product(product_id: str, product: ProductUpdate):
 async def delete_product(product_id: str):
     """Ürün sil"""
     try:
-        result = await db.execute("DELETE FROM products WHERE id = %s", (product_id,))
+        result = await db.execute("DELETE FROM products WHERE id = ?", (product_id,))
         if result == 0:
             raise HTTPException(status_code=404, detail="Ürün bulunamadı")
         return BaseResponse(message="Ürün başarıyla silindi")
@@ -229,14 +229,14 @@ async def create_customer(customer: CustomerCreate):
         await db.execute(
             """
             INSERT INTO customers (id, name, phone, email, address, tax_number) 
-            VALUES (%s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
             (customer_id, customer.name, customer.phone, customer.email, 
              customer.address, customer.tax_number)
         )
         
         new_customer = await db.fetch_one(
-            "SELECT * FROM customers WHERE id = %s", (customer_id,)
+            "SELECT * FROM customers WHERE id = ?", (customer_id,)
         )
         return CustomerResponse(data=Customer(**new_customer))
     except Exception as e:
