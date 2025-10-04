@@ -581,9 +581,10 @@ function SalesScreen() {
   const [showReceipt, setShowReceipt] = useState(false);
   const [completedSale, setCompletedSale] = useState(null);
 
-  // Müşterileri yükle
+  // Müşterileri ve kategorileri yükle
   useEffect(() => {
     loadCustomers();
+    loadCategories();
   }, []);
 
   const loadCustomers = async () => {
