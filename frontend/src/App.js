@@ -575,6 +575,9 @@ function SalesScreen() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [receivedAmount, setReceivedAmount] = useState(0);
   const [changeAmount, setChangeAmount] = useState(0);
+  const [showAddProduct, setShowAddProduct] = useState(false);
+  const [newProductBarcode, setNewProductBarcode] = useState('');
+  const [categories, setCategories] = useState([]);
   const [showReceipt, setShowReceipt] = useState(false);
   const [completedSale, setCompletedSale] = useState(null);
 
