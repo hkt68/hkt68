@@ -56,6 +56,8 @@ class ProductCreate(BaseModel):
     min_stock_level: int = 0
     unit: str = "adet"
     description: Optional[str] = None
+    vat_rate: float = 20
+    image_url: Optional[str] = None
 
 class ProductUpdate(BaseModel):
     name: Optional[str] = None
