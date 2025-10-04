@@ -596,6 +596,22 @@ function SalesScreen() {
     }
   };
 
+  const loadCategories = async () => {
+    try {
+      const response = await axios.get(`${API}/categories`);
+      setCategories(response.data.data);
+    } catch (error) {
+      console.error('Kategoriler yüklenemedi:', error);
+    }
+  };
+
+  const handleAddNewProduct = (barcode) => {
+    setNewProductBarcode(barcode);
+    setShowAddProduct(true);
+    setSearchTerm('');
+    setShowSuggestions(false);
+  };
+
   // Ürün arama
   const searchProducts = async (term) => {
     if (!term.trim()) {
