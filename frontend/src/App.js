@@ -1985,25 +1985,56 @@ function CustomerManagement() {
                 {filteredCustomers.map(customer => (
                   <div 
                     key={customer.id}
-                    onClick={() => loadCustomerDetail(customer.id)}
-                    className="p-4 border border-gray-200 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors"
+                    className="p-4 border border-gray-200 rounded-lg hover:bg-blue-50 transition-colors"
                     data-testid={`customer-card-${customer.id}`}
                   >
                     <div className="flex justify-between items-start">
-                      <div>
+                      <div 
+                        onClick={() => loadCustomerDetail(customer.id)}
+                        className="flex-1 cursor-pointer"
+                      >
                         <h4 className="font-semibold text-gray-800">{customer.name}</h4>
                         {customer.phone && (
                           <p className="text-sm text-gray-600">{customer.phone}</p>
                         )}
                       </div>
-                      <div className="text-right">
-                        <span className={`text-lg font-bold ${
-                          customer.balance > 0 ? 'text-red-600' : 'text-green-600'
-                        }`}>
-                          {customer.balance.toFixed(2)} TL
-                        </span>
-                        <div className="text-xs text-gray-500">
-                          {customer.balance > 0 ? 'Borç' : 'Alacak'}
+                      
+                      <div className="flex flex-col items-end space-y-2">
+                        <div className="text-right">
+                          <span className={`text-lg font-bold ${
+                            customer.balance > 0 ? 'text-red-600' : 'text-green-600'
+                          }`}>
+                            {customer.balance.toFixed(2)} TL
+                          </span>
+                          <div className="text-xs text-gray-500">
+                            {customer.balance > 0 ? 'Borç' : customer.balance < 0 ? 'Alacak' : 'Sıfır'}
+                          </div>
+                        </div>
+                        
+                        <div className="flex space-x-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingCustomer(customer);
+                              setNewCustomer(customer);
+                            }}
+                            className="p-1 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded"
+                            title="Müşteri düzenle"
+                            data-testid={`edit-customer-${customer.id}`}
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteCustomer(customer.id, customer.name);
+                            }}
+                            className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded"
+                            title="Müşteri sil"
+                            data-testid={`delete-customer-${customer.id}`}
+                          >
+                            🗑️
+                          </button>
                         </div>
                       </div>
                     </div>
