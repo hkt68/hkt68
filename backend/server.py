@@ -570,6 +570,34 @@ async def create_customer(customer: CustomerCreate):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Müşteri oluşturulamadı: {str(e)}")
 
+@api_router.put("/customers/{customer_id}", response_model=CustomerResponse)
+async def update_customer(customer_id: str, customer: CustomerCreate):
+    """Müşteri güncelle"""
+    try:
+        # Mevcut müşteriyi kontrol et
+        existing = await db.fetch_one("SELECT * FROM customers WHERE id = ?", (customer_id,))
+        if not existing:
+            raise HTTPException(status_code=404, detail="Müşteri bulunamadı")
+        
+        # Müşteriyi güncelle
+        await db.execute(
+            """
+            UPDATE customers 
+            SET name = ?, phone = ?, email = ?, address = ?, tax_number = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (customer.name, customer.phone, customer.email, customer.address, 
+             customer.tax_number, customer_id)
+        )
+        
+        # Güncellenmiş müşteriyi getir
+        updated_customer = await db.fetch_one(
+            "SELECT * FROM customers WHERE id = ?", (customer_id,)
+        )
+        return CustomerResponse(data=Customer(**updated_customer))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Müşteri güncellenemedi: {str(e)}")
+
 @api_router.delete("/customers/{customer_id}")
 async def delete_customer(customer_id: str):
     """Müşteri sil (tüm hareketleri ile birlikte)"""
