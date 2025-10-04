@@ -211,6 +211,143 @@ async def delete_product(product_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ürün silinemedi: {str(e)}")
 
+# ==== SALES ROUTES ====
+@api_router.post("/sales", response_model=SaleResponse)
+async def create_sale(sale: SaleCreate):
+    """Yeni satış oluştur"""
+    try:
+        sale_id = str(uuid.uuid4())
+        total_amount = 0
+        
+        # Satış kalemlerini işle ve toplam hesapla
+        sale_items = []
+        for item_data in sale.items:
+            # Ürün bilgilerini al
+            product = await db.fetch_one(
+                "SELECT * FROM products WHERE id = ?", (item_data['product_id'],)
+            )
+            if not product:
+                raise HTTPException(status_code=404, detail=f"Ürün bulunamadı: {item_data['product_id']}")
+            
+            # Stok kontrolü
+            if product['stock_quantity'] < item_data['quantity']:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"{product['name']} için yeterli stok yok. Mevcut: {product['stock_quantity']}, Talep: {item_data['quantity']}"
+                )
+            
+            item_total = item_data['quantity'] * item_data['unit_price']
+            total_amount += item_total
+            
+            sale_item_id = str(uuid.uuid4())
+            sale_items.append({
+                'id': sale_item_id,
+                'sale_id': sale_id,
+                'product_id': item_data['product_id'],
+                'quantity': item_data['quantity'],
+                'unit_price': item_data['unit_price'],
+                'total_price': item_total
+            })
+        
+        # Satış kaydını oluştur
+        await db.execute(
+            """
+            INSERT INTO sales (id, customer_id, total_amount, payment_method, 
+                             discount_amount, tax_amount, notes) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (sale_id, sale.customer_id, total_amount, sale.payment_method,
+             sale.discount_amount, sale.tax_amount, sale.notes)
+        )
+        
+        # Satış kalemlerini kaydet ve stokları güncelle
+        for item in sale_items:
+            # Satış kalemi kaydet
+            await db.execute(
+                """
+                INSERT INTO sale_items (id, sale_id, product_id, quantity, unit_price, total_price) 
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (item['id'], item['sale_id'], item['product_id'], 
+                 item['quantity'], item['unit_price'], item['total_price'])
+            )
+            
+            # Stok güncelle
+            await db.execute(
+                "UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ?",
+                (item['quantity'], item['product_id'])
+            )
+        
+        # Müşteri cari hesap işlemi (kredi ile satış ise)
+        if sale.payment_method == 'credit' and sale.customer_id:
+            # Müşteri bakiyesini güncelle
+            await db.execute(
+                "UPDATE customers SET balance = balance + ? WHERE id = ?",
+                (total_amount, sale.customer_id)
+            )
+            
+            # Cari hesap hareketini kaydet
+            transaction_id = str(uuid.uuid4())
+            await db.execute(
+                """
+                INSERT INTO customer_transactions 
+                (id, customer_id, transaction_type, amount, description, reference_id) 
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (transaction_id, sale.customer_id, 'sale', total_amount,
+                 f"Satış - Fiş No: {sale_id[:8]}", sale_id)
+            )
+        
+        # Oluşturulan satışı getir
+        created_sale = await db.fetch_one(
+            """
+            SELECT s.*, c.name as customer_name 
+            FROM sales s 
+            LEFT JOIN customers c ON s.customer_id = c.id 
+            WHERE s.id = ?
+            """, (sale_id,)
+        )
+        
+        return SaleResponse(
+            data=Sale(**created_sale),
+            message=f"Satış başarıyla tamamlandı. Toplam: {total_amount:.2f} TL"
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Satış tamamlanamadı: {str(e)}")
+
+@api_router.get("/sales", response_model=SaleListResponse)
+async def get_sales():
+    """Tüm satışları getir"""
+    try:
+        sales = await db.fetch_all(
+            """
+            SELECT s.*, c.name as customer_name 
+            FROM sales s 
+            LEFT JOIN customers c ON s.customer_id = c.id 
+            ORDER BY s.created_at DESC
+            """
+        )
+        return SaleListResponse(data=[Sale(**sale) for sale in sales])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Satışlar alınamadı: {str(e)}")
+
+@api_router.get("/sales/{sale_id}/items")
+async def get_sale_items(sale_id: str):
+    """Satış kalemlerini getir"""
+    try:
+        items = await db.fetch_all(
+            """
+            SELECT si.*, p.name as product_name, p.unit
+            FROM sale_items si
+            JOIN products p ON si.product_id = p.id
+            WHERE si.sale_id = ?
+            """, (sale_id,)
+        )
+        return {"success": True, "data": items}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Satış kalemleri alınamadı: {str(e)}")
+
 # ==== CUSTOMER ROUTES ====
 @api_router.get("/customers", response_model=CustomerListResponse)
 async def get_customers():
