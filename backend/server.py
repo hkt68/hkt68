@@ -375,7 +375,7 @@ async def create_sale(sale: SaleCreate):
                  f"Satış - Fiş No: {sale_id[:8]}", sale_id)
             )
         
-        # Oluşturulan satışı getir
+        # Oluşturulan satışı ve kalemlerini getir
         created_sale = await db.fetch_one(
             """
             SELECT s.*, c.name as customer_name 
@@ -385,8 +385,22 @@ async def create_sale(sale: SaleCreate):
             """, (sale_id,)
         )
         
+        # Satış kalemlerini getir
+        sale_items = await db.fetch_all(
+            """
+            SELECT si.*, p.name as product_name, p.vat_rate
+            FROM sale_items si
+            JOIN products p ON si.product_id = p.id
+            WHERE si.sale_id = ?
+            """, (sale_id,)
+        )
+        
+        # Sale nesnesini oluştur ve items'ları ekle
+        sale_data = Sale(**created_sale)
+        sale_data.items = [SaleItem(**item) for item in sale_items]
+        
         return SaleResponse(
-            data=Sale(**created_sale),
+            data=sale_data,
             message=f"Satış başarıyla tamamlandı. Toplam: {total_amount:.2f} TL"
         )
         
