@@ -111,7 +111,7 @@ async def search_products(q: str):
             SELECT p.*, c.name as category_name 
             FROM products p 
             LEFT JOIN categories c ON p.category_id = c.id 
-            WHERE p.name LIKE %s OR p.barcode LIKE %s 
+            WHERE p.name LIKE ? OR p.barcode LIKE ? 
             ORDER BY p.name
         """
         search_term = f"%{q}%"
