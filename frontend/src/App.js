@@ -2012,8 +2012,10 @@ function CustomerManagement() {
               </div>
             )}
 
-            {customers.length === 0 && !isLoading && (
-              <p className="text-gray-500 text-center py-8">Henüz müşteri kaydı yok</p>
+            {filteredCustomers.length === 0 && !isLoading && (
+              <p className="text-gray-500 text-center py-8">
+                {searchTerm || filterPriority !== 'all' ? 'Filtreye uygun müşteri bulunamadı' : 'Henüz müşteri kaydı yok'}
+              </p>
             )}
           </div>
         </div>
