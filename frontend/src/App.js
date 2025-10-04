@@ -6,6 +6,15 @@ import "./App.css";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Yardımcı Fonksiyonlar
+const calculateVAT = (price, vatRate) => {
+  return (price * vatRate) / 100;
+};
+
+const calculateNetPrice = (price, vatRate) => {
+  return price - calculateVAT(price, vatRate);
+};
+
 // Ana Bileşenler
 function Sidebar({ activeMenu, setActiveMenu }) {
   const menuItems = [
@@ -17,10 +26,10 @@ function Sidebar({ activeMenu, setActiveMenu }) {
   ];
 
   return (
-    <div className="w-64 bg-gradient-to-b from-blue-900 to-blue-800 text-white h-screen fixed left-0 top-0 shadow-xl">
+    <div className="w-64 bg-gradient-to-b from-blue-900 to-blue-800 text-white h-screen fixed left-0 top-0 shadow-xl z-50">
       <div className="p-6 border-b border-blue-700">
         <h1 className="text-xl font-bold text-center">Elite Medya POS</h1>
-        <p className="text-blue-200 text-sm text-center mt-1">v1.0</p>
+        <p className="text-blue-200 text-sm text-center mt-1">v2.0 Pro</p>
       </div>
       
       <nav className="mt-4">
@@ -48,7 +57,295 @@ function Sidebar({ activeMenu, setActiveMenu }) {
   );
 }
 
-// Satış Ekranı Bileşeni
+// Favori Ürünler Paneli
+function FavoriteProducts({ onAddToCart }) {
+  const [favorites, setFavorites] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    loadFavorites();
+  }, []);
+
+  const loadFavorites = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API}/products/favorites`);
+      setFavorites(response.data.data);
+    } catch (error) {
+      console.error('Favori ürünler yüklenemedi:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleFavorite = async (productId) => {
+    try {
+      await axios.put(`${API}/products/${productId}/favorite`);
+      loadFavorites(); // Listeyi yenile
+    } catch (error) {
+      console.error('Favori durumu güncellenemedi:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow-lg p-4">
+        <h3 className="font-bold text-gray-800 mb-3">⭐ Favori Ürünler</h3>
+        <div className="flex items-center justify-center py-8">
+          <div className="loading-spinner"></div>
+          <span className="text-gray-500">Yükleniyor...</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-lg shadow-lg p-4">
+      <h3 className="font-bold text-gray-800 mb-3">⭐ Favori Ürünler</h3>
+      
+      {favorites.length === 0 ? (
+        <p className="text-gray-500 text-sm text-center py-4">
+          Henüz favori ürün yok. Ürün araması yaparak favorilere ekleyebilirsiniz.
+        </p>
+      ) : (
+        <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
+          {favorites.map(product => (
+            <div 
+              key={product.id}
+              className="border rounded-lg p-2 hover:bg-blue-50 cursor-pointer transition-colors"
+              onClick={() => onAddToCart(product)}
+              data-testid={`favorite-product-${product.id}`}
+            >
+              {product.image_url ? (
+                <img 
+                  src={product.image_url} 
+                  alt={product.name}
+                  className="w-full h-16 object-cover rounded mb-2"
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+              ) : (
+                <div className="w-full h-16 bg-gray-200 rounded mb-2 flex items-center justify-center">
+                  <span className="text-gray-400 text-xs">Resim Yok</span>
+                </div>
+              )}
+              <h5 className="text-xs font-medium text-gray-800 truncate">{product.name}</h5>
+              <p className="text-xs text-green-600 font-bold">{product.sale_price.toFixed(2)} TL</p>
+              <p className="text-xs text-gray-500">KDV: %{product.vat_rate}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Arama Önerileri Komponenti
+function SearchSuggestions({ query, onSelectProduct, onClose }) {
+  const [suggestions, setSuggestions] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (query.trim().length >= 2) {
+      fetchSuggestions();
+    } else {
+      setSuggestions([]);
+    }
+  }, [query]);
+
+  const fetchSuggestions = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API}/products/suggestions?q=${query}&limit=8`);
+      setSuggestions(response.data.data);
+    } catch (error) {
+      console.error('Öneriler alınamadı:', error);
+      setSuggestions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (query.trim().length < 2) return null;
+
+  return (
+    <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-80 overflow-y-auto">
+      {loading ? (
+        <div className="p-4 text-center">
+          <div className="loading-spinner inline-block"></div>
+          <span className="ml-2 text-gray-500">Aranıyor...</span>
+        </div>
+      ) : suggestions.length > 0 ? (
+        <div>
+          {suggestions.map(product => (
+            <div 
+              key={product.id}
+              onClick={() => {
+                onSelectProduct(product);
+                onClose();
+              }}
+              className="p-3 hover:bg-blue-50 cursor-pointer border-b last:border-b-0 flex items-center space-x-3"
+              data-testid={`suggestion-${product.id}`}
+            >
+              {product.image_url ? (
+                <img 
+                  src={product.image_url} 
+                  alt={product.name}
+                  className="w-12 h-12 object-cover rounded"
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+              ) : (
+                <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
+                  <span className="text-gray-400 text-xs">📦</span>
+                </div>
+              )}
+              <div className="flex-1">
+                <h4 className="font-medium text-gray-800">{product.name}</h4>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-green-600 font-bold">{product.sale_price.toFixed(2)} TL</span>
+                  {product.barcode && (
+                    <span className="text-xs text-gray-500">{product.barcode}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="p-4 text-center text-gray-500">
+          "{query}" için ürün bulunamadı
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Para Üstü Hesaplayıcı
+function ChangeCalculator({ total, onAmountChange }) {
+  const [receivedAmount, setReceivedAmount] = useState('');
+  const [change, setChange] = useState(0);
+
+  useEffect(() => {
+    const amount = parseFloat(receivedAmount) || 0;
+    const changeAmount = amount - total;
+    setChange(changeAmount);
+    onAmountChange && onAmountChange(amount, changeAmount);
+  }, [receivedAmount, total, onAmountChange]);
+
+  const quickAmounts = [50, 100, 200, 500];
+
+  return (
+    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+      <h4 className="font-semibold text-yellow-800 mb-3">💵 Para Üstü Hesaplayıcı</h4>
+      
+      <div className="mb-3">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Alınan Para (TL)
+        </label>
+        <input
+          type="number"
+          value={receivedAmount}
+          onChange={(e) => setReceivedAmount(e.target.value)}
+          placeholder="Müşteriden alınan para..."
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          data-testid="received-amount-input"
+        />
+      </div>
+
+      {/* Hızlı Tutar Butonları */}
+      <div className="grid grid-cols-4 gap-2 mb-3">
+        {quickAmounts.map(amount => (
+          <button
+            key={amount}
+            onClick={() => setReceivedAmount(amount.toString())}
+            className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm hover:bg-blue-200 transition-colors"
+            data-testid={`quick-amount-${amount}`}
+          >
+            {amount} TL
+          </button>
+        ))}
+      </div>
+
+      {/* Sonuç */}
+      <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="bg-white rounded p-2 text-center">
+          <div className="text-gray-600">Toplam</div>
+          <div className="font-bold text-red-600">{total.toFixed(2)} TL</div>
+        </div>
+        <div className={`rounded p-2 text-center ${
+          change >= 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+        }`}>
+          <div className="text-sm">{change >= 0 ? 'Para Üstü' : 'Eksik'}</div>
+          <div className="font-bold" data-testid="change-amount">
+            {Math.abs(change).toFixed(2)} TL
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// KDV Özet Komponenti
+function VATSummary({ cart }) {
+  const vatBreakdown = cart.reduce((acc, item) => {
+    const vatRate = item.vat_rate;
+    const itemTotal = item.total;
+    const vatAmount = calculateVAT(itemTotal, vatRate);
+    const netAmount = itemTotal - vatAmount;
+
+    if (!acc[vatRate]) {
+      acc[vatRate] = { net: 0, vat: 0, total: 0 };
+    }
+    
+    acc[vatRate].net += netAmount;
+    acc[vatRate].vat += vatAmount;
+    acc[vatRate].total += itemTotal;
+    
+    return acc;
+  }, {});
+
+  const grandTotal = Object.values(vatBreakdown).reduce((sum, group) => sum + group.total, 0);
+  const totalVAT = Object.values(vatBreakdown).reduce((sum, group) => sum + group.vat, 0);
+  const totalNet = grandTotal - totalVAT;
+
+  return (
+    <div className="bg-gray-50 rounded-lg p-4 mb-4">
+      <h4 className="font-semibold text-gray-800 mb-3">📊 KDV Dökümü</h4>
+      
+      {Object.keys(vatBreakdown).length > 0 ? (
+        <div className="space-y-2">
+          {Object.entries(vatBreakdown).map(([rate, amounts]) => (
+            <div key={rate} className="flex justify-between items-center text-sm border-b pb-1">
+              <span className="text-gray-600">%{rate} KDV</span>
+              <div className="text-right">
+                <div>Net: {amounts.net.toFixed(2)} TL</div>
+                <div className="text-red-600">KDV: {amounts.vat.toFixed(2)} TL</div>
+              </div>
+            </div>
+          ))}
+          
+          <div className="border-t pt-2 font-bold">
+            <div className="flex justify-between">
+              <span>Toplam Net:</span>
+              <span>{totalNet.toFixed(2)} TL</span>
+            </div>
+            <div className="flex justify-between text-red-600">
+              <span>Toplam KDV:</span>
+              <span data-testid="total-vat">{totalVAT.toFixed(2)} TL</span>
+            </div>
+            <div className="flex justify-between text-lg text-green-600">
+              <span>GENEL TOPLAM:</span>
+              <span data-testid="grand-total">{grandTotal.toFixed(2)} TL</span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <p className="text-gray-500 text-center text-sm">Sepette ürün yok</p>
+      )}
+    </div>
+  );
+}
+
+// Satış Ekranı Bileşeni  
 function SalesScreen() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -57,6 +354,9 @@ function SalesScreen() {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [isLoading, setIsLoading] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [receivedAmount, setReceivedAmount] = useState(0);
+  const [changeAmount, setChangeAmount] = useState(0);
 
   // Müşterileri yükle
   useEffect(() => {
@@ -91,26 +391,39 @@ function SalesScreen() {
     }
   };
 
-  // Sepete ekleme
-  const addToCart = (product) => {
-    const existingItem = cart.find(item => item.id === product.id);
+  // Sepete ekleme (öneri veya arama sonucundan)
+  const addToCart = async (product) => {
+    // Eğer tam ürün bilgileri yoksa (öneri listesinden geliyorsa) detayları al
+    let fullProduct = product;
+    if (!product.vat_rate) {
+      try {
+        const response = await axios.get(`${API}/products/${product.id}`);
+        fullProduct = response.data.data;
+      } catch (error) {
+        console.error('Ürün detayları alınamadı:', error);
+        return;
+      }
+    }
+
+    const existingItem = cart.find(item => item.id === fullProduct.id);
     
     if (existingItem) {
       setCart(cart.map(item => 
-        item.id === product.id 
+        item.id === fullProduct.id 
           ? { ...item, quantity: item.quantity + 1, total: (item.quantity + 1) * item.sale_price }
           : item
       ));
     } else {
       setCart([...cart, { 
-        ...product, 
+        ...fullProduct, 
         quantity: 1, 
-        total: product.sale_price 
+        total: fullProduct.sale_price 
       }]);
     }
     
     setSearchTerm('');
     setSearchResults([]);
+    setShowSuggestions(false);
   };
 
   // Sepetten çıkarma
@@ -137,10 +450,16 @@ function SalesScreen() {
     return cart.reduce((sum, item) => sum + item.total, 0);
   };
 
-  // Satış tamamlama
+  // Satışı tamamlama
   const completeSale = async () => {
     if (cart.length === 0) {
       alert('Sepet boş!');
+      return;
+    }
+
+    // Nakit ödeme için para üstü kontrolü
+    if (paymentMethod === 'cash' && changeAmount < 0) {
+      alert(`Eksik ödeme! ${Math.abs(changeAmount).toFixed(2)} TL daha gerekli.`);
       return;
     }
 
@@ -162,14 +481,23 @@ function SalesScreen() {
       const response = await axios.post(`${API}/sales`, saleData);
       
       if (response.data.success) {
-        alert(`Satış başarılı! Toplam: ${calculateTotal().toFixed(2)} TL`);
+        const total = calculateTotal();
+        let message = `Satış başarılı! Toplam: ${total.toFixed(2)} TL`;
+        
+        if (paymentMethod === 'cash' && changeAmount > 0) {
+          message += `\nPara üstü: ${changeAmount.toFixed(2)} TL`;
+        }
+        
+        alert(message);
         setCart([]);
         setSelectedCustomer(null);
         setPaymentMethod('cash');
+        setReceivedAmount(0);
+        setChangeAmount(0);
       }
     } catch (error) {
       console.error('Satış tamamlanamadı:', error);
-      alert('Satış tamamlanamadı!');
+      alert('Satış tamamlanamadı: ' + (error.response?.data?.detail || error.message));
     } finally {
       setIsLoading(false);
     }
@@ -177,119 +505,154 @@ function SalesScreen() {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 max-w-7xl mx-auto">
         
-        {/* Ürün Arama ve Sepet */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">🛒 Satış Ekranı</h2>
-          
-          {/* Arama Kutusu */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Ürün Ara (İsim veya Barkod)
-            </label>
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                searchProducts(e.target.value);
-              }}
-              placeholder="Ürün adı veya barkod giriniz..."
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
-              data-testid="product-search-input"
-            />
-          </div>
+        {/* Sol Panel: Ürün Arama ve Favori Ürünler */}
+        <div className="space-y-6">
+          {/* Ürün Arama */}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">🛒 Satış Ekranı</h2>
+            
+            {/* Arama Kutusu */}
+            <div className="mb-6 relative">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Ürün Ara (İsim veya Barkod)
+              </label>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setShowSuggestions(true);
+                  searchProducts(e.target.value);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                placeholder="Ürün adı veya barkod giriniz..."
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+                data-testid="product-search-input"
+              />
+              
+              {/* Arama Önerileri */}
+              {showSuggestions && (
+                <SearchSuggestions 
+                  query={searchTerm}
+                  onSelectProduct={addToCart}
+                  onClose={() => setShowSuggestions(false)}
+                />
+              )}
+            </div>
 
-          {/* Arama Sonuçları */}
-          {searchResults.length > 0 && (
-            <div className="mb-6 max-h-60 overflow-y-auto border border-gray-200 rounded-lg">
-              {searchResults.map(product => (
-                <div 
-                  key={product.id}
-                  onClick={() => addToCart(product)}
-                  className="p-4 hover:bg-blue-50 cursor-pointer border-b last:border-b-0 transition-colors"
-                  data-testid={`search-result-${product.id}`}
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
+            {/* Arama Sonuçları */}
+            {searchResults.length > 0 && (
+              <div className="mb-6 max-h-60 overflow-y-auto border border-gray-200 rounded-lg">
+                {searchResults.map(product => (
+                  <div 
+                    key={product.id}
+                    onClick={() => addToCart(product)}
+                    className="p-4 hover:bg-blue-50 cursor-pointer border-b last:border-b-0 transition-colors flex items-center space-x-3"
+                    data-testid={`search-result-${product.id}`}
+                  >
+                    {product.image_url ? (
+                      <img 
+                        src={product.image_url} 
+                        alt={product.name}
+                        className="w-16 h-16 object-cover rounded"
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
+                        <span className="text-gray-400">📦</span>
+                      </div>
+                    )}
+                    <div className="flex-1">
                       <h4 className="font-semibold text-gray-800">{product.name}</h4>
                       <p className="text-sm text-gray-600">{product.category_name} - Stok: {product.stock_quantity}</p>
                       {product.barcode && (
                         <p className="text-xs text-gray-500">Barkod: {product.barcode}</p>
                       )}
+                      <p className="text-xs text-blue-600">KDV: %{product.vat_rate}</p>
                     </div>
                     <div className="text-right">
                       <span className="text-lg font-bold text-green-600">{product.sale_price.toFixed(2)} TL</span>
                     </div>
                   </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Favori Ürünler */}
+          <FavoriteProducts onAddToCart={addToCart} />
+        </div>
+
+        {/* Orta Panel: Sepet */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">🛍️ Sepet</h3>
+          
+          {cart.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">Sepet boş</p>
+          ) : (
+            <div className="space-y-3 max-h-96 overflow-y-auto mb-4">
+              {cart.map(item => (
+                <div key={item.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg cart-item">
+                  <div className="flex items-center space-x-3 flex-1">
+                    {item.image_url && (
+                      <img 
+                        src={item.image_url} 
+                        alt={item.name}
+                        className="w-12 h-12 object-cover rounded"
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                    )}
+                    <div className="flex-1">
+                      <h5 className="font-medium text-gray-800">{item.name}</h5>
+                      <p className="text-sm text-gray-600">
+                        {item.sale_price.toFixed(2)} TL x {item.quantity} (KDV %{item.vat_rate})
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <button 
+                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                      className="w-8 h-8 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                      data-testid={`decrease-quantity-${item.id}`}
+                    >
+                      -
+                    </button>
+                    
+                    <span className="w-12 text-center font-semibold">{item.quantity}</span>
+                    
+                    <button 
+                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      className="w-8 h-8 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
+                      data-testid={`increase-quantity-${item.id}`}
+                    >
+                      +
+                    </button>
+                    
+                    <button 
+                      onClick={() => removeFromCart(item.id)}
+                      className="w-8 h-8 bg-gray-500 text-white rounded-full hover:bg-gray-600 transition-colors ml-2"
+                      data-testid={`remove-item-${item.id}`}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  
+                  <div className="w-20 text-right ml-2">
+                    <span className="font-bold text-green-600">{item.total.toFixed(2)} TL</span>
+                  </div>
                 </div>
               ))}
             </div>
           )}
-
-          {/* Sepet */}
-          <div className="border-t pt-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Sepet</h3>
-            
-            {cart.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">Sepet boş</p>
-            ) : (
-              <div className="space-y-3 max-h-80 overflow-y-auto">
-                {cart.map(item => (
-                  <div key={item.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <div className="flex-1">
-                      <h5 className="font-medium text-gray-800">{item.name}</h5>
-                      <p className="text-sm text-gray-600">{item.sale_price.toFixed(2)} TL x {item.quantity}</p>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <button 
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="w-8 h-8 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-                        data-testid={`decrease-quantity-${item.id}`}
-                      >
-                        -
-                      </button>
-                      
-                      <span className="w-12 text-center font-semibold">{item.quantity}</span>
-                      
-                      <button 
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="w-8 h-8 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
-                        data-testid={`increase-quantity-${item.id}`}
-                      >
-                        +
-                      </button>
-                      
-                      <button 
-                        onClick={() => removeFromCart(item.id)}
-                        className="w-8 h-8 bg-gray-500 text-white rounded-full hover:bg-gray-600 transition-colors ml-2"
-                        data-testid={`remove-item-${item.id}`}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                    
-                    <div className="w-20 text-right">
-                      <span className="font-bold text-green-600">{item.total.toFixed(2)} TL</span>
-                    </div>
-                  </div>
-                ))}
-                
-                {/* Toplam */}
-                <div className="border-t pt-4 mt-4">
-                  <div className="flex justify-between items-center text-xl font-bold">
-                    <span>TOPLAM:</span>
-                    <span className="text-green-600" data-testid="cart-total">{calculateTotal().toFixed(2)} TL</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          
+          {/* KDV Dökümü */}
+          <VATSummary cart={cart} />
         </div>
 
-        {/* Ödeme Bölümü */}
+        {/* Sağ Panel: Ödeme */}
         <div className="bg-white rounded-xl shadow-lg p-6">
           <h3 className="text-2xl font-bold text-gray-800 mb-6">💳 Ödeme</h3>
           
@@ -339,12 +702,23 @@ function SalesScreen() {
                   data-testid={`payment-method-${method.id}`}
                 >
                   <div className="text-center">
-                    <div className="text-lg font-semibold">{method.name}</div>
+                    <div className="text-sm font-semibold">{method.name}</div>
                   </div>
                 </button>
               ))}
             </div>
           </div>
+
+          {/* Para Üstü Hesaplayıcı (Sadece nakit ödemede) */}
+          {paymentMethod === 'cash' && cart.length > 0 && (
+            <ChangeCalculator 
+              total={calculateTotal()}
+              onAmountChange={(amount, change) => {
+                setReceivedAmount(amount);
+                setChangeAmount(change);
+              }}
+            />
+          )}
 
           {/* Seçilen Müşteri Bilgisi */}
           {selectedCustomer && (
@@ -368,7 +742,7 @@ function SalesScreen() {
             </div>
             <div className="flex justify-between text-xl font-bold text-green-600 mt-2">
               <span>Toplam Tutar:</span>
-              <span>{calculateTotal().toFixed(2)} TL</span>
+              <span data-testid="cart-total">{calculateTotal().toFixed(2)} TL</span>
             </div>
           </div>
 
@@ -393,7 +767,7 @@ function ProductManagement() {
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-4">📦 Ürün Yönetimi</h2>
       <div className="bg-white rounded-lg shadow p-6">
-        <p className="text-gray-600">Ürün yönetimi bölümü geliştiriliyor...</p>
+        <p className="text-gray-600">Ürün yönetimi bölümü geliştirilecek...</p>
       </div>
     </div>
   );
@@ -412,9 +786,9 @@ function App() {
       default:
         return (
           <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">Geliştiriliyor...</h2>
+            <h2 className="text-2xl font-bold mb-4">Geliştirilecek...</h2>
             <div className="bg-white rounded-lg shadow p-6">
-              <p className="text-gray-600">Bu bölüm geliştiriliyor...</p>
+              <p className="text-gray-600">Bu bölüm geliştirilecek...</p>
             </div>
           </div>
         );
@@ -424,7 +798,7 @@ function App() {
   return (
     <div className="App bg-gray-100 min-h-screen">
       <Sidebar activeMenu={activeMenu} setActiveMenu={setActiveMenu} />
-      <div className="ml-64">
+      <div className="ml-64 transition-all duration-300">
         {renderContent()}
       </div>
     </div>
