@@ -200,8 +200,8 @@ async def create_product(product: ProductCreate):
             """
             INSERT INTO products 
             (id, name, barcode, category_id, purchase_price, sale_price, 
-             stock_quantity, min_stock_level, unit, description) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             stock_quantity, min_stock_level, unit, description, vat_rate, image_url) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (product_id, product.name, product.barcode, product.category_id,
              product.purchase_price, product.sale_price, product.stock_quantity,
