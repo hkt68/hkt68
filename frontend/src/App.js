@@ -1023,6 +1023,49 @@ function SalesScreen() {
           }}
         />
       )}
+
+      {/* Yeni Ürün Ekleme Modal */}
+      {showAddProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-gray-800">
+                  📦 Yeni Ürün Ekle - Barkod: {newProductBarcode}
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowAddProduct(false);
+                    setNewProductBarcode('');
+                  }}
+                  className="text-gray-500 hover:text-gray-700 text-xl"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <ProductForm
+                product={null}
+                categories={categories}
+                initialBarcode={newProductBarcode}
+                onSave={() => {
+                  setShowAddProduct(false);
+                  setNewProductBarcode('');
+                  // Yeni eklenen ürünü otomatik ara
+                  setTimeout(() => {
+                    setSearchTerm(newProductBarcode);
+                    searchProducts(newProductBarcode);
+                  }, 500);
+                }}
+                onCancel={() => {
+                  setShowAddProduct(false);
+                  setNewProductBarcode('');
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
