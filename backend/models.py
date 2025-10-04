@@ -39,6 +39,9 @@ class Product(BaseModel):
     min_stock_level: int = 0
     unit: str = "adet"
     description: Optional[str] = None
+    vat_rate: float = 20  # KDV oranı %
+    image_url: Optional[str] = None
+    is_favorite: bool = False
     is_active: bool = True
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
