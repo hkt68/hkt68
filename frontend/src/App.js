@@ -963,6 +963,21 @@ function SalesScreen() {
           </button>
         </div>
       </div>
+      
+      {/* Satış Fişi Dialog */}
+      {showReceipt && completedSale && (
+        <SalesReceipt 
+          sale={completedSale}
+          onClose={() => {
+            setShowReceipt(false);
+            setCompletedSale(null);
+          }}
+          onPrint={() => {
+            setShowReceipt(false);
+            setCompletedSale(null);
+          }}
+        />
+      )}
     </div>
   );
 }
