@@ -585,8 +585,8 @@ function SalesScreen() {
           <FavoriteProducts onAddToCart={addToCart} />
         </div>
 
-        {/* Orta Panel: Sepet */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
+        {/* Orta Panel: Sepet - Geniş Alan */}
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-lg p-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">🛍️ Sepet</h3>
           
           {cart.length === 0 ? (
@@ -594,54 +594,53 @@ function SalesScreen() {
           ) : (
             <div className="space-y-3 max-h-96 overflow-y-auto mb-4">
               {cart.map(item => (
-                <div key={item.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg cart-item">
-                  <div className="flex items-center space-x-3 flex-1">
-                    {item.image_url && (
-                      <img 
-                        src={item.image_url} 
-                        alt={item.name}
-                        className="w-12 h-12 object-cover rounded"
-                        onError={(e) => { e.target.style.display = 'none'; }}
-                      />
-                    )}
+                <div key={item.id} className="p-4 bg-gray-50 rounded-lg cart-item">
+                  {/* Üst kısım: Ürün adı ve toplam tutar */}
+                  <div className="flex justify-between items-start mb-3">
                     <div className="flex-1">
-                      <h5 className="font-medium text-gray-800">{item.name}</h5>
-                      <p className="text-sm text-gray-600">
-                        {item.sale_price.toFixed(2)} TL x {item.quantity} (KDV %{item.vat_rate})
+                      <h5 className="font-semibold text-gray-800 text-lg">{item.name}</h5>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {item.sale_price.toFixed(2)} TL/birim • KDV %{item.vat_rate}
                       </p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xl font-bold text-green-600">{item.total.toFixed(2)} TL</span>
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-2">
-                    <button 
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      className="w-8 h-8 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-                      data-testid={`decrease-quantity-${item.id}`}
-                    >
-                      -
-                    </button>
-                    
-                    <span className="w-12 text-center font-semibold">{item.quantity}</span>
-                    
-                    <button 
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      className="w-8 h-8 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
-                      data-testid={`increase-quantity-${item.id}`}
-                    >
-                      +
-                    </button>
+                  {/* Alt kısım: Miktar kontrolleri */}
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center space-x-3">
+                      <button 
+                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        className="w-9 h-9 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center font-bold"
+                        data-testid={`decrease-quantity-${item.id}`}
+                      >
+                        −
+                      </button>
+                      
+                      <div className="bg-white px-4 py-2 rounded-lg border-2 border-gray-200 min-w-[80px] text-center">
+                        <span className="text-lg font-semibold text-gray-800">{item.quantity}</span>
+                        <div className="text-xs text-gray-500">adet</div>
+                      </div>
+                      
+                      <button 
+                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        className="w-9 h-9 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center font-bold"
+                        data-testid={`increase-quantity-${item.id}`}
+                      >
+                        +
+                      </button>
+                    </div>
                     
                     <button 
                       onClick={() => removeFromCart(item.id)}
-                      className="w-8 h-8 bg-gray-500 text-white rounded-full hover:bg-gray-600 transition-colors ml-2"
+                      className="px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors flex items-center space-x-2"
                       data-testid={`remove-item-${item.id}`}
                     >
-                      ✕
+                      <span>🗑️</span>
+                      <span className="text-sm font-medium">Kaldır</span>
                     </button>
-                  </div>
-                  
-                  <div className="w-20 text-right ml-2">
-                    <span className="font-bold text-green-600">{item.total.toFixed(2)} TL</span>
                   </div>
                 </div>
               ))}
