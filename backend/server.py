@@ -205,7 +205,8 @@ async def create_product(product: ProductCreate):
             """,
             (product_id, product.name, product.barcode, product.category_id,
              product.purchase_price, product.sale_price, product.stock_quantity,
-             product.min_stock_level, product.unit, product.description)
+             product.min_stock_level, product.unit, product.description, 
+             product.vat_rate, product.image_url)
         )
         
         new_product = await db.fetch_one(
