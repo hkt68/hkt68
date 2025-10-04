@@ -410,20 +410,6 @@ function SalesReceipt({ sale, onClose, onPrint }) {
         </div>
       </div>
 
-      {/* Satış Fişi Popup */}
-      {showReceipt && completedSale && (
-        <SalesReceipt
-          sale={completedSale}
-          onClose={() => {
-            setShowReceipt(false);
-            setCompletedSale(null);
-          }}
-          onPrint={() => {
-            setShowReceipt(false);
-            setCompletedSale(null);
-          }}
-        />
-      )}
     </div>
   );
 }
