@@ -677,14 +677,25 @@ function SalesScreen() {
       const response = await axios.post(`${API}/sales`, saleData);
       
       if (response.data.success) {
-        const total = calculateTotal();
-        let message = `Satış başarılı! Toplam: ${total.toFixed(2)} TL`;
+        // Satış verilerini hazırla
+        const saleForReceipt = {
+          id: response.data.data.id,
+          total_amount: calculateTotal(),
+          payment_method: paymentMethod,
+          customer_name: selectedCustomer?.name || null,
+          items: cart.map(item => ({
+            product_name: item.name,
+            quantity: item.quantity,
+            unit_price: item.sale_price,
+            total: item.total,
+            vat_rate: item.vat_rate
+          }))
+        };
         
-        if (paymentMethod === 'cash' && changeAmount > 0) {
-          message += `\nPara üstü: ${changeAmount.toFixed(2)} TL`;
-        }
+        setCompletedSale(saleForReceipt);
+        setShowReceipt(true);
         
-        alert(message);
+        // Sepeti temizle
         setCart([]);
         setSelectedCustomer(null);
         setPaymentMethod('cash');
