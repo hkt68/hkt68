@@ -440,6 +440,106 @@ async def get_sale_items(sale_id: str):
         raise HTTPException(status_code=500, detail=f"Satış kalemleri alınamadı: {str(e)}")
 
 # ==== CUSTOMER ROUTES ====
+@api_router.get("/customers/{customer_id}/transactions")
+async def get_customer_transactions(customer_id: str):
+    """Müşteri cari hesap hareketlerini getir"""
+    try:
+        transactions = await db.fetch_all(
+            """
+            SELECT ct.*, s.total_amount as sale_amount
+            FROM customer_transactions ct
+            LEFT JOIN sales s ON ct.reference_id = s.id
+            WHERE ct.customer_id = ?
+            ORDER BY ct.created_at DESC
+            """, (customer_id,)
+        )
+        return {"success": True, "data": transactions}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Müşteri hareketleri alınamadı: {str(e)}")
+
+@api_router.post("/customers/{customer_id}/transactions")
+async def add_customer_transaction(customer_id: str, transaction: TransactionCreate):
+    """Manuel borç/ödeme ekleme"""
+    try:
+        # Müşteri var mı kontrol et
+        customer = await db.fetch_one("SELECT * FROM customers WHERE id = ?", (customer_id,))
+        if not customer:
+            raise HTTPException(status_code=404, detail="Müşteri bulunamadı")
+        
+        transaction_id = str(uuid.uuid4())
+        
+        # Transaction kaydet
+        await db.execute(
+            """
+            INSERT INTO customer_transactions 
+            (id, customer_id, transaction_type, amount, description) 
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (transaction_id, customer_id, transaction.transaction_type, 
+             transaction.amount, transaction.description)
+        )
+        
+        # Müşteri bakiyesini güncelle
+        if transaction.transaction_type in ['debt', 'manual_debt']:
+            # Borç artırır
+            await db.execute(
+                "UPDATE customers SET balance = balance + ? WHERE id = ?",
+                (transaction.amount, customer_id)
+            )
+        elif transaction.transaction_type == 'payment':
+            # Ödeme borcu azaltır
+            await db.execute(
+                "UPDATE customers SET balance = balance - ? WHERE id = ?", 
+                (transaction.amount, customer_id)
+            )
+        
+        # Oluşturulan transaction'ı getir
+        new_transaction = await db.fetch_one(
+            "SELECT * FROM customer_transactions WHERE id = ?", (transaction_id,)
+        )
+        
+        return TransactionResponse(
+            data=CustomerTransaction(**new_transaction),
+            message="Hareket başarıyla eklendi"
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Hareket eklenemedi: {str(e)}")
+
+@api_router.get("/customers/{customer_id}")
+async def get_customer_detail(customer_id: str):
+    """Müşteri detay ve bakiye bilgisi"""
+    try:
+        customer = await db.fetch_one("SELECT * FROM customers WHERE id = ?", (customer_id,))
+        if not customer:
+            raise HTTPException(status_code=404, detail="Müşteri bulunamadı")
+        
+        # Son hareketleri de al
+        recent_transactions = await db.fetch_all(
+            """
+            SELECT ct.*, s.total_amount as sale_amount
+            FROM customer_transactions ct
+            LEFT JOIN sales s ON ct.reference_id = s.id
+            WHERE ct.customer_id = ?
+            ORDER BY ct.created_at DESC
+            LIMIT 10
+            """, (customer_id,)
+        )
+        
+        customer_data = Customer(**customer)
+        return {
+            "success": True,
+            "data": {
+                "customer": customer_data,
+                "recent_transactions": recent_transactions,
+                "total_debt": customer['balance'],
+                "transaction_count": len(recent_transactions)
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Müşteri detayları alınamadı: {str(e)}")
+
 @api_router.get("/customers", response_model=CustomerListResponse)
 async def get_customers():
     """Tüm müşterileri getir"""
