@@ -1701,9 +1701,10 @@ function CustomerManagement() {
     if (window.confirm(confirmMsg)) {
       try {
         setIsLoading(true);
-        // API endpoint eklenecek
-        alert('Hareket silme özelliği backend\'e eklenecek');
-        // await axios.delete(`${API}/customers/${selectedCustomer.customer.id}/transactions/${transactionId}`);
+        await axios.delete(`${API}/customers/${selectedCustomer.customer.id}/transactions/${transactionId}`);
+        loadCustomerDetail(selectedCustomer.customer.id);
+        loadCustomers();
+        alert('Hareket başarıyla silindi!');
       } catch (error) {
         console.error('Hareket silinemedi:', error);
         alert('Hareket silinemedi: ' + (error.response?.data?.detail || error.message));
