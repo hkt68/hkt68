@@ -1,4 +1,4 @@
-import aiomysql
+import aiosqlite
 import os
 from typing import Dict, List, Optional, Any
 import json
@@ -6,27 +6,17 @@ from datetime import datetime, date
 
 class Database:
     def __init__(self):
-        self.pool = None
+        self.db_path = "/app/backend/elitmedya_pos.db"
         
     async def init_pool(self):
-        """Initialize MySQL connection pool"""
-        self.pool = await aiomysql.create_pool(
-            host=os.environ.get('MYSQL_HOST'),
-            port=int(os.environ.get('MYSQL_PORT', 3306)),
-            user=os.environ.get('MYSQL_USER'),
-            password=os.environ.get('MYSQL_PASSWORD'),
-            db=os.environ.get('MYSQL_DATABASE'),
-            charset='utf8mb4',
-            autocommit=True,
-            minsize=1,
-            maxsize=10
-        )
+        """Initialize SQLite connection"""
+        # SQLite için pool gerekmez, her işlemde bağlantı açarız
+        print("✅ SQLite veritabanı hazır")
         
     async def close_pool(self):
-        """Close MySQL connection pool"""
-        if self.pool:
-            self.pool.close()
-            await self.pool.wait_closed()
+        """Close SQLite connection"""
+        # SQLite için özel bir kapatma işlemi gerekmiyor
+        print("✅ SQLite bağlantısı kapatıldı")
     
     async def execute(self, query: str, params: tuple = None) -> int:
         """Execute INSERT, UPDATE, DELETE queries"""
