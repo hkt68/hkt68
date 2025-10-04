@@ -570,6 +570,65 @@ async def create_customer(customer: CustomerCreate):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Müşteri oluşturulamadı: {str(e)}")
 
+@api_router.delete("/customers/{customer_id}")
+async def delete_customer(customer_id: str):
+    """Müşteri sil (tüm hareketleri ile birlikte)"""
+    try:
+        # Önce müşteriyi kontrol et
+        customer = await db.fetch_one("SELECT * FROM customers WHERE id = ?", (customer_id,))
+        if not customer:
+            raise HTTPException(status_code=404, detail="Müşteri bulunamadı")
+        
+        # Müşteri hareketlerini sil
+        await db.execute("DELETE FROM customer_transactions WHERE customer_id = ?", (customer_id,))
+        
+        # Müşteriyi sil
+        result = await db.execute("DELETE FROM customers WHERE id = ?", (customer_id,))
+        
+        if result == 0:
+            raise HTTPException(status_code=404, detail="Müşteri bulunamadı")
+        
+        return BaseResponse(message="Müşteri ve tüm hareketleri başarıyla silindi")
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Müşteri silinemedi: {str(e)}")
+
+@api_router.delete("/customers/{customer_id}/transactions/{transaction_id}")
+async def delete_customer_transaction(customer_id: str, transaction_id: str):
+    """Müşteri hareketi sil ve bakiye güncelle"""
+    try:
+        # Transaction'ı al
+        transaction = await db.fetch_one(
+            "SELECT * FROM customer_transactions WHERE id = ? AND customer_id = ?",
+            (transaction_id, customer_id)
+        )
+        if not transaction:
+            raise HTTPException(status_code=404, detail="Hareket bulunamadı")
+        
+        # Bakiye güncellemesi için ters işlem yap
+        if transaction['transaction_type'] in ['debt', 'manual_debt', 'sale']:
+            # Borç kaydı siliniyor, bakiyeden düş
+            await db.execute(
+                "UPDATE customers SET balance = balance - ? WHERE id = ?",
+                (transaction['amount'], customer_id)
+            )
+        elif transaction['transaction_type'] == 'payment':
+            # Ödeme kaydı siliniyor, bakiyeye ekle
+            await db.execute(
+                "UPDATE customers SET balance = balance + ? WHERE id = ?",
+                (transaction['amount'], customer_id)
+            )
+        
+        # Transaction'ı sil
+        await db.execute(
+            "DELETE FROM customer_transactions WHERE id = ?", (transaction_id,)
+        )
+        
+        return BaseResponse(message="Hareket başarıyla silindi ve bakiye güncellendi")
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Hareket silinemedi: {str(e)}")
+
 # ==== BASIC ROUTES ====
 @api_router.get("/")
 async def root():
