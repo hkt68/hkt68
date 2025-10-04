@@ -1189,10 +1189,10 @@ function CategoryManagement({ categories, onCategoriesChange }) {
 }
 
 // Ürün Ekleme/Düzenleme Formu
-function ProductForm({ product = null, categories, onSave, onCancel }) {
+function ProductForm({ product = null, categories, initialBarcode = '', onSave, onCancel }) {
   const [formData, setFormData] = useState({
     name: product?.name || '',
-    barcode: product?.barcode || '',
+    barcode: product?.barcode || initialBarcode,
     category_id: product?.category_id || '',
     purchase_price: product?.purchase_price || 0,
     sale_price: product?.sale_price || 0,
