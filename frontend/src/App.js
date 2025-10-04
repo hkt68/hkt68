@@ -1614,10 +1614,21 @@ function CustomerManagement() {
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showAddTransaction, setShowAddTransaction] = useState(false);
+  const [showAddCustomer, setShowAddCustomer] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterPriority, setFilterPriority] = useState('all');
   const [newTransaction, setNewTransaction] = useState({
     transaction_type: 'manual_debt',
     amount: '',
     description: ''
+  });
+  const [newCustomer, setNewCustomer] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    address: '',
+    tax_number: ''
   });
 
   useEffect(() => {
