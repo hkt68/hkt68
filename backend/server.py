@@ -65,7 +65,7 @@ async def create_category(category: CategoryCreate):
     try:
         category_id = str(uuid.uuid4())
         await db.execute(
-            "INSERT INTO categories (id, name, description) VALUES (%s, %s, %s)",
+            "INSERT INTO categories (id, name, description) VALUES (?, ?, ?)",
             (category_id, category.name, category.description)
         )
         
