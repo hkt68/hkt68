@@ -1270,6 +1270,8 @@ function ProductForm({ product = null, categories, initialBarcode = '', onSave, 
               value={formData.barcode}
               onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder={initialBarcode ? `Barkod: ${initialBarcode}` : "Ürün barkodu..."}
+              readOnly={!!initialBarcode}
               data-testid="product-barcode-input"
             />
           </div>
