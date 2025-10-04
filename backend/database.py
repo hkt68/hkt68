@@ -46,53 +46,53 @@ class Database:
         tables = {
             'categories': '''
                 CREATE TABLE IF NOT EXISTS categories (
-                    id VARCHAR(36) PRIMARY KEY,
-                    name VARCHAR(100) NOT NULL UNIQUE,
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL UNIQUE,
                     description TEXT,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             ''',
             'products': '''
                 CREATE TABLE IF NOT EXISTS products (
-                    id VARCHAR(36) PRIMARY KEY,
-                    name VARCHAR(255) NOT NULL,
-                    barcode VARCHAR(50) UNIQUE,
-                    category_id VARCHAR(36),
-                    purchase_price DECIMAL(10,2) DEFAULT 0,
-                    sale_price DECIMAL(10,2) NOT NULL,
-                    stock_quantity INT DEFAULT 0,
-                    min_stock_level INT DEFAULT 0,
-                    unit VARCHAR(20) DEFAULT 'adet',
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    barcode TEXT UNIQUE,
+                    category_id TEXT,
+                    purchase_price REAL DEFAULT 0,
+                    sale_price REAL NOT NULL,
+                    stock_quantity INTEGER DEFAULT 0,
+                    min_stock_level INTEGER DEFAULT 0,
+                    unit TEXT DEFAULT 'adet',
                     description TEXT,
-                    is_active BOOLEAN DEFAULT TRUE,
+                    is_active INTEGER DEFAULT 1,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
                 )
             ''',
             'customers': '''
                 CREATE TABLE IF NOT EXISTS customers (
-                    id VARCHAR(36) PRIMARY KEY,
-                    name VARCHAR(255) NOT NULL,
-                    phone VARCHAR(20),
-                    email VARCHAR(100),
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    phone TEXT,
+                    email TEXT,
                     address TEXT,
-                    tax_number VARCHAR(20),
-                    balance DECIMAL(10,2) DEFAULT 0,
-                    is_active BOOLEAN DEFAULT TRUE,
+                    tax_number TEXT,
+                    balance REAL DEFAULT 0,
+                    is_active INTEGER DEFAULT 1,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             ''',
             'sales': '''
                 CREATE TABLE IF NOT EXISTS sales (
-                    id VARCHAR(36) PRIMARY KEY,
-                    customer_id VARCHAR(36),
-                    total_amount DECIMAL(10,2) NOT NULL,
-                    payment_method ENUM('cash', 'card', 'other', 'credit') NOT NULL,
-                    discount_amount DECIMAL(10,2) DEFAULT 0,
-                    tax_amount DECIMAL(10,2) DEFAULT 0,
+                    id TEXT PRIMARY KEY,
+                    customer_id TEXT,
+                    total_amount REAL NOT NULL,
+                    payment_method TEXT NOT NULL,
+                    discount_amount REAL DEFAULT 0,
+                    tax_amount REAL DEFAULT 0,
                     notes TEXT,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL
@@ -100,12 +100,12 @@ class Database:
             ''',
             'sale_items': '''
                 CREATE TABLE IF NOT EXISTS sale_items (
-                    id VARCHAR(36) PRIMARY KEY,
-                    sale_id VARCHAR(36) NOT NULL,
-                    product_id VARCHAR(36) NOT NULL,
-                    quantity INT NOT NULL,
-                    unit_price DECIMAL(10,2) NOT NULL,
-                    total_price DECIMAL(10,2) NOT NULL,
+                    id TEXT PRIMARY KEY,
+                    sale_id TEXT NOT NULL,
+                    product_id TEXT NOT NULL,
+                    quantity INTEGER NOT NULL,
+                    unit_price REAL NOT NULL,
+                    total_price REAL NOT NULL,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE,
                     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
@@ -113,22 +113,22 @@ class Database:
             ''',
             'customer_transactions': '''
                 CREATE TABLE IF NOT EXISTS customer_transactions (
-                    id VARCHAR(36) PRIMARY KEY,
-                    customer_id VARCHAR(36) NOT NULL,
-                    transaction_type ENUM('debt', 'payment', 'sale', 'manual_debt') NOT NULL,
-                    amount DECIMAL(10,2) NOT NULL,
+                    id TEXT PRIMARY KEY,
+                    customer_id TEXT NOT NULL,
+                    transaction_type TEXT NOT NULL,
+                    amount REAL NOT NULL,
                     description TEXT,
-                    reference_id VARCHAR(36),
+                    reference_id TEXT,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
                 )
             ''',
             'system_backups': '''
                 CREATE TABLE IF NOT EXISTS system_backups (
-                    id VARCHAR(36) PRIMARY KEY,
-                    filename VARCHAR(255) NOT NULL,
-                    file_size INT,
-                    backup_type ENUM('full', 'partial') DEFAULT 'full',
+                    id TEXT PRIMARY KEY,
+                    filename TEXT NOT NULL,
+                    file_size INTEGER,
+                    backup_type TEXT DEFAULT 'full',
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
             '''
