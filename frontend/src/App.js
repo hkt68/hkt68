@@ -1918,9 +1918,61 @@ function CustomerManagement() {
     return (
       <div className="p-6 bg-gray-50 min-h-screen">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-800 mb-8">👥 Müşteri ve Cari Hesap Yönetimi</h2>
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8">
+            <h2 className="text-3xl font-bold text-gray-800">👥 Müşteri ve Cari Hesap Yönetimi</h2>
+            
+            <div className="flex flex-col md:flex-row gap-3">
+              <button
+                onClick={() => setShowAddCustomer(true)}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                data-testid="add-customer-button"
+              >
+                ➕ Yeni Müşteri
+              </button>
+            </div>
+          </div>
 
           <div className="bg-white rounded-xl shadow-lg p-6">
+            {/* Arama ve Filtreleme */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Müşteri Ara
+                </label>
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Ad, telefon ile ara..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  data-testid="customer-search"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Durum Filtresi
+                </label>
+                <select
+                  value={filterPriority}
+                  onChange={(e) => setFilterPriority(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  data-testid="customer-filter"
+                >
+                  <option value="all">Tüm Müşteriler ({customers.length})</option>
+                  <option value="debt">Borçlu Müşteriler ({customers.filter(c => c.balance > 0).length})</option>
+                  <option value="credit">Alacaklı Müşteriler ({customers.filter(c => c.balance < 0).length})</option>
+                  <option value="zero">Sıfır Bakiye ({customers.filter(c => c.balance === 0).length})</option>
+                </select>
+              </div>
+              
+              <div className="flex items-end">
+                <div className="text-sm text-gray-600">
+                  <div>Toplam: {filteredCustomers.length} müşteri</div>
+                  <div>Toplam Borç: {customers.reduce((sum, c) => sum + (c.balance > 0 ? c.balance : 0), 0).toFixed(2)} TL</div>
+                </div>
+              </div>
+            </div>
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Müşteri Listesi</h3>
             
             {isLoading ? (
