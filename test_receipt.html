@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fiş Test</title>
+    <style>
+        /* Receipt Print Styles */
+        .receipt-format {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.2;
+            width: 58mm;
+            margin: 0 auto;
+            padding: 10px;
+            color: black;
+            background: white;
+            border: 1px solid #ccc;
+        }
+        
+        @media print {
+            .receipt-format {
+                font-family: 'Courier New', monospace !important;
+                font-size: 12px !important;
+                line-height: 1.2 !important;
+                width: 58mm !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                color: black !important;
+                background: white !important;
+            }
+            
+            .receipt-format * {
+                color: black !important;
+                background: white !important;
+            }
+            
+            body * {
+                visibility: hidden;
+            }
+            
+            #receipt-content, #receipt-content * {
+                visibility: visible;
+            }
+            
+            #receipt-content {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100% !important;
+                max-width: none !important;
+            }
+        }
+        
+        .test-button {
+            margin: 20px;
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <button class="test-button" onclick="window.print()">🖨️ Test Print</button>
+    
+    <div id="receipt-content" class="receipt-format">
+        <!-- İşletme Bilgileri -->
+        <div style="text-align: center; margin-bottom: 16px; border-bottom: 1px solid #000; padding-bottom: 8px;">
+            <div style="font-weight: bold; font-size: 18px;">ELİTE MEDYA BİLİŞİM</div>
+            <div style="font-size: 14px;">POS SATIŞ SİSTEMİ</div>
+            <div style="font-size: 10px; margin-top: 4px;">www.elitmedyabilisim.shop</div>
+        </div>
+
+        <!-- Fiş Bilgileri -->
+        <div style="font-size: 10px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between;">
+                <span>FİŞ NO:</span>
+                <span>0ADA03EC</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>TARİH:</span>
+                <span>04.10.2025</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>SAAT:</span>
+                <span>10:43:48</span>
+            </div>
+        </div>
+
+        <!-- Ürün Listesi -->
+        <div style="border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 8px 0; margin-bottom: 12px;">
+            <div style="font-size: 10px; font-weight: bold; margin-bottom: 4px;">ÜRÜN LİSTESİ</div>
+            <div style="margin-bottom: 8px;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="flex: 1;">Aspirin 100mg</span>
+                    <span style="margin-left: 8px;">25.00</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 10px; color: #666;">
+                    <span>2 x 12.50 TL</span>
+                    <span>KDV %8</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- KDV Dökümü -->
+        <div style="font-size: 10px; margin-bottom: 12px;">
+            <div style="font-weight: bold; margin-bottom: 4px;">KDV DÖKÜMÜ</div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>%8 KDV Matrahı:</span>
+                <span>23.15 TL</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span>%8 KDV:</span>
+                <span>1.85 TL</span>
+            </div>
+            <div style="border-top: 1px solid #000; margin-top: 4px; padding-top: 4px;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span>TOPLAM NET:</span>
+                    <span>23.15 TL</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>TOPLAM KDV:</span>
+                    <span>1.85 TL</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ödeme Bilgileri -->
+        <div style="font-size: 10px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 18px;">
+                <span>GENEL TOPLAM:</span>
+                <span>25.00 TL</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+                <span>ÖDEME ŞEKLİ:</span>
+                <span>NAKİT</span>
+            </div>
+        </div>
+
+        <!-- Alt Bilgiler -->
+        <div style="text-align: center; font-size: 10px; border-top: 1px solid #000; padding-top: 8px;">
+            <div>TEŞEKKÜR EDERİZ</div>
+            <div style="margin-top: 8px;">Bu fiş iade için gereklidir</div>
+            <div style="margin-top: 4px;">İyi günler dileriz</div>
+        </div>
+    </div>
+</body>
+</html>
