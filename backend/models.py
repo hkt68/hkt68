@@ -152,7 +152,6 @@ class CustomerTransaction(BaseModel):
     created_at: Optional[datetime] = None
 
 class TransactionCreate(BaseModel):
-    customer_id: str
     transaction_type: str
     amount: float
     description: Optional[str] = None
