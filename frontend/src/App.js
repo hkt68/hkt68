@@ -1695,6 +1695,86 @@ function CustomerManagement() {
     }
   };
 
+  const deleteTransaction = async (transactionId, description) => {
+    const confirmMsg = `"${description || 'Bu hareket'}" kaydını silmek istediğinizden emin misiniz?\n\nBu işlem geri alınamaz ve müşteri bakiyesi güncellenecektir.`;
+    
+    if (window.confirm(confirmMsg)) {
+      try {
+        setIsLoading(true);
+        // API endpoint eklenecek
+        alert('Hareket silme özelliği backend\'e eklenecek');
+        // await axios.delete(`${API}/customers/${selectedCustomer.customer.id}/transactions/${transactionId}`);
+      } catch (error) {
+        console.error('Hareket silinemedi:', error);
+        alert('Hareket silinemedi: ' + (error.response?.data?.detail || error.message));
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const addCustomer = async () => {
+    if (!newCustomer.name.trim()) {
+      alert('Müşteri adı gerekli!');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await axios.post(`${API}/customers`, newCustomer);
+      if (response.data.success) {
+        setNewCustomer({ name: '', phone: '', email: '', address: '', tax_number: '' });
+        setShowAddCustomer(false);
+        loadCustomers();
+        alert('Müşteri başarıyla eklendi!');
+      }
+    } catch (error) {
+      console.error('Müşteri eklenemedi:', error);
+      alert('Müşteri eklenemedi: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteCustomer = async (customerId, customerName) => {
+    const confirmMsg = `"${customerName}" müşterisini silmek istediğinizden emin misiniz?\n\nBu işlem tüm cari hesap hareketlerini de silecektir ve geri alınamaz.`;
+    
+    if (window.confirm(confirmMsg)) {
+      try {
+        setIsLoading(true);
+        await axios.delete(`${API}/customers/${customerId}`);
+        loadCustomers();
+        alert('Müşteri başarıyla silindi!');
+      } catch (error) {
+        console.error('Müşteri silinemedi:', error);
+        alert('Müşteri silinemedi: ' + (error.response?.data?.detail || error.message));
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  // Filtrelenmiş müşteri listesi
+  const filteredCustomers = customers.filter(customer => {
+    const matchesSearch = !searchTerm || 
+      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (customer.phone && customer.phone.includes(searchTerm));
+    
+    const matchesFilter = filterPriority === 'all' || 
+      (filterPriority === 'debt' && customer.balance > 0) ||
+      (filterPriority === 'credit' && customer.balance < 0) ||
+      (filterPriority === 'zero' && customer.balance === 0);
+    
+    return matchesSearch && matchesFilter;
+  })
+  
+  // Öncelik sıralama: Borçlular önce, sonra bakiyeye göre
+  .sort((a, b) => {
+    if (filterPriority === 'debt') return b.balance - a.balance; // Yüksek borç önce
+    if (filterPriority === 'credit') return a.balance - b.balance; // Yüksek alacak önce
+    return a.name.localeCompare(b.name); // Alfabetik
+  });
+
   const formatTransactionType = (type) => {
     const types = {
       'manual_debt': '📝 Manuel Borç',
