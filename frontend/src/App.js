@@ -140,7 +140,7 @@ function FavoriteProducts({ onAddToCart }) {
 }
 
 // Arama Önerileri Komponenti
-function SearchSuggestions({ query, onSelectProduct, onClose }) {
+function SearchSuggestions({ query, onSelectProduct, onClose, onAddNewProduct }) {
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
 
