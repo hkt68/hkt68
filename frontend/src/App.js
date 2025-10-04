@@ -219,7 +219,201 @@ function SearchSuggestions({ query, onSelectProduct, onClose }) {
   );
 }
 
-// Para Üstü Hesaplayıcı
+// Satış Fişi Komponenti
+function SalesReceipt({ sale, onClose, onPrint }) {
+  const [showPrintDialog, setShowPrintDialog] = useState(false);
+  
+  const currentDate = new Date();
+  const receiptNumber = sale?.id?.substring(0, 8).toUpperCase() || 'N/A';
+  
+  const calculateVATBreakdown = () => {
+    if (!sale?.items) return {};
+    
+    return sale.items.reduce((acc, item) => {
+      const vatRate = item.vat_rate || 0;
+      const itemTotal = item.total || (item.quantity * item.unit_price);
+      const vatAmount = (itemTotal * vatRate) / (100 + vatRate);
+      const netAmount = itemTotal - vatAmount;
+
+      if (!acc[vatRate]) {
+        acc[vatRate] = { net: 0, vat: 0, total: 0 };
+      }
+      
+      acc[vatRate].net += netAmount;
+      acc[vatRate].vat += vatAmount;
+      acc[vatRate].total += itemTotal;
+      
+      return acc;
+    }, {});
+  };
+
+  const vatBreakdown = calculateVATBreakdown();
+  const totalNet = Object.values(vatBreakdown).reduce((sum, group) => sum + group.net, 0);
+  const totalVAT = Object.values(vatBreakdown).reduce((sum, group) => sum + group.vat, 0);
+
+  const handlePrint = () => {
+    // Fiş çıkartılsın mı sorusu
+    const shouldPrint = window.confirm("Satış fişi çıkartılsın mı?");
+    
+    if (shouldPrint) {
+      setShowPrintDialog(true);
+      setTimeout(() => {
+        window.print();
+        setShowPrintDialog(false);
+        onPrint && onPrint();
+      }, 500);
+    } else {
+      onClose && onClose();
+    }
+  };
+
+  if (!sale) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="p-4 border-b bg-green-50">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-bold text-green-800">✅ Satış Tamamlandı!</h3>
+            <button 
+              onClick={() => onClose && onClose()}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
+          </div>
+          <p className="text-sm text-green-600 mt-1">
+            Fiş No: {receiptNumber} • {currentDate.toLocaleString('tr-TR')}
+          </p>
+        </div>
+
+        {/* Fiş Önizleme */}
+        <div className="p-4 max-h-96 overflow-y-auto">
+          <div id="receipt-content" className="receipt-format bg-white text-black">
+            {/* İşletme Bilgileri */}
+            <div className="text-center mb-4 border-b pb-2">
+              <div className="font-bold text-lg">ELİTE MEDYA BİLİŞİM</div>
+              <div className="text-sm">POS SATIŞ SİSTEMİ</div>
+              <div className="text-xs mt-1">www.elitmedyabilisim.shop</div>
+            </div>
+
+            {/* Fiş Bilgileri */}
+            <div className="text-xs mb-3">
+              <div className="flex justify-between">
+                <span>FİŞ NO:</span>
+                <span>{receiptNumber}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>TARİH:</span>
+                <span>{currentDate.toLocaleDateString('tr-TR')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>SAAT:</span>
+                <span>{currentDate.toLocaleTimeString('tr-TR')}</span>
+              </div>
+              {sale.customer_name && (
+                <div className="flex justify-between">
+                  <span>MÜŞTERİ:</span>
+                  <span className="truncate ml-2">{sale.customer_name}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Ürün Listesi */}
+            <div className="border-t border-b py-2 mb-3">
+              <div className="text-xs font-bold mb-1">ÜRÜN LİSTESİ</div>
+              {sale.items && sale.items.map((item, index) => (
+                <div key={index} className="mb-2">
+                  <div className="flex justify-between">
+                    <span className="truncate flex-1">{item.product_name}</span>
+                    <span className="ml-2">{(item.quantity * item.unit_price).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-600">
+                    <span>{item.quantity} x {item.unit_price.toFixed(2)} TL</span>
+                    <span>KDV %{item.vat_rate || 0}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* KDV Dökümü */}
+            {Object.keys(vatBreakdown).length > 0 && (
+              <div className="text-xs mb-3">
+                <div className="font-bold mb-1">KDV DÖKÜMÜ</div>
+                {Object.entries(vatBreakdown).map(([rate, amounts]) => (
+                  <div key={rate}>
+                    <div className="flex justify-between">
+                      <span>%{rate} KDV Matrahı:</span>
+                      <span>{amounts.net.toFixed(2)} TL</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>%{rate} KDV:</span>
+                      <span>{amounts.vat.toFixed(2)} TL</span>
+                    </div>
+                  </div>
+                ))}
+                <div className="border-t mt-1 pt-1">
+                  <div className="flex justify-between">
+                    <span>TOPLAM NET:</span>
+                    <span>{totalNet.toFixed(2)} TL</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>TOPLAM KDV:</span>
+                    <span>{totalVAT.toFixed(2)} TL</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Ödeme Bilgileri */}
+            <div className="text-xs mb-3">
+              <div className="flex justify-between font-bold text-lg">
+                <span>GENEL TOPLAM:</span>
+                <span>{sale.total_amount?.toFixed(2) || '0.00'} TL</span>
+              </div>
+              <div className="flex justify-between mt-1">
+                <span>ÖDEME ŞEKLİ:</span>
+                <span>
+                  {sale.payment_method === 'cash' && 'NAKİT'}
+                  {sale.payment_method === 'card' && 'KREDİ KARTI'}
+                  {sale.payment_method === 'credit' && 'CARİ HESAP'}
+                  {sale.payment_method === 'other' && 'DİĞER'}
+                </span>
+              </div>
+            </div>
+
+            {/* Alt Bilgiler */}
+            <div className="text-center text-xs border-t pt-2">
+              <div>TEŞEKKÜR EDERİZ</div>
+              <div className="mt-2">Bu fiş iade için gereklidir</div>
+              <div className="mt-1">İyi günler dileriz</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Alt Butonlar */}
+        <div className="p-4 border-t bg-gray-50 flex space-x-3">
+          <button
+            onClick={() => onClose && onClose()}
+            className="flex-1 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+          >
+            Kapat
+          </button>
+          <button
+            onClick={handlePrint}
+            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            data-testid="print-receipt-button"
+          >
+            🖨️ Fiş Yazdır
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Para Üstü Hesaplayıcısı
 function ChangeCalculator({ total, onAmountChange }) {
   const [receivedAmount, setReceivedAmount] = useState('');
   const [change, setChange] = useState(0);
