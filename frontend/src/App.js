@@ -505,10 +505,10 @@ function SalesScreen() {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 max-w-7xl mx-auto">
         
         {/* Sol Panel: Ürün Arama ve Favori Ürünler */}
-        <div className="space-y-6">
+        <div className="lg:col-span-2 space-y-6">
           {/* Ürün Arama */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">🛒 Satış Ekranı</h2>
