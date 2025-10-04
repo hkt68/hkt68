@@ -789,6 +789,7 @@ function SalesScreen() {
                   query={searchTerm}
                   onSelectProduct={addToCart}
                   onClose={() => setShowSuggestions(false)}
+                  onAddNewProduct={handleAddNewProduct}
                 />
               )}
             </div>
