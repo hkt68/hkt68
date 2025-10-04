@@ -20,24 +20,26 @@ class Database:
     
     async def execute(self, query: str, params: tuple = None) -> int:
         """Execute INSERT, UPDATE, DELETE queries"""
-        async with self.pool.acquire() as conn:
-            async with conn.cursor() as cursor:
-                await cursor.execute(query, params)
-                return cursor.rowcount
+        async with aiosqlite.connect(self.db_path) as conn:
+            cursor = await conn.execute(query, params)
+            await conn.commit()
+            return cursor.rowcount
     
     async def fetch_one(self, query: str, params: tuple = None) -> Dict:
         """Fetch single row"""
-        async with self.pool.acquire() as conn:
-            async with conn.cursor(aiomysql.DictCursor) as cursor:
-                await cursor.execute(query, params)
-                return await cursor.fetchone()
+        async with aiosqlite.connect(self.db_path) as conn:
+            conn.row_factory = aiosqlite.Row
+            cursor = await conn.execute(query, params)
+            row = await cursor.fetchone()
+            return dict(row) if row else None
     
     async def fetch_all(self, query: str, params: tuple = None) -> List[Dict]:
         """Fetch multiple rows"""
-        async with self.pool.acquire() as conn:
-            async with conn.cursor(aiomysql.DictCursor) as cursor:
-                await cursor.execute(query, params)
-                return await cursor.fetchall()
+        async with aiosqlite.connect(self.db_path) as conn:
+            conn.row_factory = aiosqlite.Row
+            cursor = await conn.execute(query, params)
+            rows = await cursor.fetchall()
+            return [dict(row) for row in rows]
 
     async def create_tables(self):
         """Create all required tables"""
