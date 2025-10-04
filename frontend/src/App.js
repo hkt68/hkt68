@@ -1811,16 +1811,26 @@ function CustomerManagement() {
 
     try {
       setIsLoading(true);
-      const response = await axios.post(`${API}/customers`, newCustomer);
+      
+      let response;
+      if (editingCustomer) {
+        // Müşteri güncelleme
+        response = await axios.put(`${API}/customers/${editingCustomer.id}`, newCustomer);
+      } else {
+        // Yeni müşteri ekleme
+        response = await axios.post(`${API}/customers`, newCustomer);
+      }
+      
       if (response.data.success) {
         setNewCustomer({ name: '', phone: '', email: '', address: '', tax_number: '' });
         setShowAddCustomer(false);
+        setEditingCustomer(null);
         loadCustomers();
-        alert('Müşteri başarıyla eklendi!');
+        alert(editingCustomer ? 'Müşteri başarıyla güncellendi!' : 'Müşteri başarıyla eklendi!');
       }
     } catch (error) {
-      console.error('Müşteri eklenemedi:', error);
-      alert('Müşteri eklenemedi: ' + (error.response?.data?.detail || error.message));
+      console.error('Müşteri kaydedilemedi:', error);
+      alert('Müşteri kaydedilemedi: ' + (error.response?.data?.detail || error.message));
     } finally {
       setIsLoading(false);
     }
