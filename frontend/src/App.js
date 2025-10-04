@@ -761,13 +761,624 @@ function SalesScreen() {
   );
 }
 
-// Ürün Yönetimi Placeholder
-function ProductManagement() {
+// Kategori Yönetimi Komponenti
+function CategoryManagement({ categories, onCategoriesChange }) {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newCategory, setNewCategory] = useState({ name: '', description: '' });
+  const [isLoading, setIsLoading] = useState(false);
+
+  const addCategory = async () => {
+    if (!newCategory.name.trim()) {
+      alert('Kategori adı gerekli!');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await axios.post(`${API}/categories`, newCategory);
+      if (response.data.success) {
+        onCategoriesChange();
+        setNewCategory({ name: '', description: '' });
+        setShowAddForm(false);
+        alert('Kategori eklendi!');
+      }
+    } catch (error) {
+      console.error('Kategori eklenemedi:', error);
+      alert('Kategori eklenemedi: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteCategory = async (categoryId, categoryName) => {
+    if (window.confirm(`"${categoryName}" kategorisini silmek istediğinizden emin misiniz?`)) {
+      try {
+        await axios.delete(`${API}/categories/${categoryId}`);
+        onCategoriesChange();
+        alert('Kategori silindi!');
+      } catch (error) {
+        console.error('Kategori silinemedi:', error);
+        alert('Kategori silinemedi: ' + (error.response?.data?.detail || error.message));
+      }
+    }
+  };
+
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">📦 Ürün Yönetimi</h2>
-      <div className="bg-white rounded-lg shadow p-6">
-        <p className="text-gray-600">Ürün yönetimi bölümü geliştirilecek...</p>
+    <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold text-gray-800">📂 Kategoriler</h3>
+        <button
+          onClick={() => setShowAddForm(!showAddForm)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          data-testid="add-category-button"
+        >
+          {showAddForm ? '❌ İptal' : '➕ Kategori Ekle'}
+        </button>
+      </div>
+
+      {/* Kategori Ekleme Formu */}
+      {showAddForm && (
+        <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+            <input
+              type="text"
+              value={newCategory.name}
+              onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+              placeholder="Kategori adı..."
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              data-testid="category-name-input"
+            />
+            <input
+              type="text"
+              value={newCategory.description}
+              onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
+              placeholder="Açıklama (opsiyonel)..."
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              data-testid="category-description-input"
+            />
+          </div>
+          <button
+            onClick={addCategory}
+            disabled={isLoading}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 transition-colors"
+            data-testid="save-category-button"
+          >
+            {isLoading ? 'Kaydediliyor...' : '💾 Kaydet'}
+          </button>
+        </div>
+      )}
+
+      {/* Kategori Listesi */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        {categories.map(category => (
+          <div key={category.id} className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <h4 className="font-medium text-gray-800">{category.name}</h4>
+                {category.description && (
+                  <p className="text-sm text-gray-600 mt-1">{category.description}</p>
+                )}
+              </div>
+              <button
+                onClick={() => deleteCategory(category.id, category.name)}
+                className="text-red-500 hover:text-red-700 ml-2"
+                data-testid={`delete-category-${category.id}`}
+              >
+                🗑️
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {categories.length === 0 && (
+        <p className="text-gray-500 text-center py-8">Henüz kategori eklenmemiş</p>
+      )}
+    </div>
+  );
+}
+
+// Ürün Ekleme/Düzenleme Formu
+function ProductForm({ product = null, categories, onSave, onCancel }) {
+  const [formData, setFormData] = useState({
+    name: product?.name || '',
+    barcode: product?.barcode || '',
+    category_id: product?.category_id || '',
+    purchase_price: product?.purchase_price || 0,
+    sale_price: product?.sale_price || 0,
+    stock_quantity: product?.stock_quantity || 0,
+    min_stock_level: product?.min_stock_level || 0,
+    unit: product?.unit || 'adet',
+    description: product?.description || '',
+    vat_rate: product?.vat_rate || 20,
+    image_url: product?.image_url || ''
+  });
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!formData.name.trim() || !formData.sale_price) {
+      alert('Ürün adı ve satış fiyatı gerekli!');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      let response;
+      
+      if (product) {
+        // Güncelleme
+        response = await axios.put(`${API}/products/${product.id}`, formData);
+      } else {
+        // Yeni ekleme
+        response = await axios.post(`${API}/products`, formData);
+      }
+
+      if (response.data.success) {
+        onSave();
+        alert(product ? 'Ürün güncellendi!' : 'Ürün eklendi!');
+      }
+    } catch (error) {
+      console.error('Ürün kaydedilemedi:', error);
+      alert('Ürün kaydedilemedi: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg p-6">
+      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        {product ? '✏️ Ürün Düzenle' : '➕ Yeni Ürün Ekle'}
+      </h3>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Ürün Adı */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Ürün Adı *
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              required
+              data-testid="product-name-input"
+            />
+          </div>
+
+          {/* Barkod */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Barkod
+            </label>
+            <input
+              type="text"
+              value={formData.barcode}
+              onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              data-testid="product-barcode-input"
+            />
+          </div>
+
+          {/* Kategori */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Kategori
+            </label>
+            <select
+              value={formData.category_id}
+              onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              data-testid="product-category-select"
+            >
+              <option value="">Kategori seçiniz...</option>
+              {categories.map(category => (
+                <option key={category.id} value={category.id}>{category.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Birim */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Birim
+            </label>
+            <select
+              value={formData.unit}
+              onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="adet">Adet</option>
+              <option value="kg">Kilogram</option>
+              <option value="lt">Litre</option>
+              <option value="m">Metre</option>
+              <option value="kutu">Kutu</option>
+            </select>
+          </div>
+
+          {/* Alış Fiyatı */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Alış Fiyatı (TL)
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              value={formData.purchase_price}
+              onChange={(e) => setFormData({ ...formData, purchase_price: parseFloat(e.target.value) || 0 })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Satış Fiyatı */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Satış Fiyatı (TL) *
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              value={formData.sale_price}
+              onChange={(e) => setFormData({ ...formData, sale_price: parseFloat(e.target.value) || 0 })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+
+          {/* Stok Miktarı */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Stok Miktarı
+            </label>
+            <input
+              type="number"
+              value={formData.stock_quantity}
+              onChange={(e) => setFormData({ ...formData, stock_quantity: parseInt(e.target.value) || 0 })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Minimum Stok */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Minimum Stok Seviyesi
+            </label>
+            <input
+              type="number"
+              value={formData.min_stock_level}
+              onChange={(e) => setFormData({ ...formData, min_stock_level: parseInt(e.target.value) || 0 })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* KDV Oranı */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              KDV Oranı (%)
+            </label>
+            <select
+              value={formData.vat_rate}
+              onChange={(e) => setFormData({ ...formData, vat_rate: parseFloat(e.target.value) })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              <option value={0}>%0</option>
+              <option value={1}>%1</option>
+              <option value={8}>%8</option>
+              <option value={20}>%20</option>
+            </select>
+          </div>
+
+          {/* Ürün Resmi URL */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Ürün Resmi URL
+            </label>
+            <input
+              type="url"
+              value={formData.image_url}
+              onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+              placeholder="https://example.com/image.jpg"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        {/* Açıklama */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Açıklama
+          </label>
+          <textarea
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            rows={3}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        {/* Butonlar */}
+        <div className="flex space-x-3 pt-4">
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 transition-colors"
+            data-testid="save-product-button"
+          >
+            {isLoading ? 'Kaydediliyor...' : '💾 Kaydet'}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            data-testid="cancel-product-button"
+          >
+            ❌ İptal
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+// Ana Ürün Yönetimi Komponenti
+function ProductManagement() {
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [filterCategory, setFilterCategory] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    loadProducts();
+    loadCategories();
+  }, []);
+
+  const loadProducts = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get(`${API}/products`);
+      setProducts(response.data.data);
+    } catch (error) {
+      console.error('Ürünler yüklenemedi:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const response = await axios.get(`${API}/categories`);
+      setCategories(response.data.data);
+    } catch (error) {
+      console.error('Kategoriler yüklenemedi:', error);
+    }
+  };
+
+  const deleteProduct = async (productId, productName) => {
+    if (window.confirm(`"${productName}" ürününü silmek istediğinizden emin misiniz?`)) {
+      try {
+        await axios.delete(`${API}/products/${productId}`);
+        loadProducts();
+        alert('Ürün silindi!');
+      } catch (error) {
+        console.error('Ürün silinemedi:', error);
+        alert('Ürün silinemedi: ' + (error.response?.data?.detail || error.message));
+      }
+    }
+  };
+
+  const toggleFavorite = async (productId) => {
+    try {
+      await axios.put(`${API}/products/${productId}/favorite`);
+      loadProducts();
+    } catch (error) {
+      console.error('Favori durumu güncellenemedi:', error);
+    }
+  };
+
+  // Filtrelenmiş ürünler
+  const filteredProducts = products.filter(product => {
+    const matchesCategory = !filterCategory || product.category_id === filterCategory;
+    const matchesSearch = !searchTerm || 
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.barcode && product.barcode.includes(searchTerm));
+    return matchesCategory && matchesSearch;
+  });
+
+  // Form işlemleri
+  const handleFormSave = () => {
+    loadProducts();
+    setShowAddForm(false);
+    setEditingProduct(null);
+  };
+
+  const handleFormCancel = () => {
+    setShowAddForm(false);
+    setEditingProduct(null);
+  };
+
+  return (
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-3xl font-bold text-gray-800 mb-8">📦 Ürün Yönetimi</h2>
+
+        {/* Kategori Yönetimi */}
+        <CategoryManagement 
+          categories={categories} 
+          onCategoriesChange={loadCategories}
+        />
+
+        {/* Ürün Formu */}
+        {(showAddForm || editingProduct) && (
+          <div className="mb-6">
+            <ProductForm
+              product={editingProduct}
+              categories={categories}
+              onSave={handleFormSave}
+              onCancel={handleFormCancel}
+            />
+          </div>
+        )}
+
+        {/* Ürün Listesi Kontrolleri */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <h3 className="text-lg font-semibold text-gray-800">📋 Ürün Listesi ({filteredProducts.length})</h3>
+            
+            <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+              {/* Arama */}
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Ürün ara..."
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                data-testid="product-search"
+              />
+              
+              {/* Kategori Filtresi */}
+              <select
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                data-testid="category-filter"
+              >
+                <option value="">Tüm Kategoriler</option>
+                {categories.map(category => (
+                  <option key={category.id} value={category.id}>{category.name}</option>
+                ))}
+              </select>
+              
+              {/* Yeni Ürün Butonu */}
+              <button
+                onClick={() => setShowAddForm(true)}
+                disabled={showAddForm || editingProduct}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 transition-colors whitespace-nowrap"
+                data-testid="add-product-button"
+              >
+                ➕ Yeni Ürün
+              </button>
+            </div>
+          </div>
+
+          {/* Ürün Tablosu */}
+          {isLoading ? (
+            <div className="text-center py-8">
+              <div className="loading-spinner inline-block"></div>
+              <span className="ml-2 text-gray-500">Ürünler yükleniyor...</span>
+            </div>
+          ) : filteredProducts.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full table-auto">
+                <thead>
+                  <tr className="bg-gray-50 border-b">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resim</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ürün Adı</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Barkod</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fiyat</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stok</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">KDV</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">İşlemler</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredProducts.map(product => (
+                    <tr key={product.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        {product.image_url ? (
+                          <img 
+                            src={product.image_url} 
+                            alt={product.name}
+                            className="w-12 h-12 object-cover rounded"
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
+                            <span className="text-gray-400 text-xs">📦</span>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex items-center">
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                            <div className="text-sm text-gray-500">{product.unit}</div>
+                          </div>
+                          {product.is_favorite && (
+                            <span className="ml-2 text-yellow-500">⭐</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {product.category_name || '-'}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {product.barcode || '-'}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{product.sale_price.toFixed(2)} TL</div>
+                        <div className="text-xs text-gray-500">Alış: {product.purchase_price.toFixed(2)} TL</div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className={`text-sm ${
+                          product.stock_quantity <= product.min_stock_level 
+                            ? 'text-red-600 font-medium' 
+                            : 'text-gray-900'
+                        }`}>
+                          {product.stock_quantity}
+                          {product.stock_quantity <= product.min_stock_level && ' ⚠️'}
+                        </div>
+                        <div className="text-xs text-gray-500">Min: {product.min_stock_level}</div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        %{product.vat_rate}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                        <button
+                          onClick={() => toggleFavorite(product.id)}
+                          className={`${
+                            product.is_favorite ? 'text-yellow-500' : 'text-gray-400'
+                          } hover:text-yellow-600`}
+                          title={product.is_favorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+                          data-testid={`favorite-toggle-${product.id}`}
+                        >
+                          ⭐
+                        </button>
+                        <button
+                          onClick={() => setEditingProduct(product)}
+                          className="text-blue-600 hover:text-blue-900"
+                          data-testid={`edit-product-${product.id}`}
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => deleteProduct(product.id, product.name)}
+                          className="text-red-600 hover:text-red-900"
+                          data-testid={`delete-product-${product.id}`}
+                        >
+                          🗑️
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-500">
+                {searchTerm || filterCategory ? 'Filtreye uygun ürün bulunamadı' : 'Henüz ürün eklenmemiş'}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
