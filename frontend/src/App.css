@@ -151,40 +151,6 @@ button {
     size: 58mm auto;
     margin: 0;
   }
-  
-  /* Receipt Print Styles */
-  .receipt-format {
-    font-family: 'Courier New', monospace !important;
-    font-size: 12px !important;
-    line-height: 1.2 !important;
-    width: 58mm !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    color: black !important;
-    background: white !important;
-  }
-  
-  .receipt-format * {
-    color: black !important;
-    background: white !important;
-  }
-  
-  /* Hide everything except receipt content when printing */
-  body * {
-    visibility: hidden;
-  }
-  
-  #receipt-content, #receipt-content * {
-    visibility: visible;
-  }
-  
-  #receipt-content {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100% !important;
-    max-width: none !important;
-  }
 }
 
 /* Success/Error Messages */
