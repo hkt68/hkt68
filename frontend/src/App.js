@@ -2116,7 +2116,14 @@ function CustomerManagement() {
                             onClick={(e) => {
                               e.stopPropagation();
                               setEditingCustomer(customer);
-                              setNewCustomer(customer);
+                              setNewCustomer({
+                                name: customer.name,
+                                phone: customer.phone || '',
+                                email: customer.email || '',
+                                address: customer.address || '',
+                                tax_number: customer.tax_number || ''
+                              });
+                              setShowAddCustomer(true);
                             }}
                             className="p-1 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded"
                             title="Müşteri düzenle"
