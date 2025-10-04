@@ -2468,6 +2468,391 @@ function CustomerManagement() {
   );
 }
 
+// Raporlar ve Analitik Komponenti
+function Reports() {
+  const [salesReport, setSalesReport] = useState(null);
+  const [inventoryReport, setInventoryReport] = useState(null);
+  const [customerReport, setCustomerReport] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [startDate, setStartDate] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 30);
+    return date.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState(() => {
+    return new Date().toISOString().split('T')[0];
+  });
+
+  useEffect(() => {
+    loadReports();
+  }, []);
+
+  const loadReports = async () => {
+    setIsLoading(true);
+    try {
+      const [salesRes, inventoryRes, customerRes] = await Promise.all([
+        axios.get(`${API}/reports/sales?start_date=${startDate}&end_date=${endDate}`),
+        axios.get(`${API}/reports/inventory`),
+        axios.get(`${API}/reports/customers`)
+      ]);
+      
+      setSalesReport(salesRes.data.data);
+      setInventoryReport(inventoryRes.data.data);
+      setCustomerReport(customerRes.data.data);
+    } catch (error) {
+      console.error('Raporlar yüklenemedi:', error);
+      alert('Raporlar yüklenirken hata oluştu!');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('tr-TR', { 
+      style: 'currency', 
+      currency: 'TRY' 
+    }).format(amount || 0);
+  };
+
+  const printReport = (reportType) => {
+    let reportContent = '';
+    let title = '';
+
+    if (reportType === 'sales' && salesReport) {
+      title = 'SATIŞ RAPORU';
+      reportContent = `
+        <h2>SATIŞ RAPORU</h2>
+        <p><strong>Periode:</strong> ${salesReport.period.start_date} - ${salesReport.period.end_date}</p>
+        
+        <div class="summary">
+          <h3>ÖZET</h3>
+          <p>Toplam Satış: ${salesReport.summary.total_sales}</p>
+          <p>Toplam Ciro: ${formatCurrency(salesReport.summary.total_revenue)}</p>
+          <p>Ortalama Satış: ${formatCurrency(salesReport.summary.avg_sale_amount)}</p>
+        </div>
+
+        <div class="top-products">
+          <h3>EN ÇOK SATILAN ÜRÜNLER</h3>
+          <table>
+            <tr><th>Ürün</th><th>Miktar</th><th>Tutar</th></tr>
+            ${salesReport.top_products.map(p => `
+              <tr>
+                <td>${p.product_name}</td>
+                <td>${p.total_quantity}</td>
+                <td>${formatCurrency(p.total_sales_amount)}</td>
+              </tr>
+            `).join('')}
+          </table>
+        </div>
+      `;
+    }
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${title}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          h2 { text-align: center; color: #1e40af; }
+          h3 { color: #333; border-bottom: 1px solid #ddd; }
+          table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #f5f5f5; }
+          .summary p { margin: 5px 0; }
+          @media print { @page { size: A4; margin: 15mm; } }
+        </style>
+      </head>
+      <body>
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h1>ELİTE MEDYA BİLİŞİM</h1>
+          <p>POS Sistem Raporları</p>
+        </div>
+        ${reportContent}
+        <div style="margin-top: 40px; text-align: center; font-size: 12px; color: #666;">
+          <p>Rapor Tarihi: ${new Date().toLocaleString('tr-TR')}</p>
+          <p>Elite Medya POS Sistemi</p>
+        </div>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center py-20">
+            <div className="loading-spinner inline-block mb-4"></div>
+            <p className="text-gray-600">Raporlar hazırlanıyor...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-3xl font-bold text-gray-800">📊 Raporlar ve Analitik</h2>
+          
+          <div className="flex space-x-3">
+            <button
+              onClick={() => printReport('sales')}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              🖨️ Satış Raporu Yazdır
+            </button>
+          </div>
+        </div>
+
+        {/* Tarih Filtreleme */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">📅 Rapor Dönemi</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Başlangıç Tarihi
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Bitiş Tarihi
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="flex items-end">
+              <button
+                onClick={loadReports}
+                className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                🔄 Raporları Güncelle
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          
+          {/* Satış Raporu */}
+          {salesReport && (
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">💰 Satış Analizi</h3>
+              
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {salesReport.summary?.total_sales || 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Toplam Satış</div>
+                </div>
+                
+                <div className="text-center p-4 bg-green-50 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">
+                    {formatCurrency(salesReport.summary?.total_revenue)}
+                  </div>
+                  <div className="text-sm text-gray-600">Toplam Ciro</div>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <h4 className="font-medium text-gray-800 mb-2">Ödeme Yöntemleri</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">💵 Nakit:</span>
+                    <span className="font-medium">{formatCurrency(salesReport.summary?.cash_sales)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">💳 Kart:</span>
+                    <span className="font-medium">{formatCurrency(salesReport.summary?.card_sales)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">📋 Cari:</span>
+                    <span className="font-medium">{formatCurrency(salesReport.summary?.credit_sales)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* En Çok Satılanlar */}
+              <div>
+                <h4 className="font-medium text-gray-800 mb-2">🏆 En Çok Satılan Ürünler</h4>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {salesReport.top_products?.slice(0, 5).map((product, index) => (
+                    <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                      <div>
+                        <div className="font-medium text-gray-800">{product.product_name}</div>
+                        <div className="text-xs text-gray-600">{product.total_quantity} adet</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-medium text-green-600">
+                          {formatCurrency(product.total_sales_amount)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Stok Raporu */}
+          {inventoryReport && (
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">📦 Stok Analizi</h3>
+              
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="text-center p-4 bg-purple-50 rounded-lg">
+                  <div className="text-2xl font-bold text-purple-600">
+                    {inventoryReport.inventory_summary?.total_products || 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Toplam Ürün</div>
+                </div>
+                
+                <div className="text-center p-4 bg-orange-50 rounded-lg">
+                  <div className="text-2xl font-bold text-orange-600">
+                    {inventoryReport.inventory_summary?.total_items || 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Toplam Adet</div>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Alış Değeri:</span>
+                  <span className="font-medium">
+                    {formatCurrency(inventoryReport.inventory_summary?.total_purchase_value)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Satış Değeri:</span>
+                  <span className="font-medium">
+                    {formatCurrency(inventoryReport.inventory_summary?.total_sale_value)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Düşük Stok Uyarısı */}
+              {inventoryReport.low_stock_products?.length > 0 && (
+                <div>
+                  <h4 className="font-medium text-red-600 mb-2">⚠️ Düşük Stok Uyarısı</h4>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {inventoryReport.low_stock_products.slice(0, 5).map((product) => (
+                      <div key={product.id} className="flex justify-between items-center p-2 bg-red-50 rounded">
+                        <div>
+                          <div className="font-medium text-gray-800">{product.name}</div>
+                          <div className="text-xs text-gray-600">{product.category_name}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold text-red-600">{product.stock_quantity}</div>
+                          <div className="text-xs text-gray-500">Min: {product.min_stock_level}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Müşteri Raporu */}
+          {customerReport && (
+            <div className="bg-white rounded-xl shadow-lg p-6 xl:col-span-2">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">👥 Müşteri Analizi</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div className="text-center p-4 bg-indigo-50 rounded-lg">
+                  <div className="text-2xl font-bold text-indigo-600">
+                    {customerReport.customer_summary?.total_customers || 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Toplam Müşteri</div>
+                </div>
+                
+                <div className="text-center p-4 bg-red-50 rounded-lg">
+                  <div className="text-2xl font-bold text-red-600">
+                    {customerReport.customer_summary?.customers_with_debt || 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Borçlu Müşteri</div>
+                </div>
+                
+                <div className="text-center p-4 bg-red-100 rounded-lg">
+                  <div className="text-lg font-bold text-red-700">
+                    {formatCurrency(customerReport.customer_summary?.total_debt)}
+                  </div>
+                  <div className="text-sm text-gray-600">Toplam Borç</div>
+                </div>
+                
+                <div className="text-center p-4 bg-green-100 rounded-lg">
+                  <div className="text-lg font-bold text-green-700">
+                    {formatCurrency(customerReport.customer_summary?.total_credit)}
+                  </div>
+                  <div className="text-sm text-gray-600">Toplam Alacak</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* En Borçlu Müşteriler */}
+                <div>
+                  <h4 className="font-medium text-gray-800 mb-2">💸 En Borçlu Müşteriler</h4>
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {customerReport.top_debtors?.slice(0, 5).map((customer, index) => (
+                      <div key={index} className="flex justify-between items-center p-3 bg-red-50 rounded">
+                        <div>
+                          <div className="font-medium text-gray-800">{customer.name}</div>
+                          <div className="text-xs text-gray-600">{customer.phone}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold text-red-600">
+                            {formatCurrency(customer.balance)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* En Çok Alışveriş Yapanlar */}
+                <div>
+                  <h4 className="font-medium text-gray-800 mb-2">🛒 En Çok Alışveriş Yapanlar</h4>
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {customerReport.top_buyers?.slice(0, 5).map((customer, index) => (
+                      <div key={index} className="flex justify-between items-center p-3 bg-green-50 rounded">
+                        <div>
+                          <div className="font-medium text-gray-800">{customer.name}</div>
+                          <div className="text-xs text-gray-600">{customer.total_sales} alışveriş</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold text-green-600">
+                            {formatCurrency(customer.total_spent)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Ana Uygulama
 function App() {
   const [activeMenu, setActiveMenu] = useState('sales');
@@ -2480,6 +2865,8 @@ function App() {
         return <ProductManagement />;
       case 'customers':
         return <CustomerManagement />;
+      case 'reports':
+        return <Reports />;
       default:
         return (
           <div className="p-6">
