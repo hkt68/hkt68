@@ -211,8 +211,31 @@ function SearchSuggestions({ query, onSelectProduct, onClose, onAddNewProduct })
           ))}
         </div>
       ) : (
-        <div className="p-4 text-center text-gray-500">
-          "{query}" için ürün bulunamadı
+        <div className="p-4 text-center">
+          <div className="text-gray-500 mb-3">
+            <div className="text-lg mb-2">📦 Ürün Bulunamadı</div>
+            <div className="text-sm">"{query}" için ürün kaydı yok</div>
+          </div>
+          
+          {/* Barkod formatı kontrolü (en az 8 karakter, sadece rakam) */}
+          {query.length >= 8 && /^\d+$/.test(query) && (
+            <button
+              onClick={() => {
+                onAddNewProduct && onAddNewProduct(query);
+                onClose();
+              }}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+              data-testid="add-new-product-button"
+            >
+              ➕ Bu Barkodla Yeni Ürün Ekle
+            </button>
+          )}
+          
+          {query.length < 8 && (
+            <p className="text-xs text-gray-400 mt-2">
+              Yeni ürün eklemek için en az 8 haneli barkod giriniz
+            </p>
+          )}
         </div>
       )}
     </div>
