@@ -652,7 +652,7 @@ function SalesScreen() {
         </div>
 
         {/* Sağ Panel: Ödeme */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
+        <div className="lg:col-span-1 bg-white rounded-xl shadow-lg p-6">
           <h3 className="text-2xl font-bold text-gray-800 mb-6">💳 Ödeme</h3>
           
           {/* Müşteri Seçimi */}
