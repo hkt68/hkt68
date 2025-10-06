@@ -484,8 +484,233 @@ session_start();
                 </div>
             </div>
 
+            <!-- POS Satış Sayfası -->
+            <div x-show="currentPage === 'pos'">
+                <div class="mb-6 flex items-center justify-between">
+                    <h1 class="text-2xl font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-cash-register text-green-600 mr-3"></i>
+                        Satış Yap
+                    </h1>
+                    <div class="flex space-x-2">
+                        <button @click="clearSale()" 
+                                class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                            <i class="fas fa-times mr-2"></i>
+                            Temizle
+                        </button>
+                        <button x-show="saleItems.length > 0" @click="completeSale()" 
+                                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                            <i class="fas fa-check mr-2"></i>
+                            Satışı Tamamla
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Sol: Ürün Seçimi -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- Ürün Arama -->
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Ürün Seç</h3>
+                            <div class="flex space-x-4 mb-4">
+                                <div class="flex-1">
+                                    <input type="text" x-model="productSearchPos" @input="searchProductsPos()" 
+                                           placeholder="Ürün adı veya barkod ile ara..." 
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                                </div>
+                                <button @click="clearProductSearch()" 
+                                        class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
+                                    Temizle
+                                </button>
+                            </div>
+                            
+                            <!-- Kategori Filtreleme -->
+                            <div class="flex space-x-2 mb-4 overflow-x-auto">
+                                <button @click="posCategory = ''" 
+                                        :class="posCategory === '' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'"
+                                        class="px-3 py-1 rounded-full text-sm whitespace-nowrap">
+                                    Tümü
+                                </button>
+                                <template x-for="category in categories" :key="category.id">
+                                    <button @click="posCategory = category.id" 
+                                            :class="posCategory == category.id ? 'text-white' : 'text-gray-700'"
+                                            :style="posCategory == category.id ? `background-color: ${category.renk}` : 'background-color: #f3f4f6'"
+                                            class="px-3 py-1 rounded-full text-sm whitespace-nowrap" 
+                                            x-text="category.ad">
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Ürün Grid -->
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                <template x-for="product in filteredPosProducts" :key="product.id">
+                                    <button @click="addToSale(product)" 
+                                            :disabled="product.stok_miktari <= 0"
+                                            :class="product.stok_miktari <= 0 ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'"
+                                            class="bg-gray-50 p-3 rounded-lg border border-gray-200 text-left transition-all">
+                                        <div class="font-medium text-gray-900 text-sm mb-1" x-text="product.ad"></div>
+                                        <div class="text-xs text-gray-500 mb-2" x-text="product.kategori_ad || 'Genel'"></div>
+                                        <div class="text-sm font-bold text-green-600" x-text="formatCurrency(product.satis_fiyati)"></div>
+                                        <div class="text-xs" :class="product.stok_miktari <= product.min_stok_seviyesi ? 'text-red-600' : 'text-gray-500'">
+                                            Stok: <span x-text="product.stok_miktari"></span>
+                                        </div>
+                                    </button>
+                                </template>
+                            </div>
+                            
+                            <!-- Ürün Yok Mesajı -->
+                            <div x-show="filteredPosProducts.length === 0" class="text-center py-8">
+                                <i class="fas fa-search text-4xl text-gray-300 mb-2"></i>
+                                <p class="text-gray-500">Aradığınız ürün bulunamadı</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sağ: Sepet ve Ödeme -->
+                    <div class="space-y-6">
+                        <!-- Müşteri Seçimi -->
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-3">Müşteri</h3>
+                            <select x-model="selectedCustomer" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                                <option value="">Seçiniz (Perakende Satış)</option>
+                                <template x-for="customer in customers" :key="customer.id">
+                                    <option :value="customer.id" 
+                                            x-text="customer.ad + ' ' + (customer.soyad || '') + (customer.telefon ? ' (' + customer.telefon + ')' : '')">
+                                    </option>
+                                </template>
+                            </select>
+                        </div>
+
+                        <!-- Sepet -->
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                                <i class="fas fa-shopping-cart mr-2"></i>
+                                Sepet (<span x-text="saleItems.length"></span>)
+                            </h3>
+                            
+                            <div class="space-y-2 max-h-80 overflow-y-auto">
+                                <template x-for="(item, index) in saleItems" :key="index">
+                                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                                        <div class="flex-1">
+                                            <div class="font-medium text-sm" x-text="item.name"></div>
+                                            <div class="text-xs text-gray-500" x-text="formatCurrency(item.price) + ' x ' + item.quantity"></div>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <button @click="updateQuantity(index, -1)" 
+                                                    class="w-6 h-6 bg-red-500 text-white rounded-full text-xs flex items-center justify-center">
+                                                -
+                                            </button>
+                                            <span class="text-sm font-medium w-8 text-center" x-text="item.quantity"></span>
+                                            <button @click="updateQuantity(index, 1)" 
+                                                    class="w-6 h-6 bg-green-500 text-white rounded-full text-xs flex items-center justify-center">
+                                                +
+                                            </button>
+                                            <button @click="removeFromSale(index)" 
+                                                    class="w-6 h-6 bg-gray-400 text-white rounded-full text-xs flex items-center justify-center ml-2">
+                                                ×
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Sepet Boş -->
+                            <div x-show="saleItems.length === 0" class="text-center py-8">
+                                <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-2"></i>
+                                <p class="text-gray-500 text-sm">Sepetiniz boş</p>
+                                <p class="text-gray-400 text-xs">Ürün seçerek satışa başlayın</p>
+                            </div>
+                        </div>
+
+                        <!-- Toplam ve Ödeme -->
+                        <div x-show="saleItems.length > 0" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Ödeme</h3>
+                            
+                            <!-- Toplam -->
+                            <div class="border-t border-gray-200 pt-4 mb-4">
+                                <div class="flex justify-between items-center text-xl font-bold">
+                                    <span>TOPLAM:</span>
+                                    <span class="text-green-600" x-text="formatCurrency(saleTotal)"></span>
+                                </div>
+                            </div>
+
+                            <!-- Ödeme Türü -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Ödeme Türü</label>
+                                <select x-model="paymentType" 
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                                    <option value="nakit">Nakit</option>
+                                    <option value="kart">Kredi/Banka Kartı</option>
+                                    <option value="havale">Havale/EFT</option>
+                                    <option value="veresiye">Veresiye</option>
+                                </select>
+                            </div>
+
+                            <!-- Ödenen Tutar -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Ödenen Tutar</label>
+                                <input type="number" step="0.01" x-model="paidAmount" @input="calculateChange()"
+                                       :max="paymentType === 'veresiye' ? saleTotal : ''"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                            </div>
+
+                            <!-- Para Üstü -->
+                            <div x-show="paymentType !== 'veresiye' && parseFloat(paidAmount) > saleTotal" 
+                                 class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-blue-800 font-medium">Para Üstü:</span>
+                                    <span class="text-blue-800 font-bold" x-text="formatCurrency(parseFloat(paidAmount || 0) - saleTotal)"></span>
+                                </div>
+                            </div>
+
+                            <!-- Kalan Borç -->
+                            <div x-show="parseFloat(paidAmount || 0) < saleTotal" 
+                                 class="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-orange-800 font-medium">Kalan Borç:</span>
+                                    <span class="text-orange-800 font-bold" x-text="formatCurrency(saleTotal - parseFloat(paidAmount || 0))"></span>
+                                </div>
+                                
+                                <!-- Vade Tarihi (Veresiye için) -->
+                                <div x-show="paymentType === 'veresiye' && parseFloat(paidAmount || 0) < saleTotal" class="mt-3">
+                                    <label class="block text-sm font-medium text-orange-700 mb-1">Vade Tarihi</label>
+                                    <input type="date" x-model="dueDate" 
+                                           class="w-full px-3 py-2 border border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+                                </div>
+                            </div>
+
+                            <!-- Hızlı Ödeme Butonları -->
+                            <div x-show="paymentType === 'nakit'" class="grid grid-cols-3 gap-2 mb-4">
+                                <button @click="paidAmount = saleTotal; calculateChange()" 
+                                        class="bg-green-100 text-green-800 py-2 rounded text-sm hover:bg-green-200">
+                                    Tam Para
+                                </button>
+                                <button @click="paidAmount = Math.ceil(saleTotal / 5) * 5; calculateChange()" 
+                                        class="bg-blue-100 text-blue-800 py-2 rounded text-sm hover:bg-blue-200">
+                                    5₺'ye Yuvarla
+                                </button>
+                                <button @click="paidAmount = Math.ceil(saleTotal / 10) * 10; calculateChange()" 
+                                        class="bg-purple-100 text-purple-800 py-2 rounded text-sm hover:bg-purple-200">
+                                    10₺'ye Yuvarla
+                                </button>
+                            </div>
+
+                            <!-- Satış Tamamla Butonu -->
+                            <button @click="completeSale()" 
+                                    :disabled="saleItems.length === 0 || (!paidAmount && paymentType !== 'veresiye')"
+                                    class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <i class="fas fa-check mr-2"></i>
+                                Satışı Tamamla
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Other Pages Placeholder -->
-            <div x-show="!['dashboard', 'products', 'categories'].includes(currentPage)">
+            <div x-show="!['dashboard', 'products', 'categories', 'pos'].includes(currentPage)">
                 <div class="text-center py-20">
                     <i class="fas fa-cog text-6xl text-gray-300 mb-4"></i>
                     <h2 class="text-2xl font-bold text-gray-700 mb-2" x-text="getPageTitle()"></h2>
