@@ -48,6 +48,7 @@ function app() {
         paymentType: 'nakit',
         paidAmount: '',
         dueDate: '',
+        saleTotal: 0,
 
         // Form verileri
         productForm: {
