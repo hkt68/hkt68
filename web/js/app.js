@@ -39,6 +39,16 @@ function app() {
         newStockAmount: '',
         stockUpdateNote: '',
 
+        // POS sistem
+        productSearchPos: '',
+        posCategory: '',
+        filteredPosProducts: [],
+        saleItems: [],
+        selectedCustomer: '',
+        paymentType: 'nakit',
+        paidAmount: '',
+        dueDate: '',
+
         // Form verileri
         productForm: {
             ad: '',
