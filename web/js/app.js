@@ -104,6 +104,7 @@ function app() {
             await this.loadCategories(); 
             await this.loadCustomers();
             await this.loadLowStockProducts();
+            await this.loadDebts();
         },
 
         // İstatistikleri yenile
