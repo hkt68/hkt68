@@ -95,6 +95,9 @@ function app() {
                 this.filterProducts();
                 this.filterPosProducts();
             });
+            this.$watch('customers', () => {
+                this.filterCustomers();
+            });
         },
 
         // İlk veri yükleme
