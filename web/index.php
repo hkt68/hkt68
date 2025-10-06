@@ -709,8 +709,336 @@ session_start();
                 </div>
             </div>
 
+            <!-- Müşteriler Sayfası -->
+            <div x-show="currentPage === 'customers'">
+                <div class="mb-6 flex items-center justify-between">
+                    <h1 class="text-2xl font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-users text-purple-600 mr-3"></i>
+                        Müşteri Yönetimi
+                    </h1>
+                    <button @click="showAddCustomer = true; resetForms()" 
+                            class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                        <i class="fas fa-plus mr-2"></i>
+                        Yeni Müşteri
+                    </button>
+                </div>
+
+                <!-- Müşteri Arama -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="md:col-span-2">
+                            <input type="text" x-model="customerSearch" @input="filterCustomers()" 
+                                   placeholder="Ad, soyad veya telefon ile ara..." 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                        </div>
+                        <button @click="refreshCustomers()" 
+                                class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <i class="fas fa-sync-alt mr-2"></i>
+                            Yenile
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Müşteri Listesi -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Müşteri</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">İletişim</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Toplam Alışveriş</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Toplam Borç</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Kayıt Tarihi</th>
+                                    <th class="px-4 py-3 text-center text-sm font-medium text-gray-700">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <template x-for="customer in filteredCustomers" :key="customer.id">
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-3">
+                                            <div class="font-medium text-gray-900" x-text="customer.ad + ' ' + (customer.soyad || '')"></div>
+                                            <div class="text-sm text-gray-500" x-text="customer.borc_limiti > 0 ? 'Borç Limiti: ' + formatCurrency(customer.borc_limiti) : 'Peşin müşteri'"></div>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <div class="text-sm text-gray-900" x-text="customer.telefon || '-'"></div>
+                                            <div class="text-sm text-gray-500" x-text="customer.email || '-'"></div>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <div class="text-sm font-medium text-gray-900" x-text="formatCurrency(customer.toplam_alisveris || 0)"></div>
+                                            <div class="text-sm text-gray-500" x-text="(customer.toplam_satis || 0) + ' satış'"></div>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <span class="text-sm font-medium" 
+                                                  :class="customer.toplam_borc > 0 ? 'text-red-600' : 'text-green-600'"
+                                                  x-text="formatCurrency(customer.toplam_borc || 0)"></span>
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-900" x-text="formatDate(customer.olusturma_tarihi)"></td>
+                                        <td class="px-4 py-3 text-center">
+                                            <div class="flex items-center justify-center space-x-2">
+                                                <button @click="viewCustomerDetails(customer)" 
+                                                        class="text-blue-600 hover:text-blue-800" title="Detaylar">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button @click="editCustomer(customer)" 
+                                                        class="text-green-600 hover:text-green-800" title="Düzenle">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button @click="deleteCustomer(customer.id)" 
+                                                        class="text-red-600 hover:text-red-800" title="Sil">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+
+                        <!-- Müşteri Yok -->
+                        <div x-show="filteredCustomers.length === 0" class="text-center py-8">
+                            <i class="fas fa-users text-4xl text-gray-300 mb-2"></i>
+                            <p class="text-gray-500">Henüz müşteri kaydı yok</p>
+                            <button @click="showAddCustomer = true; resetForms()" 
+                                    class="mt-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                                İlk Müşterinizi Ekleyin
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Borç Takibi Sayfası -->
+            <div x-show="currentPage === 'debts'">
+                <div class="mb-6 flex items-center justify-between">
+                    <h1 class="text-2xl font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-exclamation-triangle text-red-600 mr-3"></i>
+                        Borç Takibi
+                    </h1>
+                    <div class="flex space-x-2">
+                        <button @click="refreshDebts()" 
+                                class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                            <i class="fas fa-sync-alt mr-2"></i>
+                            Yenile
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Özet Kartlar -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex items-center">
+                            <div class="p-2 bg-orange-100 rounded-lg">
+                                <i class="fas fa-clock text-orange-600"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-500">Toplam Bekleyen Borç</p>
+                                <p class="text-xl font-bold text-orange-600" x-text="formatCurrency(totalDebtAmount)"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex items-center">
+                            <div class="p-2 bg-red-100 rounded-lg">
+                                <i class="fas fa-exclamation-triangle text-red-600"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-500">Vadesi Geçmiş</p>
+                                <p class="text-xl font-bold text-red-600" x-text="overdueCount + ' adet'"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex items-center">
+                            <div class="p-2 bg-yellow-100 rounded-lg">
+                                <i class="fas fa-calendar text-yellow-600"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-500">Bu Hafta Vadeli</p>
+                                <p class="text-xl font-bold text-yellow-600" x-text="thisWeekCount + ' adet'"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Borç Listesi -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div class="p-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">Bekleyen Borçlar</h3>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Satış</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Müşteri</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Toplam Tutar</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Ödenen</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Kalan Borç</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Vade Tarihi</th>
+                                    <th class="px-4 py-3 text-center text-sm font-medium text-gray-700">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <template x-for="debt in debts" :key="debt.id">
+                                    <tr class="hover:bg-gray-50" 
+                                        :class="debt.geciken_gun > 0 ? 'bg-red-50' : debt.geciken_gun >= -7 ? 'bg-yellow-50' : ''">
+                                        <td class="px-4 py-3">
+                                            <div class="font-medium text-gray-900" x-text="'Satış #' + debt.id"></div>
+                                            <div class="text-sm text-gray-500" x-text="formatDateTime(debt.olusturma_tarihi)"></div>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <div class="font-medium text-gray-900" x-text="debt.musteri_ad + ' ' + (debt.musteri_soyad || '')"></div>
+                                            <div class="text-sm text-gray-500" x-text="debt.musteri_telefon || '-'"></div>
+                                        </td>
+                                        <td class="px-4 py-3 font-medium text-gray-900" x-text="formatCurrency(debt.toplam_tutar)"></td>
+                                        <td class="px-4 py-3 text-gray-600" x-text="formatCurrency(debt.odenen_tutar)"></td>
+                                        <td class="px-4 py-3">
+                                            <span class="font-bold text-red-600" x-text="formatCurrency(debt.kalan_borc)"></span>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <div x-show="debt.vade_tarihi">
+                                                <span :class="debt.geciken_gun > 0 ? 'text-red-600 font-bold' : debt.geciken_gun >= -7 ? 'text-yellow-600 font-medium' : 'text-gray-900'"
+                                                      x-text="formatDate(debt.vade_tarihi)"></span>
+                                                <div class="text-xs" :class="debt.geciken_gun > 0 ? 'text-red-600' : debt.geciken_gun >= -7 ? 'text-yellow-600' : 'text-gray-500'">
+                                                    <span x-text="debt.geciken_gun > 0 ? debt.geciken_gun + ' gün gecikmiş' : 
+                                                                  debt.geciken_gun >= -7 ? Math.abs(debt.geciken_gun) + ' gün kaldı' : 'Normal'"></span>
+                                                </div>
+                                            </div>
+                                            <span x-show="!debt.vade_tarihi" class="text-gray-400">Vade yok</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-center">
+                                            <div class="flex items-center justify-center space-x-2">
+                                                <button @click="showPaymentModal(debt)" 
+                                                        class="text-green-600 hover:text-green-800" title="Ödeme Al">
+                                                    <i class="fas fa-money-bill"></i>
+                                                </button>
+                                                <button @click="viewSaleDetails(debt)" 
+                                                        class="text-blue-600 hover:text-blue-800" title="Detaylar">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button @click="deleteSale(debt.id)" 
+                                                        class="text-red-600 hover:text-red-800" title="Satış İptal">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+
+                        <!-- Borç Yok -->
+                        <div x-show="debts.length === 0" class="text-center py-12">
+                            <i class="fas fa-check-circle text-6xl text-green-300 mb-4"></i>
+                            <h3 class="text-xl font-semibold text-gray-700 mb-2">Tüm borçlar ödendi!</h3>
+                            <p class="text-gray-500">Şu anda bekleyen borç bulunmuyor.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Raporlar Sayfası -->
+            <div x-show="currentPage === 'reports'">
+                <div class="mb-6 flex items-center justify-between">
+                    <h1 class="text-2xl font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-chart-bar text-gray-600 mr-3"></i>
+                        Raporlar
+                    </h1>
+                    <button @click="refreshReports()" 
+                            class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-sync-alt mr-2"></i>
+                        Yenile
+                    </button>
+                </div>
+
+                <!-- Rapor Kategorileri -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Satış Raporları -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-shopping-cart text-green-600 mr-2"></i>
+                            Satış Raporları
+                        </h3>
+                        <div class="space-y-3">
+                            <button class="w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                <div class="font-medium text-gray-900">Günlük Satış</div>
+                                <div class="text-sm text-gray-500">Bugünün satış detayları</div>
+                            </button>
+                            <button class="w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                <div class="font-medium text-gray-900">Aylık Satış</div>
+                                <div class="text-sm text-gray-500">Bu ay satış özeti</div>
+                            </button>
+                            <button class="w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                <div class="font-medium text-gray-900">En Çok Satanlar</div>
+                                <div class="text-sm text-gray-500">Popüler ürünler</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Stok Raporları -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-boxes text-orange-600 mr-2"></i>
+                            Stok Raporları
+                        </h3>
+                        <div class="space-y-3">
+                            <button class="w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                <div class="font-medium text-gray-900">Mevcut Stoklar</div>
+                                <div class="text-sm text-gray-500">Tüm ürün stok durumu</div>
+                            </button>
+                            <button class="w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                <div class="font-medium text-gray-900">Düşük Stoklar</div>
+                                <div class="text-sm text-gray-500">Kritik seviyedeki ürünler</div>
+                            </button>
+                            <button class="w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                <div class="font-medium text-gray-900">Stok Hareketleri</div>
+                                <div class="text-sm text-gray-500">Giriş ve çıkış işlemleri</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Mali Raporlar -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-chart-line text-blue-600 mr-2"></i>
+                            Mali Raporlar
+                        </h3>
+                        <div class="space-y-3">
+                            <button class="w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                <div class="font-medium text-gray-900">Kâr-Zarar</div>
+                                <div class="text-sm text-gray-500">Gelir ve gider analizi</div>
+                            </button>
+                            <button class="w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                <div class="font-medium text-gray-900">Alacak-Verecek</div>
+                                <div class="text-sm text-gray-500">Müşteri borçları</div>
+                            </button>
+                            <button class="w-full text-left p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                <div class="font-medium text-gray-900">Ödeme Analizi</div>
+                                <div class="text-sm text-gray-500">Ödeme türleri dağılımı</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rapor Geliştirme Notu -->
+                <div class="mt-8 bg-blue-50 border border-blue-200 p-6 rounded-xl">
+                    <div class="flex items-center mb-3">
+                        <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                        <h4 class="font-semibold text-blue-900">Raporlar Geliştiriliyor</h4>
+                    </div>
+                    <p class="text-blue-800 text-sm">
+                        Detaylı rapor sayfaları ve grafik analizler yakında eklenecektir. 
+                        Şu anda Dashboard üzerindeki özet bilgileri kullanabilirsiniz.
+                    </p>
+                </div>
+            </div>
+
             <!-- Other Pages Placeholder -->
-            <div x-show="!['dashboard', 'products', 'categories', 'pos'].includes(currentPage)">
+            <div x-show="!['dashboard', 'products', 'categories', 'pos', 'customers', 'debts', 'reports'].includes(currentPage)">
                 <div class="text-center py-20">
                     <i class="fas fa-cog text-6xl text-gray-300 mb-4"></i>
                     <h2 class="text-2xl font-bold text-gray-700 mb-2" x-text="getPageTitle()"></h2>
