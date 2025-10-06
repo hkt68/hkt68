@@ -499,6 +499,216 @@ session_start();
         </div>
     </div>
 
+    <!-- Modals -->
+    
+    <!-- Ürün Ekleme Modal -->
+    <div x-show="showAddProduct" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" x-cloak>
+        <div class="bg-white rounded-xl p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-gray-900">
+                    <i class="fas fa-plus text-blue-600 mr-2"></i>
+                    Yeni Ürün Ekle
+                </h2>
+                <button @click="showAddProduct = false" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <form @submit.prevent="addProduct()">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Ürün Adı *</label>
+                        <input type="text" x-model="productForm.ad" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Barkod</label>
+                        <input type="text" x-model="productForm.barkod" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
+                        <select x-model="productForm.kategori_id" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Kategori Seçin</option>
+                            <template x-for="category in categories" :key="category.id">
+                                <option :value="category.id" x-text="category.ad"></option>
+                            </template>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Alış Fiyatı</label>
+                        <input type="number" step="0.01" x-model="productForm.alis_fiyati" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Satış Fiyatı *</label>
+                        <input type="number" step="0.01" x-model="productForm.satis_fiyati" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Başlangıç Stok</label>
+                        <input type="number" x-model="productForm.stok_miktari" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Min Stok Seviyesi</label>
+                        <input type="number" x-model="productForm.min_stok_seviyesi" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Birim</label>
+                        <select x-model="productForm.birim" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="adet">Adet</option>
+                            <option value="kg">Kg</option>
+                            <option value="gram">Gram</option>
+                            <option value="litre">Litre</option>
+                            <option value="metre">Metre</option>
+                            <option value="paket">Paket</option>
+                        </select>
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Açıklama</label>
+                        <textarea x-model="productForm.aciklama" rows="3" 
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-4 mt-6">
+                    <button type="button" @click="showAddProduct = false" 
+                            class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                        İptal
+                    </button>
+                    <button type="submit" 
+                            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-save mr-2"></i>
+                        Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Kategori Ekleme Modal -->
+    <div x-show="showAddCategory" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" x-cloak>
+        <div class="bg-white rounded-xl p-6 w-full max-w-lg mx-4">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-gray-900">
+                    <i class="fas fa-tags text-yellow-600 mr-2"></i>
+                    Yeni Kategori
+                </h2>
+                <button @click="showAddCategory = false" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <form @submit.prevent="addCategory()">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Kategori Adı *</label>
+                        <input type="text" x-model="categoryForm.ad" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Renk</label>
+                        <div class="flex items-center space-x-2">
+                            <input type="color" x-model="categoryForm.renk" 
+                                   class="w-12 h-10 border border-gray-300 rounded cursor-pointer">
+                            <input type="text" x-model="categoryForm.renk" 
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Açıklama</label>
+                        <textarea x-model="categoryForm.aciklama" rows="3" 
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-4 mt-6">
+                    <button type="button" @click="showAddCategory = false" 
+                            class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                        İptal
+                    </button>
+                    <button type="submit" 
+                            class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors">
+                        <i class="fas fa-save mr-2"></i>
+                        Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Stok Güncelleme Modal -->
+    <div x-show="showStockUpdate" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" x-cloak>
+        <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-gray-900">
+                    <i class="fas fa-boxes text-green-600 mr-2"></i>
+                    Stok Güncelle
+                </h2>
+                <button @click="showStockUpdate = false" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <div x-show="selectedProduct">
+                <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                    <h3 class="font-semibold text-gray-900" x-text="selectedProduct?.ad"></h3>
+                    <p class="text-sm text-gray-600">
+                        Mevcut Stok: <span class="font-medium" x-text="selectedProduct?.stok_miktari"></span>
+                        <span x-text="selectedProduct?.birim"></span>
+                    </p>
+                </div>
+
+                <form @submit.prevent="updateStock()">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Yeni Stok Miktarı *</label>
+                            <input type="number" x-model="newStockAmount" required 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Açıklama</label>
+                            <textarea x-model="stockUpdateNote" rows="2" 
+                                      placeholder="Stok güncelleme nedeni..." 
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-4 mt-6">
+                        <button type="button" @click="showStockUpdate = false" 
+                                class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                            İptal
+                        </button>
+                        <button type="submit" 
+                                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                            <i class="fas fa-save mr-2"></i>
+                            Güncelle
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+
     <script src="js/app.js"></script>
 </body>
 </html>
