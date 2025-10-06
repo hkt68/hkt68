@@ -84,6 +84,7 @@ function app() {
             // İlk filtreleme
             this.$watch('products', () => {
                 this.filterProducts();
+                this.filterPosProducts();
             });
         },
 
