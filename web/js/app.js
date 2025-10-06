@@ -658,6 +658,171 @@ function app() {
             } catch (error) {
                 this.showError('Bağlantı hatası: ' + error.message);
             }
+        },
+
+        // Müşteri Fonksiyonları
+        async refreshCustomers() {
+            await this.loadCustomers();
+            this.filterCustomers();
+        },
+
+        filterCustomers() {
+            this.filteredCustomers = this.customers.filter(customer => {
+                const searchMatch = !this.customerSearch ||
+                    customer.ad.toLowerCase().includes(this.customerSearch.toLowerCase()) ||
+                    (customer.soyad && customer.soyad.toLowerCase().includes(this.customerSearch.toLowerCase())) ||
+                    (customer.telefon && customer.telefon.includes(this.customerSearch));
+
+                return searchMatch;
+            });
+        },
+
+        async addCustomer() {
+            try {
+                const response = await fetch('api/customers.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(this.customerForm)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.showSuccess('Müşteri başarıyla eklendi!');
+                    this.showAddCustomer = false;
+                    this.resetForms();
+                    await this.refreshCustomers();
+                } else {
+                    this.showError(result.error || 'Müşteri eklenirken hata oluştu');
+                }
+            } catch (error) {
+                this.showError('Bağlantı hatası: ' + error.message);
+            }
+        },
+
+        editCustomer(customer) {
+            this.customerForm = {
+                ad: customer.ad,
+                soyad: customer.soyad || '',
+                telefon: customer.telefon || '',
+                email: customer.email || '',
+                adres: customer.adres || '',
+                borc_limiti: customer.borc_limiti || 0
+            };
+            this.selectedCustomer = customer;
+            this.showAddCustomer = true;
+        },
+
+        async deleteCustomer(id) {
+            if (!this.confirmAction('Bu müşteriyi silmek istediğinizden emin misiniz?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`api/customers.php/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.showSuccess('Müşteri başarıyla silindi!');
+                    await this.refreshCustomers();
+                } else {
+                    this.showError(result.error || 'Müşteri silinirken hata oluştu');
+                }
+            } catch (error) {
+                this.showError('Bağlantı hatası: ' + error.message);
+            }
+        },
+
+        // Borç Takibi
+        async loadDebts() {
+            try {
+                const response = await fetch('api/sales.php/debts');
+                this.debts = await response.json();
+                
+                // İstatistikleri hesapla
+                this.totalDebtAmount = this.debts.reduce((sum, debt) => sum + debt.kalan_borc, 0);
+                this.overdueCount = this.debts.filter(debt => debt.geciken_gun > 0).length;
+                this.thisWeekCount = this.debts.filter(debt => debt.geciken_gun >= -7 && debt.geciken_gun <= 0).length;
+                
+            } catch (error) {
+                console.error('Borçlar yüklenirken hata:', error);
+            }
+        },
+
+        async refreshDebts() {
+            await this.loadDebts();
+        },
+
+        async showPaymentModal(debt) {
+            // Ödeme modal'ı göster - basit prompt ile
+            const payment = prompt(`${debt.musteri_ad} için ödeme tutarını giriniz:\n\nKalan Borç: ${this.formatCurrency(debt.kalan_borc)}`);
+            
+            if (payment && parseFloat(payment) > 0) {
+                await this.addPayment(debt.id, parseFloat(payment));
+            }
+        },
+
+        async addPayment(saleId, amount) {
+            try {
+                const response = await fetch('api/sales.php/payment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        satis_id: saleId,
+                        odeme_tutari: amount,
+                        odeme_turu: 'nakit',
+                        aciklama: 'Manuel ödeme'
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.showSuccess('Ödeme başarıyla kaydedildi!');
+                    await this.refreshDebts();
+                    await this.refreshStats();
+                } else {
+                    this.showError(result.error || 'Ödeme kaydedilirken hata oluştu');
+                }
+            } catch (error) {
+                this.showError('Bağlantı hatası: ' + error.message);
+            }
+        },
+
+        async deleteSale(id) {
+            if (!this.confirmAction('Bu satışı iptal etmek istediğinizden emin misiniz?\n\nBu işlem geri alınamaz ve stoklar iade edilecektir.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`api/sales.php/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.showSuccess('Satış başarıyla iptal edildi ve stoklar iade edildi!');
+                    await this.refreshDebts();
+                    await this.loadInitialData();
+                } else {
+                    this.showError(result.error || 'Satış iptal edilirken hata oluştu');
+                }
+            } catch (error) {
+                this.showError('Bağlantı hatası: ' + error.message);
+            }
+        },
+
+        // Raporlar
+        refreshReports() {
+            this.showSuccess('Raporlar sayfası geliştirme aşamasında!');
         }
     }
 }
