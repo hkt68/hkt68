@@ -35,6 +35,14 @@ function app() {
         categoryFilter: '',
         stockFilter: '',
         filteredProducts: [],
+        customerSearch: '',
+        filteredCustomers: [],
+
+        // Borç takibi
+        debts: [],
+        totalDebtAmount: 0,
+        overdueCount: 0,
+        thisWeekCount: 0,
 
         // Stok güncelleme
         newStockAmount: '',
