@@ -24,6 +24,7 @@ function app() {
         showAddProduct: false,
         showEditProduct: false,
         showAddCategory: false,
+        showAddCustomer: false,
         showStockUpdate: false,
         showLowStock: false,
         selectedProduct: null,
