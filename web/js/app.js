@@ -476,6 +476,177 @@ function app() {
 
                 return searchMatch && categoryMatch && stockMatch;
             });
+        },
+
+        // POS Fonksiyonları
+        searchProductsPos() {
+            this.filterPosProducts();
+        },
+
+        clearProductSearch() {
+            this.productSearchPos = '';
+            this.filterPosProducts();
+        },
+
+        filterPosProducts() {
+            this.filteredPosProducts = this.products.filter(product => {
+                // Sadece aktif ve stokta olan ürünler
+                if (!product.aktif) return false;
+
+                // Arama filtresi
+                const searchMatch = !this.productSearchPos || 
+                    product.ad.toLowerCase().includes(this.productSearchPos.toLowerCase()) ||
+                    (product.barkod && product.barkod.toLowerCase().includes(this.productSearchPos.toLowerCase()));
+
+                // Kategori filtresi
+                const categoryMatch = !this.posCategory || 
+                    product.kategori_id == this.posCategory;
+
+                return searchMatch && categoryMatch;
+            });
+        },
+
+        addToSale(product) {
+            if (product.stok_miktari <= 0) {
+                this.showError('Bu ürünün stoğu yok!');
+                return;
+            }
+
+            // Sepette var mı kontrol et
+            const existingIndex = this.saleItems.findIndex(item => item.id === product.id);
+            
+            if (existingIndex !== -1) {
+                // Stok kontrolü
+                if (this.saleItems[existingIndex].quantity >= product.stok_miktari) {
+                    this.showError('Yetersiz stok!');
+                    return;
+                }
+                this.saleItems[existingIndex].quantity++;
+            } else {
+                // Yeni ürün ekle
+                this.saleItems.push({
+                    id: product.id,
+                    name: product.ad,
+                    price: product.satis_fiyati,
+                    quantity: 1,
+                    stock: product.stok_miktari,
+                    unit: product.birim || 'adet'
+                });
+            }
+
+            this.calculateSaleTotal();
+        },
+
+        updateQuantity(index, change) {
+            const newQuantity = this.saleItems[index].quantity + change;
+            
+            if (newQuantity <= 0) {
+                this.removeFromSale(index);
+                return;
+            }
+
+            if (newQuantity > this.saleItems[index].stock) {
+                this.showError('Yetersiz stok!');
+                return;
+            }
+
+            this.saleItems[index].quantity = newQuantity;
+            this.calculateSaleTotal();
+        },
+
+        removeFromSale(index) {
+            this.saleItems.splice(index, 1);
+            this.calculateSaleTotal();
+        },
+
+        calculateSaleTotal() {
+            this.saleTotal = this.saleItems.reduce((total, item) => {
+                return total + (item.price * item.quantity);
+            }, 0);
+        },
+
+        calculateChange() {
+            // Para üstü hesaplama otomatik yapılıyor (template'te)
+        },
+
+        clearSale() {
+            if (this.saleItems.length > 0) {
+                if (!this.confirmAction('Sepeti temizlemek istediğinizden emin misiniz?')) {
+                    return;
+                }
+            }
+            
+            this.saleItems = [];
+            this.selectedCustomer = '';
+            this.paymentType = 'nakit';
+            this.paidAmount = '';
+            this.dueDate = '';
+            this.saleTotal = 0;
+        },
+
+        async completeSale() {
+            if (this.saleItems.length === 0) {
+                this.showError('Sepette ürün bulunmamaktadır!');
+                return;
+            }
+
+            if (!this.paidAmount && this.paymentType !== 'veresiye') {
+                this.showError('Ödenen tutarı giriniz!');
+                return;
+            }
+
+            const saleData = {
+                musteri_id: this.selectedCustomer || null,
+                toplam_tutar: this.saleTotal,
+                odenen_tutar: parseFloat(this.paidAmount || 0),
+                odeme_turu: this.paymentType,
+                vade_tarihi: this.dueDate || null,
+                aciklama: `POS Satış - ${this.saleItems.length} ürün`,
+                urunler: this.saleItems.map(item => ({
+                    id: item.id,
+                    miktar: item.quantity,
+                    fiyat: item.price
+                }))
+            };
+
+            try {
+                const response = await fetch('api/sales.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(saleData)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Para üstü varsa göster
+                    const change = parseFloat(this.paidAmount || 0) - this.saleTotal;
+                    let message = `Satış başarıyla tamamlandı!\nSatış No: ${result.satis_id}`;
+                    
+                    if (change > 0) {
+                        message += `\n\nPara Üstü: ${this.formatCurrency(change)}`;
+                    } else if (change < 0) {
+                        message += `\n\nKalan Borç: ${this.formatCurrency(Math.abs(change))}`;
+                        if (this.dueDate) {
+                            message += `\nVade Tarihi: ${this.formatDate(this.dueDate)}`;
+                        }
+                    }
+
+                    this.showSuccess(message);
+                    this.clearSale();
+                    
+                    // Verileri yenile
+                    await this.loadInitialData();
+                    await this.filterPosProducts();
+                    
+                } else {
+                    this.showError(result.error || 'Satış işlemi sırasında hata oluştu');
+                }
+            } catch (error) {
+                this.showError('Bağlantı hatası: ' + error.message);
+            }
         }
     }
 }
