@@ -1,0 +1,62 @@
+# Elit Bilişim - POS Sistemi
+# Apache Yapılandırma Dosyası
+
+RewriteEngine On
+
+# PHP hata raporlama ayarları
+php_flag display_errors Off
+php_flag log_errors On
+
+# Güvenlik başlıkları
+Header always set X-Frame-Options DENY
+Header always set X-Content-Type-Options nosniff
+Header always set X-XSS-Protection "1; mode=block"
+
+# Karakter kodlama
+AddDefaultCharset UTF-8
+
+# API routing
+RewriteRule ^api/products/?(.*)$ api/products.php/$1 [L,QSA]
+RewriteRule ^api/categories/?(.*)$ api/categories.php/$1 [L,QSA]
+RewriteRule ^api/customers/?(.*)$ api/customers.php/$1 [L,QSA]
+RewriteRule ^api/sales/?(.*)$ api/sales.php/$1 [L,QSA]
+
+# Veritabanı kurulum dosyasını gizle
+<Files "init_db.php">
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+# Config dosyalarını gizle
+<FilesMatch "\.(env|ini|conf)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Backup dosyalarını gizle
+<FilesMatch "\.(bak|backup|old|tmp)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Gzip sıkıştırma
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/json
+</IfModule>
+
+# Cache ayarları
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+</IfModule>
