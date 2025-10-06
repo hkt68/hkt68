@@ -70,6 +70,10 @@ function app() {
         // Başlatma
         init() {
             this.loadInitialData();
+            // İlk filtreleme
+            this.$watch('products', () => {
+                this.filterProducts();
+            });
         },
 
         // İlk veri yükleme
