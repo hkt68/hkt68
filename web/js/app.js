@@ -222,6 +222,246 @@ function app() {
                 adres: '',
                 borc_limiti: 0
             };
+
+            this.newStockAmount = '';
+            this.stockUpdateNote = '';
+        },
+
+        // Ürün işlemleri
+        async refreshProducts() {
+            await this.loadProducts();
+            this.filterProducts();
+        },
+
+        async addProduct() {
+            try {
+                const response = await fetch('api/products.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(this.productForm)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.showSuccess('Ürün başarıyla eklendi!');
+                    this.showAddProduct = false;
+                    this.resetForms();
+                    await this.refreshProducts();
+                    await this.loadInitialData();
+                } else {
+                    this.showError(result.error || 'Ürün eklenirken hata oluştu');
+                }
+            } catch (error) {
+                this.showError('Bağlantı hatası: ' + error.message);
+            }
+        },
+
+        editProduct(product) {
+            this.productForm = {
+                ad: product.ad,
+                barkod: product.barkod || '',
+                kategori_id: product.kategori_id || '',
+                alis_fiyati: product.alis_fiyati || '',
+                satis_fiyati: product.satis_fiyati,
+                min_stok_seviyesi: product.min_stok_seviyesi || 5,
+                birim: product.birim || 'adet',
+                aciklama: product.aciklama || ''
+            };
+            this.selectedProduct = product;
+            this.showEditProduct = true;
+        },
+
+        async updateProduct() {
+            try {
+                const response = await fetch(`api/products.php/${this.selectedProduct.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(this.productForm)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.showSuccess('Ürün başarıyla güncellendi!');
+                    this.showEditProduct = false;
+                    this.resetForms();
+                    await this.refreshProducts();
+                } else {
+                    this.showError(result.error || 'Ürün güncellenirken hata oluştu');
+                }
+            } catch (error) {
+                this.showError('Bağlantı hatası: ' + error.message);
+            }
+        },
+
+        async deleteProduct(id) {
+            if (!this.confirmAction('Bu ürünü silmek istediğinizden emin misiniz?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`api/products.php/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.showSuccess('Ürün başarıyla silindi!');
+                    await this.refreshProducts();
+                    await this.loadInitialData();
+                } else {
+                    this.showError(result.error || 'Ürün silinirken hata oluştu');
+                }
+            } catch (error) {
+                this.showError('Bağlantı hatası: ' + error.message);
+            }
+        },
+
+        async updateStock() {
+            if (!this.selectedProduct || !this.newStockAmount) return;
+
+            try {
+                const response = await fetch(`api/products.php/${this.selectedProduct.id}/stock`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        yeni_stok: this.newStockAmount,
+                        aciklama: this.stockUpdateNote || 'Stok güncelleme'
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.showSuccess('Stok başarıyla güncellendi!');
+                    this.showStockUpdate = false;
+                    this.resetForms();
+                    await this.refreshProducts();
+                    await this.loadLowStockProducts();
+                } else {
+                    this.showError(result.error || 'Stok güncellenirken hata oluştu');
+                }
+            } catch (error) {
+                this.showError('Bağlantı hatası: ' + error.message);
+            }
+        },
+
+        // Kategori işlemleri
+        async addCategory() {
+            try {
+                const response = await fetch('api/categories.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(this.categoryForm)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.showSuccess('Kategori başarıyla eklendi!');
+                    this.showAddCategory = false;
+                    this.resetForms();
+                    await this.loadCategories();
+                } else {
+                    this.showError(result.error || 'Kategori eklenirken hata oluştu');
+                }
+            } catch (error) {
+                this.showError('Bağlantı hatası: ' + error.message);
+            }
+        },
+
+        editCategory(category) {
+            this.categoryForm = {
+                ad: category.ad,
+                aciklama: category.aciklama || '',
+                renk: category.renk || '#3B82F6'
+            };
+            this.selectedCategory = category;
+            this.showAddCategory = true;
+        },
+
+        async updateCategory() {
+            try {
+                const response = await fetch(`api/categories.php/${this.selectedCategory.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(this.categoryForm)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.showSuccess('Kategori başarıyla güncellendi!');
+                    this.showAddCategory = false;
+                    this.resetForms();
+                    await this.loadCategories();
+                } else {
+                    this.showError(result.error || 'Kategori güncellenirken hata oluştu');
+                }
+            } catch (error) {
+                this.showError('Bağlantı hatası: ' + error.message);
+            }
+        },
+
+        async deleteCategory(id) {
+            if (!this.confirmAction('Bu kategoriyi silmek istediğinizden emin misiniz?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`api/categories.php/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.showSuccess('Kategori başarıyla silindi!');
+                    await this.loadCategories();
+                } else {
+                    this.showError(result.error || 'Kategori silinirken hata oluştu');
+                }
+            } catch (error) {
+                this.showError('Bağlantı hatası: ' + error.message);
+            }
+        },
+
+        // Filtreleme
+        filterProducts() {
+            this.filteredProducts = this.products.filter(product => {
+                // Arama filtresi
+                const searchMatch = !this.productSearch || 
+                    product.ad.toLowerCase().includes(this.productSearch.toLowerCase()) ||
+                    (product.barkod && product.barkod.toLowerCase().includes(this.productSearch.toLowerCase()));
+
+                // Kategori filtresi
+                const categoryMatch = !this.categoryFilter || 
+                    product.kategori_id == this.categoryFilter;
+
+                // Stok filtresi
+                let stockMatch = true;
+                if (this.stockFilter === 'normal') {
+                    stockMatch = product.stok_miktari > product.min_stok_seviyesi;
+                } else if (this.stockFilter === 'low') {
+                    stockMatch = product.stok_miktari <= product.min_stok_seviyesi && product.stok_miktari > 0;
+                } else if (this.stockFilter === 'out') {
+                    stockMatch = product.stok_miktari <= 0;
+                }
+
+                return searchMatch && categoryMatch && stockMatch;
+            });
         }
     }
 }
