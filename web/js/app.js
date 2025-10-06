@@ -24,7 +24,20 @@ function app() {
         showAddProduct: false,
         showEditProduct: false,
         showAddCategory: false,
-        selectedItem: null,
+        showStockUpdate: false,
+        showLowStock: false,
+        selectedProduct: null,
+        selectedCategory: null,
+
+        // Filtreleme
+        productSearch: '',
+        categoryFilter: '',
+        stockFilter: '',
+        filteredProducts: [],
+
+        // Stok güncelleme
+        newStockAmount: '',
+        stockUpdateNote: '',
 
         // Form verileri
         productForm: {
