@@ -286,8 +286,206 @@ session_start();
                 </div>
             </div>
 
+            <!-- Ürünler Sayfası -->
+            <div x-show="currentPage === 'products'">
+                <div class="mb-6 flex items-center justify-between">
+                    <h1 class="text-2xl font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-box text-orange-600 mr-3"></i>
+                        Ürün Yönetimi
+                    </h1>
+                    <div class="flex space-x-2">
+                        <button @click="loadLowStockProducts(); showLowStock = true" 
+                                class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            Düşük Stok (<span x-text="lowStockProducts.length"></span>)
+                        </button>
+                        <button @click="showAddProduct = true; resetForms()" 
+                                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>
+                            Yeni Ürün
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Arama ve Filtre -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <input type="text" x-model="productSearch" @input="filterProducts()" 
+                                   placeholder="Ürün ara..." 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <select x-model="categoryFilter" @change="filterProducts()" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">Tüm Kategoriler</option>
+                                <template x-for="category in categories" :key="category.id">
+                                    <option :value="category.id" x-text="category.ad"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div>
+                            <select x-model="stockFilter" @change="filterProducts()" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">Stok Durumu</option>
+                                <option value="normal">Normal Stok</option>
+                                <option value="low">Düşük Stok</option>
+                                <option value="out">Stok Yok</option>
+                            </select>
+                        </div>
+                        <div>
+                            <button @click="refreshProducts()" 
+                                    class="w-full bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                <i class="fas fa-sync-alt mr-2"></i>
+                                Yenile
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ürün Listesi -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Ürün</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Kategori</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Barkod</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Stok</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Alış</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Satış</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-700">Durum</th>
+                                    <th class="px-4 py-3 text-center text-sm font-medium text-gray-700">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <template x-for="product in filteredProducts" :key="product.id">
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-3">
+                                            <div class="font-medium text-gray-900" x-text="product.ad"></div>
+                                            <div class="text-sm text-gray-500" x-text="product.birim"></div>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                                  :style="`background-color: ${product.kategori_renk}20; color: ${product.kategori_renk}`"
+                                                  x-text="product.kategori_ad || 'Kategori Yok'"></span>
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-900" x-text="product.barkod || '-'"></td>
+                                        <td class="px-4 py-3">
+                                            <div class="flex items-center">
+                                                <span class="text-sm font-medium" 
+                                                      :class="product.stok_miktari <= product.min_stok_seviyesi ? 'text-red-600' : 'text-gray-900'"
+                                                      x-text="product.stok_miktari"></span>
+                                                <button @click="showStockUpdate = true; selectedProduct = product" 
+                                                        class="ml-2 text-blue-600 hover:text-blue-800">
+                                                    <i class="fas fa-edit text-xs"></i>
+                                                </button>
+                                            </div>
+                                            <div class="text-xs text-gray-500">Min: <span x-text="product.min_stok_seviyesi"></span></div>
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-900" x-text="formatCurrency(product.alis_fiyati)"></td>
+                                        <td class="px-4 py-3 text-sm font-medium text-gray-900" x-text="formatCurrency(product.satis_fiyati)"></td>
+                                        <td class="px-4 py-3">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                                  :class="product.stok_miktari <= 0 ? 'bg-red-100 text-red-800' : 
+                                                          product.stok_miktari <= product.min_stok_seviyesi ? 'bg-yellow-100 text-yellow-800' : 
+                                                          'bg-green-100 text-green-800'"
+                                                  x-text="product.stok_miktari <= 0 ? 'Stok Yok' : 
+                                                          product.stok_miktari <= product.min_stok_seviyesi ? 'Düşük Stok' : 
+                                                          'Normal'"></span>
+                                        </td>
+                                        <td class="px-4 py-3 text-center">
+                                            <div class="flex items-center justify-center space-x-2">
+                                                <button @click="editProduct(product)" 
+                                                        class="text-blue-600 hover:text-blue-800" title="Düzenle">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button @click="showStockUpdate = true; selectedProduct = product" 
+                                                        class="text-green-600 hover:text-green-800" title="Stok Güncelle">
+                                                    <i class="fas fa-boxes"></i>
+                                                </button>
+                                                <button @click="deleteProduct(product.id)" 
+                                                        class="text-red-600 hover:text-red-800" title="Sil">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                        
+                        <!-- Ürün Yok Mesajı -->
+                        <div x-show="filteredProducts.length === 0" class="text-center py-8">
+                            <i class="fas fa-box-open text-4xl text-gray-300 mb-2"></i>
+                            <p class="text-gray-500">Henüz ürün bulunamadı</p>
+                            <button @click="showAddProduct = true; resetForms()" 
+                                    class="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                İlk Ürününüzü Ekleyin
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kategoriler Sayfası -->
+            <div x-show="currentPage === 'categories'">
+                <div class="mb-6 flex items-center justify-between">
+                    <h1 class="text-2xl font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-tags text-yellow-600 mr-3"></i>
+                        Kategori Yönetimi
+                    </h1>
+                    <button @click="showAddCategory = true; resetForms()" 
+                            class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors">
+                        <i class="fas fa-plus mr-2"></i>
+                        Yeni Kategori
+                    </button>
+                </div>
+
+                <!-- Kategori Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <template x-for="category in categories" :key="category.id">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-4 h-4 rounded-full" :style="`background-color: ${category.renk}`"></div>
+                                <div class="flex space-x-2">
+                                    <button @click="editCategory(category)" 
+                                            class="text-blue-600 hover:text-blue-800" title="Düzenle">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button @click="deleteCategory(category.id)" 
+                                            class="text-red-600 hover:text-red-800" title="Sil">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2" x-text="category.ad"></h3>
+                            <p class="text-sm text-gray-600 mb-4" x-text="category.aciklama || 'Açıklama bulunmuyor'"></p>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-500">
+                                    <span x-text="category.urun_sayisi || 0"></span> ürün
+                                </span>
+                                <span class="text-xs text-gray-400" x-text="formatDate(category.olusturma_tarihi)"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Kategori Yok Mesajı -->
+                <div x-show="categories.length === 0" class="text-center py-12">
+                    <i class="fas fa-tags text-6xl text-gray-300 mb-4"></i>
+                    <h2 class="text-xl font-semibold text-gray-700 mb-2">Henüz kategori yok</h2>
+                    <p class="text-gray-500 mb-4">Ürünlerinizi organize etmek için kategoriler oluşturun</p>
+                    <button @click="showAddCategory = true; resetForms()" 
+                            class="bg-yellow-600 text-white px-6 py-2 rounded-lg hover:bg-yellow-700 transition-colors">
+                        İlk Kategorinizi Oluşturun
+                    </button>
+                </div>
+            </div>
+
             <!-- Other Pages Placeholder -->
-            <div x-show="currentPage !== 'dashboard'">
+            <div x-show="!['dashboard', 'products', 'categories'].includes(currentPage)">
                 <div class="text-center py-20">
                     <i class="fas fa-cog text-6xl text-gray-300 mb-4"></i>
                     <h2 class="text-2xl font-bold text-gray-700 mb-2" x-text="getPageTitle()"></h2>
