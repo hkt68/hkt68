@@ -263,6 +263,62 @@ function POSPage({ user, onLogout }) {
     }
   };
 
+  const handleQuickAddProduct = () => {
+    setQuickProductData({
+      barcode: notFoundBarcode,
+      name: '',
+      category: '',
+      purchase_price: '',
+      sale_price: '',
+      vat_rate: 18,
+      stock: 1,
+      is_favorite: false
+    });
+    setShowProductNotFoundModal(false);
+    setShowQuickAddModal(true);
+  };
+
+  const handleQuickProductSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      const response = await axios.post(`${API}/products`, {
+        barcode: quickProductData.barcode,
+        name: quickProductData.name,
+        category: quickProductData.category,
+        purchase_price: parseFloat(quickProductData.purchase_price),
+        sale_price: parseFloat(quickProductData.sale_price),
+        vat_rate: parseFloat(quickProductData.vat_rate),
+        stock: parseInt(quickProductData.stock),
+        is_favorite: quickProductData.is_favorite
+      });
+      
+      toast.success(`${response.data.name} ürün olarak eklendi ve sepete konuldu`);
+      
+      // Sepete ekle
+      addToCart(response.data);
+      
+      // Modal'ı kapat ve formu sıfırla
+      setShowQuickAddModal(false);
+      setQuickProductData({
+        barcode: '',
+        name: '',
+        category: '',
+        purchase_price: '',
+        sale_price: '',
+        vat_rate: 18,
+        stock: 0,
+        is_favorite: false
+      });
+      
+      // Ürünleri yenile
+      loadProducts();
+      loadFavorites();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Ürün eklenemedi');
+    }
+  };
+
   const subtotal = calculateSubtotal();
   const discount = calculateDiscount();
   const vat = calculateVAT();
