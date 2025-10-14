@@ -130,6 +130,7 @@ function POSPage({ user, onLogout }) {
     setSelectedCustomer(null);
     setCashReceived('');
     setCashAmount(0);
+    setDiscountRate(0);
   };
 
   const calculateSubtotal = () => {
