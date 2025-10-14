@@ -99,8 +99,16 @@ function Dashboard({ user, onLogout }) {
     <Layout user={user} onLogout={onLogout}>
       <div className="dashboard" data-testid="dashboard">
         <div className="welcome-section">
-          <h2>Hoş geldiniz, {user.full_name}!</h2>
-          <p>Bugünün özeti ve hızlı erişim</p>
+          <div>
+            <h2>Hoş geldiniz, {user.full_name}!</h2>
+            <p>Bugünün özeti ve hızlı erişim</p>
+          </div>
+          
+          {showInstallButton && (
+            <button className="btn btn-success" onClick={handleInstallClick}>
+              📱 Mobil Uygulama Olarak Yükle
+            </button>
+          )}
         </div>
 
         <div className="stats-grid">
