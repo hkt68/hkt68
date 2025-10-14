@@ -132,8 +132,27 @@ function POSPage({ user, onLogout }) {
     setCashAmount(0);
   };
 
-  const calculateTotal = () => {
+  const calculateSubtotal = () => {
     return cart.reduce((sum, item) => sum + item.total, 0);
+  };
+
+  const calculateDiscount = () => {
+    const subtotal = calculateSubtotal();
+    return (subtotal * discountRate) / 100;
+  };
+
+  const calculateVAT = () => {
+    const subtotal = calculateSubtotal();
+    const discount = calculateDiscount();
+    const afterDiscount = subtotal - discount;
+    // Average VAT calculation (18% default)
+    return afterDiscount * 0.18 / 1.18;
+  };
+
+  const calculateTotal = () => {
+    const subtotal = calculateSubtotal();
+    const discount = calculateDiscount();
+    return subtotal - discount;
   };
 
   const calculateChange = () => {
