@@ -122,6 +122,10 @@ function App() {
             path="/price-check"
             element={user ? <PriceCheckPage user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}
           />
+          <Route
+            path="/sales-history"
+            element={user ? <SalesHistoryPage user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}
+          />
         </Routes>
       </BrowserRouter>
     </div>
