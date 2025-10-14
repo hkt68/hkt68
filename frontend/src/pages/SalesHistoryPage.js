@@ -297,7 +297,20 @@ function SalesHistoryPage({ user, onLogout }) {
                 </table>
               </div>
 
-              <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--primary)', color: 'white', borderRadius: '8px', textAlign: 'right' }}>
+              <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--bg-tertiary)', borderRadius: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span>Ara Toplam:</span>
+                  <strong>{selectedSale.subtotal.toFixed(2)} ₺</strong>
+                </div>
+                {selectedSale.discount_rate > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: '#d97706' }}>
+                    <span>İndirim ({selectedSale.discount_rate}%):</span>
+                    <strong>-{selectedSale.discount_amount.toFixed(2)} ₺</strong>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ marginTop: '1rem', padding: '1rem', background: 'var(--primary)', color: 'white', borderRadius: '8px', textAlign: 'right' }}>
                 <div style={{ fontSize: '1.125rem' }}>Genel Toplam</div>
                 <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>{selectedSale.total.toFixed(2)} ₺</div>
                 {selectedSale.payment_method === 'cash' && selectedSale.cash_received && (
