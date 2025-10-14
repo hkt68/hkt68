@@ -295,6 +295,103 @@ function SettingsPage({ user, onLogout, updateTheme }) {
         </>
       )}
 
+      {/* User Modal */}
+      {showUserModal && (
+        <div className="modal-overlay" onClick={() => setShowUserModal(false)}>
+          <div className="modal" style={{ maxWidth: '600px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{editingUser ? 'Kullanıcı Düzenle' : 'Yeni Kullanıcı Ekle'}</h3>
+              <button onClick={() => setShowUserModal(false)}>×</button>
+            </div>
+            
+            <form onSubmit={handleUserSubmit}>
+              <div className="modal-body">
+                <div className="input-group">
+                  <label>Kullanıcı Adı *</label>
+                  <input
+                    type="text"
+                    value={userFormData.username}
+                    onChange={(e) => setUserFormData({...userFormData, username: e.target.value})}
+                    required
+                    disabled={editingUser}
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label>Ad Soyad *</label>
+                  <input
+                    type="text"
+                    value={userFormData.full_name}
+                    onChange={(e) => setUserFormData({...userFormData, full_name: e.target.value})}
+                    required
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label>Email *</label>
+                  <input
+                    type="email"
+                    value={userFormData.email}
+                    onChange={(e) => setUserFormData({...userFormData, email: e.target.value})}
+                    required
+                  />
+                </div>
+
+                {!editingUser && (
+                  <div className="input-group">
+                    <label>Şifre *</label>
+                    <input
+                      type="password"
+                      value={userFormData.password}
+                      onChange={(e) => setUserFormData({...userFormData, password: e.target.value})}
+                      required
+                    />
+                  </div>
+                )}
+
+                <div className="input-group">
+                  <label>Rol *</label>
+                  <select
+                    value={userFormData.role}
+                    onChange={(e) => setUserFormData({...userFormData, role: e.target.value})}
+                  >
+                    <option value="user">Kullanıcı</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+
+                {userFormData.role === 'user' && (
+                  <div className="input-group">
+                    <label style={{ marginBottom: '1rem' }}>Sayfa Yetkileri (Admin tüm sayfalara erişebilir)</label>
+                    <div className="permissions-grid">
+                      {availablePages.map(page => (
+                        <label key={page.id} className="permission-item">
+                          <input
+                            type="checkbox"
+                            checked={userFormData.permissions.includes(page.id)}
+                            onChange={() => togglePermission(page.id)}
+                          />
+                          <span>{page.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowUserModal(false)}>
+                  İptal
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={loading}>
+                  {loading ? 'Kaydediliyor...' : editingUser ? 'Güncelle' : 'Ekle'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <style jsx>{`
         .page-header { margin-bottom: 2rem; }
         .page-header h2 { font-size: 1.875rem; font-weight: 700; color: var(--text-primary); }
