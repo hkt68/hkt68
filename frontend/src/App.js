@@ -1,50 +1,126 @@
-import { useEffect } from "react";
-import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import axios from 'axios';
+import '@/App.css';
+
+// Pages
+import LoginPage from '@/pages/LoginPage';
+import Dashboard from '@/pages/Dashboard';
+import POSPage from '@/pages/POSPage';
+import ProductsPage from '@/pages/ProductsPage';
+import StockPage from '@/pages/StockPage';
+import CustomersPage from '@/pages/CustomersPage';
+import ReportsPage from '@/pages/ReportsPage';
+import SettingsPage from '@/pages/SettingsPage';
+import PriceCheckPage from '@/pages/PriceCheckPage';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const Home = () => {
-  const helloWorldApi = async () => {
+// Axios interceptor for auth token
+axios.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+function App() {
+  const [user, setUser] = useState(null);
+  const [theme, setTheme] = useState('blue');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    checkAuth();
+    loadSettings();
+  }, []);
+
+  const checkAuth = async () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const response = await axios.get(`${API}/auth/me`);
+        setUser(response.data);
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        localStorage.removeItem('token');
+      }
+    }
+    setLoading(false);
+  };
+
+  const loadSettings = async () => {
     try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
+      const response = await axios.get(`${API}/settings`);
+      setTheme(response.data.theme || 'blue');
+    } catch (error) {
+      console.error('Failed to load settings:', error);
     }
   };
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
+  const handleLogin = (userData, token) => {
+    localStorage.setItem('token', token);
+    setUser(userData);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+  };
+
+  const updateTheme = (newTheme) => {
+    setTheme(newTheme);
+  };
+
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <div className="spinner"></div>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
-
-function App() {
-  return (
-    <div className="App">
+    <div className={`App theme-${theme}`}>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
+          <Route 
+            path="/login" 
+            element={!user ? <LoginPage onLogin={handleLogin} /> : <Navigate to="/" />} 
+          />
+          <Route
+            path="/"
+            element={user ? <Dashboard user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/pos"
+            element={user ? <POSPage user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/products"
+            element={user ? <ProductsPage user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/stock"
+            element={user ? <StockPage user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/customers"
+            element={user ? <CustomersPage user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/reports"
+            element={user ? <ReportsPage user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/settings"
+            element={user ? <SettingsPage user={user} onLogout={handleLogout} updateTheme={updateTheme} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/price-check"
+            element={user ? <PriceCheckPage user={user} onLogout={handleLogout} /> : <Navigate to="/login" />}
+          />
         </Routes>
       </BrowserRouter>
     </div>
