@@ -355,7 +355,7 @@ function POSPage({ user, onLogout }) {
                     type="text"
                     value={barcode}
                     onChange={(e) => setBarcode(e.target.value)}
-                    placeholder="Barkod okutun veya yazın..."
+                    placeholder="Barkod veya ürün adı (örn: Süt, Ekmek, Cola...)"
                     className="barcode-input"
                     data-testid="barcode-input"
                     autoFocus
