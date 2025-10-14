@@ -164,6 +164,8 @@ class Sale(BaseModel):
     sale_number: str
     items: List[SaleItem]
     subtotal: float
+    discount_rate: float = 0.0
+    discount_amount: float = 0.0
     total: float
     payment_method: str  # "cash", "card", "other", "customer"
     customer_id: Optional[str] = None
