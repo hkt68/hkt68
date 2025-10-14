@@ -977,6 +977,57 @@ function POSPage({ user, onLogout }) {
           font-size: 1.125rem;
         }
 
+        .suggestions-dropdown {
+          position: absolute;
+          top: 100%;
+          left: 0;
+          right: 0;
+          background: white;
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          z-index: 1000;
+          max-height: 300px;
+          overflow-y: auto;
+          margin-top: 0.25rem;
+        }
+
+        .suggestion-item {
+          padding: 0.75rem 1rem;
+          cursor: pointer;
+          border-bottom: 1px solid var(--border);
+          transition: background 0.2s;
+        }
+
+        .suggestion-item:last-child {
+          border-bottom: none;
+        }
+
+        .suggestion-item:hover {
+          background: var(--bg-tertiary);
+        }
+
+        .suggestion-name {
+          font-weight: 600;
+          color: var(--text-primary);
+          margin-bottom: 0.25rem;
+        }
+
+        .suggestion-details {
+          display: flex;
+          justify-content: space-between;
+          font-size: 0.875rem;
+        }
+
+        .suggestion-barcode {
+          color: var(--text-secondary);
+        }
+
+        .suggestion-price {
+          color: var(--primary);
+          font-weight: 600;
+        }
+
         .camera-preview {
           margin-top: 1rem;
           border-radius: 8px;
