@@ -1295,6 +1295,22 @@ function POSPage({ user, onLogout }) {
           color: #ef4444;
         }
 
+        .checkbox-group {
+          margin-bottom: 1rem;
+        }
+
+        .checkbox-group label {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          cursor: pointer;
+          user-select: none;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+          width: auto;
+        }
+
         @media (max-width: 1024px) {
           .pos-grid {
             grid-template-columns: 1fr;
