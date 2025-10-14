@@ -90,6 +90,8 @@ function POSPage({ user, onLogout }) {
     e.preventDefault();
     if (!barcode.trim()) return;
 
+    setShowSuggestions(false);
+
     try {
       // Önce barkod ile dene
       const response = await axios.get(`${API}/products/barcode/${barcode}`);
@@ -120,6 +122,31 @@ function POSPage({ user, onLogout }) {
         setBarcode('');
       }
     }
+  };
+
+  const handleBarcodeChange = (e) => {
+    const value = e.target.value;
+    setBarcode(value);
+
+    if (value.length >= 2) {
+      // Öneri listesi oluştur
+      const suggestions = products.filter(p => 
+        p.name.toLowerCase().includes(value.toLowerCase()) ||
+        p.barcode.includes(value)
+      ).slice(0, 5);
+      
+      setProductSuggestions(suggestions);
+      setShowSuggestions(suggestions.length > 0);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  const selectSuggestion = (product) => {
+    addToCart(product);
+    setBarcode('');
+    setShowSuggestions(false);
+    toast.success(`${product.name} sepete eklendi`);
   };
 
   const addToCart = (product) => {
