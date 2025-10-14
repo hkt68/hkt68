@@ -382,7 +382,7 @@ function SettingsPage({ user, onLogout, updateTheme }) {
                   <tr><th>Tarih</th><th>Kullanıcı</th><th>İşlem</th><th>Modül</th></tr>
                 </thead>
                 <tbody>
-                  {logs.map((log) => (
+                  {currentLogs.map((log) => (
                     <tr key={log.id}>
                       <td>{new Date(log.created_at).toLocaleString('tr-TR')}</td>
                       <td>{log.user}</td>
@@ -393,6 +393,31 @@ function SettingsPage({ user, onLogout, updateTheme }) {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="pagination">
+                <button
+                  className="pagination-btn"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  ‹ Önceki
+                </button>
+                
+                <div className="pagination-info">
+                  Sayfa {currentPage} / {totalPages} (Toplam {logs.length} kayıt)
+                </div>
+                
+                <button
+                  className="pagination-btn"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                >
+                  Sonraki ›
+                </button>
+              </div>
+            )}
           </div>
         </>
       )}
