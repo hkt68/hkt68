@@ -13,6 +13,7 @@ import {
   Menu,
   X
 } from 'lucide-react';
+import TopBar from '@/components/TopBar';
 
 function Layout({ user, onLogout, children }) {
   const location = useLocation();
