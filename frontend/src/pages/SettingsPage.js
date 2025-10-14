@@ -345,6 +345,36 @@ function SettingsPage({ user, onLogout, updateTheme }) {
           </div>
 
           <div className="card" style={{ marginTop: '2rem' }}>
+            <h3><Database size={20} /> Yedekleme & Geri Yükleme</h3>
+            
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+              Tüm sistem verilerinizi (ürünler, satışlar, müşteriler, ayarlar) yedekleyin ve geri yükleyin.
+            </p>
+
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+              <button className="btn btn-primary" onClick={handleBackup}>
+                <Download size={16} />
+                Yedek İndir (JSON)
+              </button>
+
+              <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={handleRestore}
+                  style={{ display: 'none' }}
+                />
+                Yedek Geri Yükle
+              </label>
+            </div>
+
+            <div style={{ padding: '1rem', background: '#fef3c7', borderRadius: '8px', fontSize: '0.875rem' }}>
+              <strong>⚠️ Uyarı:</strong> Yedek geri yüklerken mevcut tüm veriler silinecektir. 
+              İşlem geri alınamaz!
+            </div>
+          </div>
+
+          <div className="card" style={{ marginTop: '2rem' }}>
             <h3><Database size={20} /> Aktivite Logları</h3>
             <div className="table-container">
               <table>
