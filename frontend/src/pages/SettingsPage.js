@@ -218,11 +218,30 @@ function SettingsPage({ user, onLogout, updateTheme }) {
       {user.role === 'admin' && (
         <>
           <div className="card" style={{ marginTop: '2rem' }}>
-            <h3><Users size={20} /> Kullanıcı Yönetimi</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h3><Users size={20} /> Kullanıcı Yönetimi</h3>
+              <button 
+                className="btn btn-primary btn-sm"
+                onClick={() => {
+                  resetUserForm();
+                  setShowUserModal(true);
+                }}
+              >
+                <Plus size={16} />
+                Yeni Kullanıcı
+              </button>
+            </div>
+            
             <div className="table-container">
               <table>
                 <thead>
-                  <tr><th>Kullanıcı</th><th>Email</th><th>Rol</th><th>Durum</th></tr>
+                  <tr>
+                    <th>Kullanıcı</th>
+                    <th>Email</th>
+                    <th>Rol</th>
+                    <th>Durum</th>
+                    <th>İşlemler</th>
+                  </tr>
                 </thead>
                 <tbody>
                   {users.map((u) => (
@@ -231,6 +250,21 @@ function SettingsPage({ user, onLogout, updateTheme }) {
                       <td>{u.email}</td>
                       <td><span className="badge badge-primary">{u.role === 'admin' ? 'Admin' : 'Kullanıcı'}</span></td>
                       <td><span className={`badge ${u.is_active ? 'badge-success' : 'badge-danger'}`}>{u.is_active ? 'Aktif' : 'Pasif'}</span></td>
+                      <td>
+                        <button 
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => handleEditUser(u)}
+                          style={{ marginRight: '0.5rem' }}
+                        >
+                          <Edit size={14} />
+                        </button>
+                        <button 
+                          className="btn btn-danger btn-sm"
+                          onClick={() => handleDeleteUser(u.id)}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
