@@ -35,6 +35,48 @@ function ReportsPage({ user, onLogout }) {
     }
   };
 
+  const exportToExcel = () => {
+    if (!reportData) {
+      toast.error('Önce rapor oluşturun');
+      return;
+    }
+
+    let data = [];
+    let sheetName = '';
+
+    if (reportType === 'sales') {
+      sheetName = 'Satış Raporu';
+      data = reportData.sales?.map(sale => ({
+        'Fiş No': sale.sale_number,
+        'Tarih': new Date(sale.created_at).toLocaleString('tr-TR'),
+        'Toplam': sale.total.toFixed(2) + ' ₺'
+      })) || [];
+    } else if (reportType === 'products') {
+      sheetName = 'Ürün Raporu';
+      data = reportData.low_stock_products?.map(p => ({
+        'Ürün': p.name,
+        'Barkod': p.barcode,
+        'Stok': p.stock,
+        'Alış Fiyatı': p.purchase_price.toFixed(2) + ' ₺',
+        'Satış Fiyatı': p.sale_price.toFixed(2) + ' ₺'
+      })) || [];
+    } else if (reportType === 'profit') {
+      sheetName = 'Kar-Zarar Raporu';
+      data = [{
+        'Toplam Gelir': reportData.total_revenue?.toFixed(2) + ' ₺',
+        'Toplam Maliyet': reportData.total_cost?.toFixed(2) + ' ₺',
+        'Kar': reportData.profit?.toFixed(2) + ' ₺',
+        'Kar Marjı': reportData.profit_margin?.toFixed(2) + '%'
+      }];
+    }
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    XLSX.writeFile(wb, `${sheetName}_${new Date().toISOString().split('T')[0]}.xlsx`);
+    toast.success('Excel dosyası indirildi');
+  };
+
   return (
     <Layout user={user} onLogout={onLogout}>
       <Toaster position="top-right" richColors />
