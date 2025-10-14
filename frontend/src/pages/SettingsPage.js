@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import axios from 'axios';
-import { Palette, Users, Save, Database, Plus, Edit, Trash2, X } from 'lucide-react';
+import { Palette, Users, Save, Database, Plus, Edit, Trash2, X, Download } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
