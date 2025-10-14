@@ -182,6 +182,7 @@ class SaleCreate(BaseModel):
     customer_id: Optional[str] = None
     cash_received: Optional[float] = None
     print_receipt: bool = False
+    discount_rate: float = 0.0
 
 # Settings Models
 class Settings(BaseModel):
