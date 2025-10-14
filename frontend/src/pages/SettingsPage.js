@@ -79,6 +79,95 @@ function SettingsPage({ user, onLogout, updateTheme }) {
     }
   };
 
+  const availablePages = [
+    { id: 'dashboard', label: 'Dashboard' },
+    { id: 'pos', label: 'Satış (POS)' },
+    { id: 'sales-history', label: 'Satış Geçmişi' },
+    { id: 'products', label: 'Ürünler' },
+    { id: 'stock', label: 'Stok' },
+    { id: 'customers', label: 'Cari Müşteri' },
+    { id: 'reports', label: 'Raporlama' },
+    { id: 'price-check', label: 'Fiyat Gör' },
+    { id: 'settings', label: 'Ayarlar' }
+  ];
+
+  const handleUserSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      if (editingUser) {
+        // Update user
+        await axios.put(`${API}/users/${editingUser.id}`, {
+          full_name: userFormData.full_name,
+          email: userFormData.email,
+          role: userFormData.role,
+          permissions: userFormData.permissions,
+          is_active: true
+        });
+        toast.success('Kullanıcı güncellendi');
+      } else {
+        // Create new user
+        await axios.post(`${API}/auth/register`, userFormData);
+        toast.success('Kullanıcı eklendi');
+      }
+      
+      setShowUserModal(false);
+      resetUserForm();
+      loadUsers();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'İşlem başarısız');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditUser = (userToEdit) => {
+    setEditingUser(userToEdit);
+    setUserFormData({
+      username: userToEdit.username,
+      email: userToEdit.email,
+      password: '',
+      full_name: userToEdit.full_name,
+      role: userToEdit.role,
+      permissions: userToEdit.permissions || []
+    });
+    setShowUserModal(true);
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm('Bu kullanıcıyı silmek istediğinize emin misiniz?')) return;
+    
+    try {
+      await axios.delete(`${API}/users/${userId}`);
+      toast.success('Kullanıcı silindi');
+      loadUsers();
+    } catch (error) {
+      toast.error('Kullanıcı silinemedi');
+    }
+  };
+
+  const resetUserForm = () => {
+    setUserFormData({
+      username: '',
+      email: '',
+      password: '',
+      full_name: '',
+      role: 'user',
+      permissions: []
+    });
+    setEditingUser(null);
+  };
+
+  const togglePermission = (pageId) => {
+    setUserFormData(prev => ({
+      ...prev,
+      permissions: prev.permissions.includes(pageId)
+        ? prev.permissions.filter(p => p !== pageId)
+        : [...prev.permissions, pageId]
+    }));
+  };
+
   return (
     <Layout user={user} onLogout={onLogout}>
       <Toaster position="top-right" richColors />
