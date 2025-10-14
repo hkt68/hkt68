@@ -31,6 +31,19 @@ function POSPage({ user, onLogout }) {
   const [printReceipt, setPrintReceipt] = useState(false);
   const [cashAmount, setCashAmount] = useState(0);
   const [discountRate, setDiscountRate] = useState(0);
+  const [showProductNotFoundModal, setShowProductNotFoundModal] = useState(false);
+  const [notFoundBarcode, setNotFoundBarcode] = useState('');
+  const [showQuickAddModal, setShowQuickAddModal] = useState(false);
+  const [quickProductData, setQuickProductData] = useState({
+    barcode: '',
+    name: '',
+    category: '',
+    purchase_price: '',
+    sale_price: '',
+    vat_rate: 18,
+    stock: 0,
+    is_favorite: false
+  });
   const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [customerSearch, setCustomerSearch] = useState('');
   const [cameraActive, setCameraActive] = useState(false);
