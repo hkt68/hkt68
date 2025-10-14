@@ -234,6 +234,17 @@ function POSPage({ user, onLogout }) {
       <Toaster position="top-right" richColors />
       
       <div className="pos-page" data-testid="pos-page">
+        {/* Kullanıcı Bilgisi */}
+        <div style={{ marginBottom: '1rem', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+            {user.full_name.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>Kasiyer: {user.full_name}</div>
+            <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{user.role === 'admin' ? 'Yönetici' : 'Kullanıcı'}</div>
+          </div>
+        </div>
+
         <div className="pos-grid">
           {/* Left Side - Products */}
           <div className="pos-left">
