@@ -402,6 +402,39 @@ function SettingsPage({ user, onLogout, updateTheme }) {
         .theme-option.active { border-color: var(--primary); background: var(--bg-tertiary); }
         .theme-color { width: 50px; height: 50px; border-radius: 50%; margin: 0 auto 0.5rem; }
         .theme-name { font-size: 0.875rem; font-weight: 500; }
+        
+        .permissions-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 0.75rem;
+          padding: 1rem;
+          background: var(--bg-tertiary);
+          border-radius: 8px;
+        }
+        
+        .permission-item {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          cursor: pointer;
+          padding: 0.5rem;
+          border-radius: 4px;
+          transition: background 0.2s;
+        }
+        
+        .permission-item:hover {
+          background: var(--bg-secondary);
+        }
+        
+        .permission-item input[type="checkbox"] {
+          width: auto;
+          margin: 0;
+        }
+        
+        .permission-item span {
+          font-size: 0.875rem;
+          color: var(--text-primary);
+        }
       `}</style>
     </Layout>
   );
