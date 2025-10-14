@@ -3,7 +3,7 @@ import Layout from '@/components/Layout';
 import axios from 'axios';
 import { Calendar, Download, TrendingUp } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
-import * XLSX from 'xlsx';
+import * as XLSX from 'xlsx';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
