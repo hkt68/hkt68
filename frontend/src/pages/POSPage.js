@@ -397,17 +397,38 @@ function POSPage({ user, onLogout }) {
               <h3><Barcode size={20} /> Barkod Okuma</h3>
               
               <form onSubmit={handleBarcodeSubmit} className="barcode-form">
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input
-                    ref={barcodeInputRef}
-                    type="text"
-                    value={barcode}
-                    onChange={(e) => setBarcode(e.target.value)}
-                    placeholder="Barkod veya ürün adı (örn: Süt, Ekmek, Cola...)"
-                    className="barcode-input"
-                    data-testid="barcode-input"
-                    autoFocus
-                  />
+                <div style={{ display: 'flex', gap: '0.5rem', position: 'relative' }}>
+                  <div style={{ flex: 1, position: 'relative' }}>
+                    <input
+                      ref={barcodeInputRef}
+                      type="text"
+                      value={barcode}
+                      onChange={handleBarcodeChange}
+                      onFocus={() => barcode.length >= 2 && setShowSuggestions(true)}
+                      placeholder="Barkod veya ürün adı (örn: Süt, Ekmek, Cola...)"
+                      className="barcode-input"
+                      data-testid="barcode-input"
+                      autoFocus
+                    />
+                    
+                    {showSuggestions && productSuggestions.length > 0 && (
+                      <div className="suggestions-dropdown">
+                        {productSuggestions.map((product) => (
+                          <div
+                            key={product.id}
+                            className="suggestion-item"
+                            onClick={() => selectSuggestion(product)}
+                          >
+                            <div className="suggestion-name">{product.name}</div>
+                            <div className="suggestion-details">
+                              <span className="suggestion-barcode">{product.barcode}</span>
+                              <span className="suggestion-price">{product.sale_price.toFixed(2)} ₺</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <button
                     type="button"
                     className="btn btn-secondary"
