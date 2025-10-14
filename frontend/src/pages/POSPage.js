@@ -94,7 +94,9 @@ function POSPage({ user, onLogout }) {
       setBarcode('');
       toast.success(`${response.data.name} sepete eklendi`);
     } catch (error) {
-      toast.error('Ürün bulunamadı');
+      // Ürün bulunamadı
+      setNotFoundBarcode(barcode);
+      setShowProductNotFoundModal(true);
       setBarcode('');
     }
   };
