@@ -247,6 +247,9 @@ function POSPage({ user, onLogout }) {
     }
   };
 
+  const subtotal = calculateSubtotal();
+  const discount = calculateDiscount();
+  const vat = calculateVAT();
   const total = calculateTotal();
   const change = calculateChange();
 
