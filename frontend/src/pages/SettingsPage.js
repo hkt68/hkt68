@@ -170,6 +170,76 @@ function SettingsPage({ user, onLogout, updateTheme }) {
     }));
   };
 
+  // Log pagination
+  const indexOfLastLog = currentPage * logsPerPage;
+  const indexOfFirstLog = indexOfLastLog - logsPerPage;
+  const currentLogs = logs.slice(indexOfFirstLog, indexOfLastLog);
+  const totalPages = Math.ceil(logs.length / logsPerPage);
+
+  const handleBackup = async () => {
+    try {
+      // MongoDB'den tüm verileri çek
+      const [productsRes, customersRes, salesRes, usersRes, settingsRes] = await Promise.all([
+        axios.get(`${API}/products`),
+        axios.get(`${API}/customers`),
+        axios.get(`${API}/sales`),
+        axios.get(`${API}/users`),
+        axios.get(`${API}/settings`)
+      ]);
+
+      const backupData = {
+        version: '1.0',
+        timestamp: new Date().toISOString(),
+        data: {
+          products: productsRes.data,
+          customers: customersRes.data,
+          sales: salesRes.data,
+          users: usersRes.data,
+          settings: settingsRes.data
+        }
+      };
+
+      // JSON dosyası olarak indir
+      const dataStr = JSON.stringify(backupData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `pos_yedek_${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      toast.success('Yedek başarıyla indirildi');
+    } catch (error) {
+      toast.error('Yedek oluşturulamadı');
+    }
+  };
+
+  const handleRestore = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!window.confirm('Mevcut tüm veriler silinecek ve yedeği yüklenecek. Emin misiniz?')) {
+      e.target.value = '';
+      return;
+    }
+
+    try {
+      const fileText = await file.text();
+      const backupData = JSON.parse(fileText);
+
+      toast.info('Yedek geri yükleniyor...');
+
+      // Not: Bu basitleştirilmiş bir örnek
+      // Gerçek uygulamada backend'de özel bir endpoint olmalı
+      toast.warning('Yedek geri yükleme özelliği backend tarafında geliştirilmeli');
+      
+    } catch (error) {
+      toast.error('Yedek dosyası okunamadı');
+    }
+    e.target.value = '';
+  };
+
   return (
     <Layout user={user} onLogout={onLogout}>
       <Toaster position="top-right" richColors />
