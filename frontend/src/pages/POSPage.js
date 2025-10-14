@@ -141,7 +141,14 @@ function POSPage({ user, onLogout }) {
   };
 
   const handleQuickCash = (amount) => {
-    setCashReceived(amount.toString());
+    const newAmount = cashAmount + amount;
+    setCashAmount(newAmount);
+    setCashReceived(newAmount.toString());
+  };
+
+  const resetCashAmount = () => {
+    setCashAmount(0);
+    setCashReceived('');
   };
 
   const handleCompleteSale = async () => {
