@@ -121,7 +121,7 @@ function ReportsPage({ user, onLogout }) {
         <div className="card" style={{ marginTop: '2rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3>Rapor Sonuçları</h3>
-            <button className="btn btn-secondary btn-sm">
+            <button className="btn btn-success btn-sm" onClick={exportToExcel}>
               <Download size={16} />
               Excel İndir
             </button>
