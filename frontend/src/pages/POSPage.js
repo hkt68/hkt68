@@ -451,14 +451,28 @@ function POSPage({ user, onLogout }) {
                   <>
                     <div className="input-group">
                       <label>Alınan Tutar</label>
-                      <input
-                        type="number"
-                        value={cashReceived}
-                        onChange={(e) => setCashReceived(e.target.value)}
-                        placeholder="0.00"
-                        step="0.01"
-                        data-testid="cash-received-input"
-                      />
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <input
+                          type="number"
+                          value={cashReceived}
+                          onChange={(e) => {
+                            setCashReceived(e.target.value);
+                            setCashAmount(parseFloat(e.target.value) || 0);
+                          }}
+                          placeholder="0.00"
+                          step="0.01"
+                          data-testid="cash-received-input"
+                          style={{ flex: 1 }}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={resetCashAmount}
+                          title="Temizle"
+                        >
+                          ×
+                        </button>
+                      </div>
                     </div>
 
                     <div className="quick-cash">
