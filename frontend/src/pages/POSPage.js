@@ -736,6 +736,166 @@ function POSPage({ user, onLogout }) {
         </div>
       )}
 
+      {/* Product Not Found Modal */}
+      {showProductNotFoundModal && (
+        <div className="modal-overlay" onClick={() => setShowProductNotFoundModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Ürün Bulunamadı</h3>
+              <button onClick={() => setShowProductNotFoundModal(false)}>
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="modal-body">
+              <p style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>
+                "<strong>{notFoundBarcode}</strong>" barkodu ile ürün bulunamadı.
+              </p>
+              
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleQuickAddProduct}
+                  style={{ flex: 1 }}
+                >
+                  <Plus size={16} />
+                  Hızlı Ürün Ekle
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowProductNotFoundModal(false)}
+                  style={{ flex: 1 }}
+                >
+                  İptal
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Add Product Modal */}
+      {showQuickAddModal && (
+        <div className="modal-overlay" onClick={() => setShowQuickAddModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Hızlı Ürün Ekle</h3>
+              <button onClick={() => setShowQuickAddModal(false)}>
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="modal-body">
+              <form onSubmit={handleQuickProductSubmit}>
+                <div className="input-group">
+                  <label>Barkod</label>
+                  <input
+                    type="text"
+                    value={quickProductData.barcode}
+                    onChange={(e) => setQuickProductData({...quickProductData, barcode: e.target.value})}
+                    required
+                    readOnly
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label>Ürün Adı</label>
+                  <input
+                    type="text"
+                    value={quickProductData.name}
+                    onChange={(e) => setQuickProductData({...quickProductData, name: e.target.value})}
+                    required
+                    autoFocus
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label>Kategori</label>
+                  <input
+                    type="text"
+                    value={quickProductData.category}
+                    onChange={(e) => setQuickProductData({...quickProductData, category: e.target.value})}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="input-group">
+                    <label>Alış Fiyatı</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={quickProductData.purchase_price}
+                      onChange={(e) => setQuickProductData({...quickProductData, purchase_price: e.target.value})}
+                      required
+                    />
+                  </div>
+
+                  <div className="input-group">
+                    <label>Satış Fiyatı</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={quickProductData.sale_price}
+                      onChange={(e) => setQuickProductData({...quickProductData, sale_price: e.target.value})}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="input-group">
+                    <label>KDV Oranı (%)</label>
+                    <input
+                      type="number"
+                      value={quickProductData.vat_rate}
+                      onChange={(e) => setQuickProductData({...quickProductData, vat_rate: e.target.value})}
+                    />
+                  </div>
+
+                  <div className="input-group">
+                    <label>Stok</label>
+                    <input
+                      type="number"
+                      value={quickProductData.stock}
+                      onChange={(e) => setQuickProductData({...quickProductData, stock: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                <div className="checkbox-group">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={quickProductData.is_favorite}
+                      onChange={(e) => setQuickProductData({...quickProductData, is_favorite: e.target.checked})}
+                    />
+                    <span>Hızlı ürünlere ekle</span>
+                  </label>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
+                  <button
+                    type="submit"
+                    className="btn btn-success"
+                    style={{ flex: 1 }}
+                  >
+                    Ekle ve Sepete Koy
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setShowQuickAddModal(false)}
+                    style={{ flex: 1 }}
+                  >
+                    İptal
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style jsx>{`
         .pos-page {
           max-width: 1600px;
