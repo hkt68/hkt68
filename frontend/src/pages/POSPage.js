@@ -128,6 +128,7 @@ function POSPage({ user, onLogout }) {
     setCart([]);
     setSelectedCustomer(null);
     setCashReceived('');
+    setCashAmount(0);
   };
 
   const calculateTotal = () => {
