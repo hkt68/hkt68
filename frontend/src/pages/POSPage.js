@@ -89,15 +89,34 @@ function POSPage({ user, onLogout }) {
     if (!barcode.trim()) return;
 
     try {
+      // Önce barkod ile dene
       const response = await axios.get(`${API}/products/barcode/${barcode}`);
       addToCart(response.data);
       setBarcode('');
       toast.success(`${response.data.name} sepete eklendi`);
     } catch (error) {
-      // Ürün bulunamadı
-      setNotFoundBarcode(barcode);
-      setShowProductNotFoundModal(true);
-      setBarcode('');
+      // Barkod bulunamadı, ürün adına göre ara
+      try {
+        const allProducts = await axios.get(`${API}/products`);
+        const foundProduct = allProducts.data.find(p => 
+          p.name.toLowerCase().includes(barcode.toLowerCase())
+        );
+        
+        if (foundProduct) {
+          addToCart(foundProduct);
+          setBarcode('');
+          toast.success(`${foundProduct.name} sepete eklendi`);
+        } else {
+          // Hiç bulunamadı, ekleme modal'ı aç
+          setNotFoundBarcode(barcode);
+          setShowProductNotFoundModal(true);
+          setBarcode('');
+        }
+      } catch (error2) {
+        setNotFoundBarcode(barcode);
+        setShowProductNotFoundModal(true);
+        setBarcode('');
+      }
     }
   };
 
