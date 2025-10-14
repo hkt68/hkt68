@@ -21,6 +21,7 @@ function Layout({ user, onLogout, children }) {
   const menuItems = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard', permission: 'dashboard' },
     { path: '/pos', icon: ShoppingCart, label: 'Satış (POS)', permission: 'pos' },
+    { path: '/sales-history', icon: FileText, label: 'Satış Geçmişi', permission: 'sales-history' },
     { path: '/products', icon: Package, label: 'Ürünler', permission: 'products' },
     { path: '/stock', icon: Warehouse, label: 'Stok', permission: 'stock' },
     { path: '/customers', icon: Users, label: 'Cari Müşteri', permission: 'customers' },
