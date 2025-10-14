@@ -19,6 +19,15 @@ function SettingsPage({ user, onLogout, updateTheme }) {
   const [settings, setSettings] = useState({ company_name: '', site_title: '', logo_url: '', theme: 'blue' });
   const [users, setUsers] = useState([]);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [userFormData, setUserFormData] = useState({
+    username: '',
+    email: '',
+    password: '',
+    full_name: '',
+    role: 'user',
+    permissions: []
+  });
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
 
