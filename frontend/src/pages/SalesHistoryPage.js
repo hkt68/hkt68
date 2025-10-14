@@ -98,8 +98,18 @@ function SalesHistoryPage({ user, onLogout }) {
           <div class="total">
             <table>
               <tr>
-                <td>TOPLAM:</td>
-                <td class="right">${sale.total.toFixed(2)} ₺</td>
+                <td>Ara Toplam:</td>
+                <td class="right">${sale.subtotal.toFixed(2)} ₺</td>
+              </tr>
+              ${sale.discount_rate > 0 ? `
+                <tr>
+                  <td>İndirim (${sale.discount_rate}%):</td>
+                  <td class="right">-${sale.discount_amount.toFixed(2)} ₺</td>
+                </tr>
+              ` : ''}
+              <tr>
+                <td class="bold">TOPLAM:</td>
+                <td class="right bold">${sale.total.toFixed(2)} ₺</td>
               </tr>
               ${sale.payment_method === 'cash' && sale.cash_received ? `
                 <tr>
