@@ -13,6 +13,7 @@ import CustomersPage from '@/pages/CustomersPage';
 import ReportsPage from '@/pages/ReportsPage';
 import SettingsPage from '@/pages/SettingsPage';
 import PriceCheckPage from '@/pages/PriceCheckPage';
+import SalesHistoryPage from '@/pages/SalesHistoryPage';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
