@@ -195,7 +195,8 @@ function POSPage({ user, onLogout }) {
         payment_method: paymentMethod,
         customer_id: selectedCustomer?.id || null,
         cash_received: paymentMethod === 'cash' ? parseFloat(cashReceived) : null,
-        print_receipt: printReceipt
+        print_receipt: printReceipt,
+        discount_rate: discountRate
       };
 
       const response = await axios.post(`${API}/sales`, saleData);
