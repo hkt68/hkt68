@@ -562,6 +562,42 @@ function SettingsPage({ user, onLogout, updateTheme }) {
           font-size: 0.875rem;
           color: var(--text-primary);
         }
+
+        .pagination {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 1rem;
+          margin-top: 1.5rem;
+          padding-top: 1rem;
+          border-top: 1px solid var(--border);
+        }
+
+        .pagination-btn {
+          padding: 0.5rem 1rem;
+          border: 1px solid var(--border);
+          background: white;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: all 0.2s;
+          font-weight: 500;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+          background: var(--primary);
+          color: white;
+          border-color: var(--primary);
+        }
+
+        .pagination-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .pagination-info {
+          color: var(--text-secondary);
+          font-size: 0.875rem;
+        }
       `}</style>
     </Layout>
   );
