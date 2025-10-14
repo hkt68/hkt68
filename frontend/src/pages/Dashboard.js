@@ -73,6 +73,20 @@ function Dashboard({ user, onLogout }) {
     }
   };
 
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    if (outcome === 'accepted') {
+      console.log('PWA installed');
+    }
+    
+    setDeferredPrompt(null);
+    setShowInstallButton(false);
+  };
+
   if (loading) {
     return (
       <Layout user={user} onLogout={onLogout}>
