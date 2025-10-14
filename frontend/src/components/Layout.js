@@ -93,6 +93,8 @@ function Layout({ user, onLogout, children }) {
 
       {/* Main Content */}
       <div className="main-content">
+        <TopBar />
+        
         <header className="top-header">
           <button className="menu-btn" onClick={() => setSidebarOpen(true)}>
             <Menu size={24} />
