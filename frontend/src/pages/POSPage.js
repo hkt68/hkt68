@@ -29,6 +29,7 @@ function POSPage({ user, onLogout }) {
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [cashReceived, setCashReceived] = useState('');
   const [printReceipt, setPrintReceipt] = useState(false);
+  const [cashAmount, setCashAmount] = useState(0);
   const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [customerSearch, setCustomerSearch] = useState('');
   const [cameraActive, setCameraActive] = useState(false);
