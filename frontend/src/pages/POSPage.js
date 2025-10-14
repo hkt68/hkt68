@@ -44,6 +44,8 @@ function POSPage({ user, onLogout }) {
     stock: 0,
     is_favorite: false
   });
+  const [productSuggestions, setProductSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [customerSearch, setCustomerSearch] = useState('');
   const [cameraActive, setCameraActive] = useState(false);
