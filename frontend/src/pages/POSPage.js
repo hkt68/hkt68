@@ -844,6 +844,31 @@ function POSPage({ user, onLogout }) {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          margin-bottom: 0.75rem;
+          color: var(--text-secondary);
+        }
+
+        .total-row-main {
+          padding-top: 0.75rem;
+          border-top: 2px solid var(--border);
+          margin-top: 0.5rem;
+          margin-bottom: 0;
+        }
+
+        .total-value {
+          font-weight: 600;
+          color: var(--text-primary);
+        }
+
+        .discount-section {
+          background: #fef3c7;
+          padding: 0.75rem;
+          border-radius: 6px;
+          margin: 0.75rem 0;
+        }
+
+        .discount-section .total-row {
+          margin-bottom: 0;
         }
 
         .total-amount {
