@@ -518,7 +518,8 @@ async def get_customer_transactions(customer_id: str, current_user: dict = Depen
 async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_current_user)):
     # Calculate totals
     subtotal = sum(item.total for item in sale_data.items)
-    total = subtotal
+    discount_amount = (subtotal * sale_data.discount_rate) / 100
+    total = subtotal - discount_amount
     
     # Generate sale number
     count = await db.sales.count_documents({}) + 1
@@ -529,6 +530,8 @@ async def create_sale(sale_data: SaleCreate, current_user: dict = Depends(get_cu
         sale_number=sale_number,
         items=[item.model_dump() for item in sale_data.items],
         subtotal=subtotal,
+        discount_rate=sale_data.discount_rate,
+        discount_amount=discount_amount,
         total=total,
         payment_method=sale_data.payment_method,
         customer_id=sale_data.customer_id,
