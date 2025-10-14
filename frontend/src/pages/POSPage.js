@@ -409,7 +409,46 @@ function POSPage({ user, onLogout }) {
 
               <div className="cart-total">
                 <div className="total-row">
-                  <span>Toplam:</span>
+                  <span>Ara Toplam:</span>
+                  <span className="total-value">{subtotal.toFixed(2)} ₺</span>
+                </div>
+                
+                <div className="discount-section">
+                  <div className="total-row">
+                    <span>İndirim:</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <input
+                        type="number"
+                        value={discountRate}
+                        onChange={(e) => setDiscountRate(Math.max(0, Math.min(100, parseFloat(e.target.value) || 0)))}
+                        placeholder="0"
+                        min="0"
+                        max="100"
+                        style={{ 
+                          width: '60px', 
+                          padding: '0.25rem 0.5rem', 
+                          border: '1px solid var(--border)', 
+                          borderRadius: '4px',
+                          textAlign: 'right'
+                        }}
+                      />
+                      <span>%</span>
+                      <span className="total-value" style={{ fontSize: '0.875rem' }}>
+                        -{discount.toFixed(2)} ₺
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="total-row">
+                  <span>KDV (Dahil):</span>
+                  <span className="total-value" style={{ fontSize: '0.875rem' }}>
+                    {vat.toFixed(2)} ₺
+                  </span>
+                </div>
+
+                <div className="total-row total-row-main">
+                  <span style={{ fontSize: '1.125rem', fontWeight: '700' }}>Genel Toplam:</span>
                   <span className="total-amount" data-testid="cart-total">
                     {total.toFixed(2)} ₺
                   </span>
